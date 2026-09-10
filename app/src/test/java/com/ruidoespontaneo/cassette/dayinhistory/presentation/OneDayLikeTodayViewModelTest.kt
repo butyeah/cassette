@@ -1,6 +1,7 @@
 package com.ruidoespontaneo.cassette.dayinhistory.presentation
 
 import com.ruidoespontaneo.cassette.dayinhistory.domain.DayInHistoryRepository
+import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.dayinhistory.domain.usecase.GetAlbumsByDayUseCase
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import java.time.LocalDate
@@ -49,7 +50,7 @@ class OneDayLikeTodayViewModelTest {
 
         val state = viewModel.state.value
         assertFalse(state.isLoading)
-        assertEquals(listOf(album), state.albums)
+        assertEquals(listOf(AlbumsByYear(1994, listOf(album))), state.albumsByYear)
         assertNull(state.errorMessage)
         assertEquals(today, state.day)
     }
@@ -79,8 +80,44 @@ class OneDayLikeTodayViewModelTest {
 
         val state = viewModel.state.value
         assertFalse(state.isLoading)
-        assertTrue(state.albums.isEmpty())
+        assertTrue(state.albumsByYear.isEmpty())
         assertEquals("boom", state.errorMessage)
+    }
+
+    @Test
+    fun `NextDay and PreviousDay reload the adjacent day`() {
+        var requestedMonth: Int? = null
+        var requestedDay: Int? = null
+        val viewModel = viewModel { month, day ->
+            requestedMonth = month
+            requestedDay = day
+            Result.success(emptyList())
+        }
+        dispatcher.scheduler.advanceUntilIdle()
+
+        // Computed straight from today's real LocalDate, independent of however the
+        // ViewModel steps a MonthDay forward/back, so this can't pass by mirroring a bug there.
+        val today = MonthDay.from(LocalDate.now())
+        val expectedNext = MonthDay.from(LocalDate.now().plusDays(1))
+        val expectedPrevious = MonthDay.from(LocalDate.now().minusDays(1))
+
+        viewModel.onIntent(OneDayLikeTodayIntent.NextDay)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(expectedNext.monthValue, requestedMonth)
+        assertEquals(expectedNext.dayOfMonth, requestedDay)
+        assertEquals(expectedNext, viewModel.state.value.day)
+
+        viewModel.onIntent(OneDayLikeTodayIntent.PreviousDay)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(today.monthValue, requestedMonth)
+        assertEquals(today.dayOfMonth, requestedDay)
+        assertEquals(today, viewModel.state.value.day)
+
+        viewModel.onIntent(OneDayLikeTodayIntent.PreviousDay)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(expectedPrevious.monthValue, requestedMonth)
+        assertEquals(expectedPrevious.dayOfMonth, requestedDay)
+        assertEquals(expectedPrevious, viewModel.state.value.day)
     }
 
     @Test

@@ -3,18 +3,20 @@ package com.ruidoespontaneo.cassette.dayinhistory.presentation
 import com.ruidoespontaneo.cassette.core.mvi.UiEffect
 import com.ruidoespontaneo.cassette.core.mvi.UiIntent
 import com.ruidoespontaneo.cassette.core.mvi.UiState
-import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
+import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import java.time.MonthDay
 
 data class OneDayLikeTodayUiState(
     val day: MonthDay = MonthDay.now(),
     val isLoading: Boolean = true,
-    val albums: List<Album> = emptyList(),
+    val albumsByYear: List<AlbumsByYear> = emptyList(),
     val errorMessage: String? = null
 ) : UiState
 
 sealed interface OneDayLikeTodayIntent : UiIntent {
     data object Retry : OneDayLikeTodayIntent
+    data object NextDay : OneDayLikeTodayIntent
+    data object PreviousDay : OneDayLikeTodayIntent
 }
 
 // No one-off events yet (nothing to navigate to or pop a snackbar for) —
