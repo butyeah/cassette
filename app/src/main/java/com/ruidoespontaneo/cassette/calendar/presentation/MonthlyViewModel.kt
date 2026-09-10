@@ -9,7 +9,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 @HiltViewModel
-class CalendarViewModel @Inject constructor(
+class MonthlyViewModel @Inject constructor(
     private val getAlbumsByMonthUseCase: GetAlbumsByMonthUseCase
 ) : MviViewModel<CalendarUiState, CalendarIntent, CalendarEffect>(CalendarUiState()) {
 

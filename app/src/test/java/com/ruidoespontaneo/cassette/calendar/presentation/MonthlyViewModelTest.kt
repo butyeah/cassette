@@ -19,7 +19,7 @@ import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class CalendarViewModelTest {
+class MonthlyViewModelTest {
 
     private val dispatcher = StandardTestDispatcher()
 
@@ -109,7 +109,7 @@ class CalendarViewModelTest {
             limit: Int,
             offset: Int
         ) -> Result<List<Album>>
-    ): CalendarViewModel {
+    ): MonthlyViewModel {
         val repository = object : MusicBrainzRepository {
             override suspend fun getAlbumsByDate(
                 from: LocalDate,
@@ -118,6 +118,6 @@ class CalendarViewModelTest {
                 offset: Int
             ): Result<List<Album>> = getAlbumsByDate(from, to, limit, offset)
         }
-        return CalendarViewModel(GetAlbumsByMonthUseCase(repository))
+        return MonthlyViewModel(GetAlbumsByMonthUseCase(repository))
     }
 }
