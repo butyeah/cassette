@@ -68,15 +68,6 @@ private fun LoginScreenContent(
 }
 
 @Composable
-private fun SignedInContent(email: String, onSignOut: () -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(stringResource(R.string.signed_in_as, email), style = MaterialTheme.typography.bodyLarge)
-        Spacer(Modifier.height(16.dp))
-        Button(onClick = onSignOut) { Text(stringResource(R.string.sign_out)) }
-    }
-}
-
-@Composable
 private fun SignedOutContent(
     state: LoginUiState,
     onIntent: (LoginIntent) -> Unit,
