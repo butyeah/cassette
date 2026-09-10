@@ -13,73 +13,114 @@ https://musicbrainz.org/doc/MusicBrainz_Database/Download
 Only 4 of MusicBrainz's ~30 core tables are needed (column layouts confirmed
 against admin/sql/CreateTables.sql in musicbrainz-server as of 2026-09):
   - release_group              title, artist_credit id, primary type id
-  - release_group_meta         first_release_date_year/month/day
+  - release_group_meta         first_release_date_year/month/day — a
+                                *computed/derived* table, so it actually ships
+                                in mbdump-derived.tar.bz2, not mbdump.tar.bz2
+                                (confirmed by scanning both archives directly)
   - artist_credit               pre-rendered `name` (e.g. "A & B") — so the
                                  artist_credit_name/artist join tables aren't
                                  needed just to show a display name
   - release_group_primary_type  id -> 'Album'/'Single'/'EP'/... name
 
 Usage:
-    python3 scripts/build_day_index.py [--dump-url URL] [--raw-dir DIR] [--output PATH]
+    python3 scripts/build_day_index.py [--export-base-url URL] [--raw-dir DIR] [--output PATH]
 
 Safe to re-run: the download step is skipped if the raw table files already
-exist in --raw-dir. Downloads and extracts ~7GB (compressed) of MusicBrainz
-data on first run — that's the one genuinely slow/expensive step here.
+exist in --raw-dir. Downloads mbdump-derived.tar.bz2 (~500MB compressed) and
+mbdump.tar.bz2 (~7GB compressed) on first run — that's the one genuinely
+slow/expensive step here.
 """
 from __future__ import annotations
 
 import argparse
 import sqlite3
+import ssl
 import tarfile
 import urllib.request
 from pathlib import Path
 from typing import BinaryIO, Iterator
 
-DEFAULT_DUMP_URL = (
-    "https://data.metabrainz.org/pub/musicbrainz/data/fullexport/LATEST/mbdump.tar.bz2"
-)
-# Members inside mbdump.tar.bz2 we actually need — everything else is skipped
-# without ever being written to disk.
-WANTED_TABLES = (
-    "release_group",
-    "release_group_meta",
-    "artist_credit",
-    "release_group_primary_type",
-)
+# The dump directories are dated (e.g. .../fullexport/20260909-002431/), so
+# there's no fixed URL for "the current dump" — LATEST is a small text file
+# at this base URL containing that dated directory's name, resolved below.
+DEFAULT_EXPORT_BASE_URL = "https://data.metabrainz.org/pub/musicbrainz/data/fullexport"
+# Which dump archive each wanted table actually ships in — everything else in
+# each archive is skipped without ever being written to disk. Verified by
+# scanning both archives directly rather than assumed, since MusicBrainz
+# splits "core" vs. "derived/computed" tables across them and that split
+# isn't documented anywhere obvious.
+TABLE_ARCHIVES: dict[str, str] = {
+    "release_group": "mbdump.tar.bz2",
+    "artist_credit": "mbdump.tar.bz2",
+    "release_group_primary_type": "mbdump.tar.bz2",
+    "release_group_meta": "mbdump-derived.tar.bz2",
+}
 # Resolved at runtime from release_group_primary_type itself (not hardcoded
 # as a magic id) in case MusicBrainz ever renumbers it.
 ALBUM_TYPE_NAME = "Album"
 
 
-def download_tables(dump_url: str, raw_dir: Path) -> None:
-    """Streams mbdump.tar.bz2 and extracts only WANTED_TABLES into raw_dir,
-    without ever writing the full ~7GB archive (or its much larger
-    uncompressed contents) to disk."""
+def make_ssl_context() -> ssl.SSLContext:
+    """A default context wired to a real CA bundle — some Python installs
+    (notably Homebrew's on macOS) don't trust the system store out of the
+    box, which otherwise fails every HTTPS request with
+    CERTIFICATE_VERIFY_FAILED."""
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        pass
+    for candidate in ("/etc/ssl/cert.pem", "/etc/ssl/certs/ca-certificates.crt"):
+        if Path(candidate).exists():
+            return ssl.create_default_context(cafile=candidate)
+    return ssl.create_default_context()
+
+
+def resolve_dump_base_url(export_base_url: str, ssl_context: ssl.SSLContext) -> str:
+    """LATEST is a plain-text file (not a directory alias) containing the
+    current dated export directory's name, e.g. `20260909-002431`."""
+    with urllib.request.urlopen(f"{export_base_url}/LATEST", context=ssl_context) as resp:
+        latest_dir = resp.read().decode("ascii").strip()
+    return f"{export_base_url}/{latest_dir}"
+
+
+def download_tables(dump_base_url: str, raw_dir: Path, ssl_context: ssl.SSLContext) -> None:
+    """Streams each dump archive that has at least one still-missing wanted
+    table, extracting only those tables into raw_dir — without ever writing
+    a full archive (or its much larger uncompressed contents) to disk."""
     raw_dir.mkdir(parents=True, exist_ok=True)
-    missing = {t for t in WANTED_TABLES if not (raw_dir / t).exists()}
+    missing = {t for t in TABLE_ARCHIVES if not (raw_dir / t).exists()}
     if not missing:
         print(f"All tables already present in {raw_dir}, skipping download.")
         return
 
-    print(f"Downloading and extracting {sorted(missing)} from {dump_url} ...")
-    with urllib.request.urlopen(dump_url) as response:
-        with tarfile.open(fileobj=response, mode="r|bz2") as tar:
-            for member in tar:
-                name = Path(member.name).name
-                if name not in missing:
-                    continue
-                extracted = tar.extractfile(member)
-                if extracted is None:
-                    continue
-                dest = raw_dir / name
-                with open(dest, "wb") as out:
-                    _copy_stream(extracted, out)
-                print(f"  extracted {name} ({dest.stat().st_size:,} bytes)")
-                missing.discard(name)
-                if not missing:
-                    break  # stop reading the stream early once we have everything
+    archives_needed = {TABLE_ARCHIVES[t] for t in missing}
+    for archive in sorted(archives_needed):
+        wanted_from_archive = {t for t in missing if TABLE_ARCHIVES[t] == archive}
+        archive_url = f"{dump_base_url}/{archive}"
+        print(f"Downloading and extracting {sorted(wanted_from_archive)} from {archive_url} ...")
+        with urllib.request.urlopen(archive_url, context=ssl_context) as response:
+            with tarfile.open(fileobj=response, mode="r|bz2") as tar:
+                for member in tar:
+                    name = Path(member.name).name
+                    if name not in wanted_from_archive:
+                        continue
+                    extracted = tar.extractfile(member)
+                    if extracted is None:
+                        continue
+                    dest = raw_dir / name
+                    with open(dest, "wb") as out:
+                        _copy_stream(extracted, out)
+                    print(f"  extracted {name} ({dest.stat().st_size:,} bytes)")
+                    wanted_from_archive.discard(name)
+                    missing.discard(name)
+                    if not wanted_from_archive:
+                        break  # stop reading this archive early
+        if wanted_from_archive:
+            raise RuntimeError(f"Never found these tables in {archive}: {sorted(wanted_from_archive)}")
     if missing:
-        raise RuntimeError(f"Never found these tables in the dump: {sorted(missing)}")
+        raise RuntimeError(f"Never found these tables in any archive: {sorted(missing)}")
 
 
 def _copy_stream(src: BinaryIO, dst: BinaryIO, chunk_size: int = 1024 * 1024) -> None:
@@ -210,12 +251,23 @@ def build_index(raw_dir: Path, output: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dump-url", default=DEFAULT_DUMP_URL)
+    parser.add_argument("--export-base-url", default=DEFAULT_EXPORT_BASE_URL)
+    parser.add_argument(
+        "--dump-base-url",
+        default=None,
+        help="Skip LATEST resolution and use this dated export directory URL directly "
+        "(e.g. https://.../fullexport/20260909-002431).",
+    )
     parser.add_argument("--raw-dir", type=Path, default=Path("scripts/.mbdump-raw"))
     parser.add_argument("--output", type=Path, default=Path("scripts/day_index.sqlite"))
     args = parser.parse_args()
 
-    download_tables(args.dump_url, args.raw_dir)
+    ssl_context = make_ssl_context()
+    dump_base_url = args.dump_base_url or resolve_dump_base_url(args.export_base_url, ssl_context)
+    if not args.dump_base_url:
+        print(f"Resolved LATEST -> {dump_base_url}")
+
+    download_tables(dump_base_url, args.raw_dir, ssl_context)
     build_index(args.raw_dir, args.output)
 
 
