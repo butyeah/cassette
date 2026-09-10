@@ -3,6 +3,8 @@ package com.ruidoespontaneo.cassette.dayinhistory.presentation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,10 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -23,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import java.time.LocalDate
@@ -50,7 +55,11 @@ private fun OneDayLikeTodayScreenContent(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        DayHeader(day = state.day)
+        DayHeader(
+            day = state.day,
+            onPrevious = { onIntent(OneDayLikeTodayIntent.PreviousDay) },
+            onNext = { onIntent(OneDayLikeTodayIntent.NextDay) }
+        )
         when {
             state.isLoading -> LoadingIndicator(Modifier.fillMaxSize())
             state.errorMessage != null -> ErrorMessage(
@@ -59,23 +68,28 @@ private fun OneDayLikeTodayScreenContent(
                 modifier = Modifier.fillMaxSize()
             )
 
-            else -> AlbumList(albums = state.albums, modifier = Modifier.fillMaxSize())
+            else -> AlbumsByYearList(groups = state.albumsByYear, modifier = Modifier.fillMaxSize())
         }
     }
 }
 
 @Composable
-private fun DayHeader(day: MonthDay, modifier: Modifier = Modifier) {
-    Box(
+private fun DayHeader(
+    day: MonthDay,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp),
-        contentAlignment = Alignment.Center
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "One day like today: ${day.format(DAY_FORMAT)}",
-            style = MaterialTheme.typography.titleLarge
-        )
+        TextButton(onClick = onPrevious) { Text("‹") }
+        Text(text = day.format(DAY_FORMAT), style = MaterialTheme.typography.titleLarge)
+        TextButton(onClick = onNext) { Text("›") }
     }
 }
 
@@ -100,17 +114,33 @@ private fun ErrorMessage(message: String, onRetry: () -> Unit, modifier: Modifie
 }
 
 @Composable
-private fun AlbumList(albums: List<Album>, modifier: Modifier = Modifier) {
-    if (albums.isEmpty()) {
+private fun AlbumsByYearList(groups: List<AlbumsByYear>, modifier: Modifier = Modifier) {
+    if (groups.isEmpty()) {
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
             Text("No albums released on this day")
         }
         return
     }
-    // Newest first reads like a "on this day, through the years" timeline.
-    val sortedAlbums = albums.sortedByDescending { it.releaseDate?.year }
-    LazyColumn(modifier = modifier) {
-        items(sortedAlbums, key = { it.id }) { album -> AlbumRow(album) }
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(groups, key = { it.year }) { group -> YearCard(group) }
+    }
+}
+
+@Composable
+private fun YearCard(group: AlbumsByYear, modifier: Modifier = Modifier) {
+    Card(modifier = modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(vertical = 8.dp)) {
+            Text(
+                text = group.year.toString(),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            )
+            group.albums.forEach { album -> AlbumRow(album) }
+        }
     }
 }
 
@@ -118,29 +148,43 @@ private fun AlbumList(albums: List<Album>, modifier: Modifier = Modifier) {
 private fun AlbumRow(album: Album) {
     ListItem(
         headlineContent = { Text(album.title) },
-        supportingContent = { Text(album.artistName) },
-        trailingContent = {
-            album.releaseDate?.let { Text(it.year.toString()) }
-        }
+        supportingContent = { Text(album.artistName) }
     )
 }
 
 private val DAY_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM d", Locale.getDefault())
 
-private val previewAlbums = listOf(
-    Album(
-        id = "1",
-        title = "Origin of Symmetry",
-        releaseDate = LocalDate.of(2001, 6, 17),
-        artistId = null,
-        artistName = "Muse"
+private val previewGroups = listOf(
+    AlbumsByYear(
+        year = 2001,
+        albums = listOf(
+            Album(
+                id = "1",
+                title = "Origin of Symmetry",
+                releaseDate = LocalDate.of(2001, 6, 17),
+                artistId = null,
+                artistName = "Muse"
+            )
+        )
     ),
-    Album(
-        id = "2",
-        title = "The Downward Spiral",
-        releaseDate = LocalDate.of(1994, 6, 17),
-        artistId = null,
-        artistName = "Nine Inch Nails"
+    AlbumsByYear(
+        year = 1994,
+        albums = listOf(
+            Album(
+                id = "2",
+                title = "The Downward Spiral",
+                releaseDate = LocalDate.of(1994, 6, 17),
+                artistId = null,
+                artistName = "Nine Inch Nails"
+            ),
+            Album(
+                id = "3",
+                title = "Superunknown",
+                releaseDate = LocalDate.of(1994, 6, 17),
+                artistId = null,
+                artistName = "Soundgarden"
+            )
+        )
     )
 )
 
@@ -152,7 +196,7 @@ private fun OneDayLikeTodayScreenListPreview() {
             state = OneDayLikeTodayUiState(
                 day = MonthDay.of(6, 17),
                 isLoading = false,
-                albums = previewAlbums
+                albumsByYear = previewGroups
             ),
             onIntent = {}
         )
