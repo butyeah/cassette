@@ -10,10 +10,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.ruidoespontaneo.cassette.auth.presentation.LoginScreen
 import com.ruidoespontaneo.cassette.dayinhistory.presentation.OneDayLikeTodayScreen
+import com.ruidoespontaneo.cassette.notifications.presentation.NotificationsScreen
 import java.time.format.DateTimeFormatter
 
 const val ROUTE_ONE_DAY_LIKE_TODAY = "oneDayLikeToday"
 const val ROUTE_LOGIN = "login"
+const val ROUTE_NOTIFICATIONS = "notifications"
 
 @Composable
 fun CassetteApp(dayFormatter: DateTimeFormatter) {
@@ -33,7 +35,13 @@ fun CassetteApp(dayFormatter: DateTimeFormatter) {
             composable(ROUTE_LOGIN) {
                 // Profile is a permanent tab, not a pushed destination, so there's nothing to
                 // pop back to once signed in — the screen already re-renders itself.
-                LoginScreen(onSignedIn = {})
+                LoginScreen(
+                    onSignedIn = {},
+                    onNotificationsClick = { navController.navigate(ROUTE_NOTIFICATIONS) }
+                )
+            }
+            composable(ROUTE_NOTIFICATIONS) {
+                NotificationsScreen(onBack = { navController.popBackStack() })
             }
         }
     }

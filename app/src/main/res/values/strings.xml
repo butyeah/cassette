@@ -13,9 +13,12 @@
     <string name="sign_in">Sign in</string>
     <string name="sign_up">Sign up</string>
     <string name="sign_out">Sign out</string>
-    <string name="set_up_notifications">Set up notifications</string>
+    <string name="notifications_title">Notifications</string>
+    <string name="notifications_permission_label">Enable notifications</string>
+    <string name="manage_in_settings">Manage in Settings</string>
+    <string name="back">Back</string>
     <string name="notifications_enabled">Notifications enabled</string>
-    <string name="daily_reminder_at">Daily reminder at %1$s</string>
+    <string name="daily_reminder_at">Daily reminder at %02d:%02d</string>
     <string name="daily_reminder_off">No daily reminder set</string>
     <string name="save">Save</string>
     <string name="turn_off">Turn off</string>
