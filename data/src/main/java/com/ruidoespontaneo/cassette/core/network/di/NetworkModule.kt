@@ -1,9 +1,9 @@
 package com.ruidoespontaneo.cassette.core.network.di
 
-import com.ruidoespontaneo.cassette.BuildConfig
 import com.ruidoespontaneo.cassette.core.network.JsonFormatInterceptor
 import com.ruidoespontaneo.cassette.core.network.RateLimitInterceptor
 import com.ruidoespontaneo.cassette.core.network.UserAgentInterceptor
+import com.ruidoespontaneo.cassette.data.BuildConfig
 import com.ruidoespontaneo.cassette.musicbrainz.data.api.MusicBrainzApi
 import com.squareup.moshi.Moshi
 import dagger.Module
@@ -36,7 +36,7 @@ object NetworkModule {
     @Singleton
     @MusicBrainz
     fun provideMusicBrainzOkHttpClient(): OkHttpClient {
-        val userAgent = "Cassette/${BuildConfig.VERSION_NAME} (${BuildConfig.MUSICBRAINZ_CONTACT})"
+        val userAgent = "Cassette/${BuildConfig.APP_VERSION_NAME} (${BuildConfig.MUSICBRAINZ_CONTACT})"
         val logging = HttpLoggingInterceptor().apply {
             level = if (BuildConfig.DEBUG) {
                 HttpLoggingInterceptor.Level.BODY
