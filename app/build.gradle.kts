@@ -72,6 +72,16 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.kotlinx.coroutines.android)
+    // kotlinx-coroutines-play-services: bridges Firestore's Task-based API into
+    // suspend functions via `.await()`.
+    implementation(libs.kotlinx.coroutines.play.services)
+    // Firestore backs GetAlbumsByDayUseCase (dayinhistory package). This compiles
+    // and links, but won't initialize at runtime until the app has a real Firebase
+    // project: that also needs the com.google.gms.google-services plugin applied
+    // here and an app/google-services.json, both deliberately left out until the
+    // project exists (see the "This day in history" plan).
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))
