@@ -13,6 +13,15 @@
     <string name="sign_in">Sign in</string>
     <string name="sign_up">Sign up</string>
     <string name="sign_out">Sign out</string>
+    <string name="set_up_notifications">Set up notifications</string>
+    <string name="notifications_enabled">Notifications enabled</string>
+    <string name="daily_reminder_at">Daily reminder at %1$s</string>
+    <string name="daily_reminder_off">No daily reminder set</string>
+    <string name="save">Save</string>
+    <string name="turn_off">Turn off</string>
+    <string name="daily_reminder_notification_title">One day like today</string>
+    <string name="daily_reminder_notification_text">Today\'s albums released in history are ready — take a look!</string>
+    <string name="daily_reminder_channel_name">Daily reminder</string>
     <string name="sign_in_with_google">Sign in with Google</string>
     <string name="signed_in_as">Signed in as %1$s</string>
     <!-- The Web client OAuth client ID from google-services.json's oauth_client (client_type 3),
