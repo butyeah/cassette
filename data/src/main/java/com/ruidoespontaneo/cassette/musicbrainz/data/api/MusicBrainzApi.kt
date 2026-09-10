@@ -1,7 +1,9 @@
 package com.ruidoespontaneo.cassette.musicbrainz.data.api
 
+import com.ruidoespontaneo.cassette.musicbrainz.data.model.ReleaseGroupDetailDto
 import com.ruidoespontaneo.cassette.musicbrainz.data.model.ReleaseSearchResponse
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
@@ -27,4 +29,16 @@ interface MusicBrainzApi {
         @Query("limit") limit: Int = 100,
         @Query("offset") offset: Int = 0
     ): ReleaseSearchResponse
+
+    /**
+     * Look up one release group (album) by its MusicBrainz id.
+     * https://musicbrainz.org/doc/MusicBrainz_API#Lookups
+     *
+     * [id] is the release-group MBID, e.g. [com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album.id].
+     */
+    @GET("release-group/{id}")
+    suspend fun getReleaseGroup(
+        @Path("id") id: String,
+        @Query("inc") inc: String = "artist-credits+genres+ratings"
+    ): ReleaseGroupDetailDto
 }
