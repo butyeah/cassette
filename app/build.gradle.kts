@@ -40,6 +40,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        // java.time (used for the calendar's date ranges) needs desugaring
+        // below API 26, and minSdk here is 24.
+        isCoreLibraryDesugaringEnabled = true
     }
     buildFeatures {
         compose = true
@@ -74,4 +77,5 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 }

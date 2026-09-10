@@ -1,6 +1,6 @@
 package com.ruidoespontaneo.cassette.musicbrainz.data.api
 
-import com.ruidoespontaneo.cassette.musicbrainz.data.model.ArtistSearchResponse
+import com.ruidoespontaneo.cassette.musicbrainz.data.model.ReleaseSearchResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -13,13 +13,18 @@ import retrofit2.http.Query
 interface MusicBrainzApi {
 
     /**
-     * Full-text search over artists.
-     * https://musicbrainz.org/doc/MusicBrainz_API/Search#Artist
+     * Full-text search over releases (albums).
+     * https://musicbrainz.org/doc/MusicBrainz_API/Search#Release
+     *
+     * [query] is a raw Lucene query string, e.g.
+     * `date:[2024-01-01 TO 2024-01-31] AND primarytype:album` to scope
+     * results to a date range for a calendar view — built by
+     * [com.ruidoespontaneo.cassette.musicbrainz.data.MusicBrainzRepositoryImpl].
      */
-    @GET("artist")
-    suspend fun searchArtists(
+    @GET("release")
+    suspend fun getAlbumsByDate(
         @Query("query") query: String,
-        @Query("limit") limit: Int = 25,
+        @Query("limit") limit: Int = 100,
         @Query("offset") offset: Int = 0
-    ): ArtistSearchResponse
+    ): ReleaseSearchResponse
 }
