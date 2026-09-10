@@ -2,8 +2,10 @@ package com.ruidoespontaneo.cassette.musicbrainz.data
 
 import com.ruidoespontaneo.cassette.musicbrainz.data.api.MusicBrainzApi
 import com.ruidoespontaneo.cassette.musicbrainz.data.model.ReleaseDto
+import com.ruidoespontaneo.cassette.musicbrainz.data.model.ReleaseGroupDetailDto
 import com.ruidoespontaneo.cassette.musicbrainz.domain.MusicBrainzRepository
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
+import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -39,6 +41,37 @@ class MusicBrainzRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun getAlbumDetail(id: String): Result<AlbumDetail> {
+        return try {
+            Result.success(api.getReleaseGroup(id).toDomain())
+        } catch (e: CancellationException) {
+            // Let structured concurrency cancel this coroutine instead of
+            // reporting cancellation as a lookup failure.
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "MusicBrainz release-group lookup failed for %s", id)
+            Result.failure(e)
+        }
+    }
+
+    private fun ReleaseGroupDetailDto.toDomain() = AlbumDetail(
+        id = id,
+        title = title,
+        artistName = artistCredit.joinToString(separator = "") { credit ->
+            credit.name + credit.joinPhrase.orEmpty()
+        },
+        primaryType = primaryType,
+        firstReleaseDate = firstReleaseDate?.let { raw ->
+            // A partial date ("2024" or "2024-01") can't be placed on a
+            // calendar day, so it comes through as null rather than
+            // throwing or being guessed at.
+            runCatching { LocalDate.parse(raw, DATE_FORMAT) }.getOrNull()
+        },
+        genres = genres.map { it.name },
+        ratingValue = rating?.value,
+        ratingVotesCount = rating?.votesCount ?: 0
+    )
 
     private fun ReleaseDto.toDomain() = Album(
         id = id,

@@ -1,6 +1,7 @@
 package com.ruidoespontaneo.cassette.musicbrainz.domain
 
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
+import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import java.time.LocalDate
 
 interface MusicBrainzRepository {
@@ -20,4 +21,14 @@ interface MusicBrainzRepository {
         limit: Int = 100,
         offset: Int = 0
     ): Result<List<Album>>
+
+    /**
+     * Full detail for one album (MusicBrainz release group), looked up by
+     * its MBID — e.g. [Album.id], however that album was found.
+     *
+     * @return [Result.success] with the album's detail, or [Result.failure]
+     * with the underlying exception on a network or HTTP error — callers
+     * decide how to surface that to the UI.
+     */
+    suspend fun getAlbumDetail(id: String): Result<AlbumDetail>
 }
