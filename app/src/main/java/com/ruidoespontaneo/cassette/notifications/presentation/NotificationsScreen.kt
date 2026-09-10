@@ -30,11 +30,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.ruidoespontaneo.cassette.R
+import com.ruidoespontaneo.cassette.ui.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,8 +72,8 @@ fun NotificationsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             )
         }
     ) { innerPadding ->
-        Card(modifier = Modifier.padding(innerPadding).fillMaxWidth().padding(16.dp)) {
-            Column(modifier = Modifier.padding(16.dp)) {
+        Card(modifier = Modifier.padding(innerPadding).fillMaxWidth().padding(Spacing.large)) {
+            Column(modifier = Modifier.padding(Spacing.large)) {
                 NotificationPermissionRow(
                     isGranted = isNotificationsGranted,
                     onRequestPermission = {
@@ -85,7 +85,7 @@ fun NotificationsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         }
                     }
                 )
-                DailyReminderSection(enabled = isNotificationsGranted, modifier = Modifier.padding(top = 16.dp))
+                DailyReminderSection(enabled = isNotificationsGranted, modifier = Modifier.padding(top = Spacing.large))
             }
         }
     }

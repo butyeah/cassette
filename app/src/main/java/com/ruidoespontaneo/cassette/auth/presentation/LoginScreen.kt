@@ -23,10 +23,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruidoespontaneo.cassette.R
+import com.ruidoespontaneo.cassette.ui.theme.Spacing
 
 @Composable
 fun LoginScreen(
@@ -60,7 +60,7 @@ private fun LoginScreenContent(
     onGoogleSignInClick: (Context) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+    Column(modifier = modifier.fillMaxSize().padding(Spacing.large)) {
         if (state.signedInAs != null) {
             SignedInContent(
                 email = state.signedInAs,
@@ -83,7 +83,7 @@ private fun SignedOutContent(
     Column(modifier = modifier.fillMaxWidth()) {
         Text(stringResource(R.string.profile_greeting), style = MaterialTheme.typography.headlineSmall)
         Text(stringResource(R.string.profile_sign_in_invitation), style = MaterialTheme.typography.bodyMedium)
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Spacing.large))
         OutlinedTextField(
             value = state.email,
             onValueChange = { onIntent(LoginIntent.EmailChanged(it)) },
@@ -92,7 +92,7 @@ private fun SignedOutContent(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Spacing.small))
         OutlinedTextField(
             value = state.password,
             onValueChange = { onIntent(LoginIntent.PasswordChanged(it)) },
@@ -103,11 +103,11 @@ private fun SignedOutContent(
             modifier = Modifier.fillMaxWidth()
         )
         state.errorMessage?.let {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Spacing.small))
             Text(it, color = MaterialTheme.colorScheme.error)
         }
-        Spacer(Modifier.height(16.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Spacer(Modifier.height(Spacing.large))
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
             Button(onClick = { onIntent(LoginIntent.SignIn) }, enabled = !state.isLoading) {
                 Text(stringResource(R.string.sign_in))
             }
@@ -115,7 +115,7 @@ private fun SignedOutContent(
                 Text(stringResource(R.string.sign_up))
             }
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Spacing.large))
         GoogleSignInButton(onClick = onGoogleSignInClick, enabled = !state.isLoading)
     }
 }

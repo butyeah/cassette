@@ -17,10 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruidoespontaneo.cassette.R
+import com.ruidoespontaneo.cassette.ui.theme.Spacing
 
 // Material's conventional alpha for disabled content.
 private const val DISABLED_CONTENT_ALPHA = 0.38f
@@ -66,10 +66,10 @@ private fun DailyReminderSectionContent(
                 initialHour = state.scheduledTime?.hour ?: DEFAULT_HOUR,
                 initialMinute = state.scheduledTime?.minute ?: DEFAULT_MINUTE
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(Spacing.small))
             TimePicker(state = timePickerState)
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Spacer(Modifier.height(Spacing.small))
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 Button(
                     onClick = {
                         onIntent(DailyReminderIntent.Confirm(timePickerState.hour, timePickerState.minute))
