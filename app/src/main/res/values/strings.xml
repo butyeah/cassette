@@ -27,4 +27,7 @@
     <string name="daily_reminder_channel_name">Daily reminder</string>
     <string name="sign_in_with_google">Sign in with Google</string>
     <string name="signed_in_as">Signed in as %1$s</string>
+    <string name="album_detail_default_title">Album</string>
+    <string name="genres_format">Genres: %1$s</string>
+    <string name="rating_format">%1$.1f / 5 (%2$d ratings)</string>
 </resources>
