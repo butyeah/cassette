@@ -8,19 +8,30 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
+import com.ruidoespontaneo.cassette.dayinhistory.di.DayFormatter
 import com.ruidoespontaneo.cassette.dayinhistory.presentation.OneDayLikeTodayScreen
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import dagger.hilt.android.AndroidEntryPoint
+import java.time.format.DateTimeFormatter
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    @DayFormatter
+    lateinit var dayFormatter: DateTimeFormatter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             CassetteTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    OneDayLikeTodayScreen(modifier = Modifier.padding(innerPadding))
+                    OneDayLikeTodayScreen(
+                        modifier = Modifier.padding(innerPadding),
+                        dayFormatter = dayFormatter
+                    )
                 }
             }
         }

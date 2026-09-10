@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Cassette</string>
+    <string name="previous_day">‹</string>
+    <string name="next_day">›</string>
+    <string name="retry">Retry</string>
+    <string name="no_albums_message">No albums released on this day</string>
 </resources>
