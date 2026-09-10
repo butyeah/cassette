@@ -8,9 +8,12 @@ Run: python3 scripts/test_upload_day_index.py
 """
 from __future__ import annotations
 
+import sqlite3
+import tempfile
 import unittest
+from pathlib import Path
 
-from upload_day_index import upload
+from upload_day_index import iter_albums, upload
 
 
 class FakeBatch:
@@ -86,6 +89,38 @@ class UploadTest(unittest.TestCase):
 
         self.assertEqual(0, total)
         self.assertEqual([], db.commits)
+
+
+class IterAlbumsTest(unittest.TestCase):
+    def _write_fixture(self, tmp: str, rows: int) -> Path:
+        db_path = Path(tmp) / "day_index.sqlite"
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            "CREATE TABLE album (id TEXT PRIMARY KEY, title TEXT, artist_name TEXT, "
+            "year INTEGER, month INTEGER, day INTEGER)"
+        )
+        conn.executemany(
+            "INSERT INTO album VALUES (?, ?, ?, ?, ?, ?)",
+            [(f"id-{i}", f"Title {i}", "Artist", 2000, 1, 1) for i in range(rows)],
+        )
+        conn.commit()
+        conn.close()
+        return db_path
+
+    def test_no_limit_reads_every_row(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db_path = self._write_fixture(tmp, rows=5)
+            self.assertEqual(5, sum(1 for _ in iter_albums(db_path)))
+
+    def test_limit_caps_the_number_of_rows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db_path = self._write_fixture(tmp, rows=5)
+            self.assertEqual(3, sum(1 for _ in iter_albums(db_path, limit=3)))
+
+    def test_limit_larger_than_table_reads_every_row(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db_path = self._write_fixture(tmp, rows=5)
+            self.assertEqual(5, sum(1 for _ in iter_albums(db_path, limit=100)))
 
 
 if __name__ == "__main__":
