@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
-import com.ruidoespontaneo.cassette.calendar.presentation.MonthlyScreen
+import com.ruidoespontaneo.cassette.dayinhistory.presentation.OneDayLikeTodayScreen
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             CassetteTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    MonthlyScreen(modifier = Modifier.padding(innerPadding))
+                    OneDayLikeTodayScreen(modifier = Modifier.padding(innerPadding))
                 }
             }
         }
