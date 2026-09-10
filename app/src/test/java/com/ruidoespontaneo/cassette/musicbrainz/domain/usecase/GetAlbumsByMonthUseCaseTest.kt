@@ -39,23 +39,39 @@ class GetAlbumsByMonthUseCaseTest {
     }
 
     @Test
-    fun `returns the repository's success result unchanged`() = runBlocking {
-        val albums = listOf(
-            Album(
-                id = "album-1",
-                title = "Title",
-                releaseDate = month.atDay(1),
-                artistId = "artist-1",
-                artistName = "Artist"
-            )
+    fun `sorts albums by release day`() = runBlocking {
+        val late = album(id = "late", releaseDate = month.atDay(20))
+        val early = album(id = "early", releaseDate = month.atDay(3))
+        val middle = album(id = "middle", releaseDate = month.atDay(10))
+        val useCase = GetAlbumsByMonthUseCase(
+            fakeRepository { _, _, _, _ -> Result.success(listOf(late, early, middle)) }
         )
-        val useCase = GetAlbumsByMonthUseCase(fakeRepository { _, _, _, _ -> Result.success(albums) })
 
         val result = useCase(month)
 
-        assertTrue(result.isSuccess)
-        assertSame(albums, result.getOrNull())
+        assertEquals(listOf(early, middle, late), result.getOrNull())
     }
+
+    @Test
+    fun `ignores albums without a full release date`() = runBlocking {
+        val dated = album(id = "dated", releaseDate = month.atDay(15))
+        val undated = album(id = "undated", releaseDate = null)
+        val useCase = GetAlbumsByMonthUseCase(
+            fakeRepository { _, _, _, _ -> Result.success(listOf(undated, dated)) }
+        )
+
+        val result = useCase(month)
+
+        assertEquals(listOf(dated), result.getOrNull())
+    }
+
+    private fun album(id: String, releaseDate: LocalDate?) = Album(
+        id = id,
+        title = "Title",
+        releaseDate = releaseDate,
+        artistId = "artist-1",
+        artistName = "Artist"
+    )
 
     @Test
     fun `returns the repository's failure unchanged`() = runBlocking {
