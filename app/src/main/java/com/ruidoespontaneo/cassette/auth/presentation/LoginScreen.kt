@@ -39,6 +39,7 @@ import kotlinx.coroutines.launch
 fun LoginScreen(
     modifier: Modifier = Modifier,
     onSignedIn: () -> Unit,
+    onNotificationsClick: () -> Unit,
     viewModel: LoginViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -49,18 +50,28 @@ fun LoginScreen(
             }
         }
     }
-    LoginScreenContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
+    LoginScreenContent(
+        state = state,
+        onIntent = viewModel::onIntent,
+        onNotificationsClick = onNotificationsClick,
+        modifier = modifier
+    )
 }
 
 @Composable
 private fun LoginScreenContent(
     state: LoginUiState,
     onIntent: (LoginIntent) -> Unit,
+    onNotificationsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
         if (state.signedInAs != null) {
-            SignedInContent(email = state.signedInAs, onSignOut = { onIntent(LoginIntent.SignOut) })
+            SignedInContent(
+                email = state.signedInAs,
+                onNotificationsClick = onNotificationsClick,
+                onSignOut = { onIntent(LoginIntent.SignOut) }
+            )
         } else {
             SignedOutContent(state = state, onIntent = onIntent)
         }
@@ -126,13 +137,14 @@ private fun GoogleSignInButton(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val googleWebClientId = stringResource(R.string.google_web_client_id)
     Button(
         enabled = enabled,
         onClick = {
             coroutineScope.launch {
                 val googleIdOption = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
-                    .setServerClientId(context.getString(R.string.google_web_client_id))
+                    .setServerClientId(googleWebClientId)
                     .build()
                 val request = GetCredentialRequest.Builder()
                     .addCredentialOption(googleIdOption)
