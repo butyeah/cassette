@@ -15,3 +15,9 @@ local.properties
 # Keystore files (do not commit signing keys)
 *.jks
 *.keystore
+
+# Python (scripts/build_day_index.py)
+__pycache__/
+*.pyc
+scripts/.mbdump-raw/
+scripts/day_index.sqlite
