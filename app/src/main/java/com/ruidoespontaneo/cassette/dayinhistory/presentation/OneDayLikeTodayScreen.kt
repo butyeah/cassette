@@ -1,5 +1,6 @@
 package com.ruidoespontaneo.cassette.dayinhistory.presentation
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,11 +16,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,8 +35,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
+import java.time.Instant
 import java.time.LocalDate
 import java.time.MonthDay
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -58,8 +65,15 @@ private fun OneDayLikeTodayScreenContent(
         DayHeader(
             day = state.day,
             onPrevious = { onIntent(OneDayLikeTodayIntent.PreviousDay) },
-            onNext = { onIntent(OneDayLikeTodayIntent.NextDay) }
+            onNext = { onIntent(OneDayLikeTodayIntent.NextDay) },
+            onDateClick = { onIntent(OneDayLikeTodayIntent.ToggleCalendar) }
         )
+        if (state.isCalendarExpanded) {
+            DayCalendar(
+                day = state.day,
+                onDaySelected = { onIntent(OneDayLikeTodayIntent.SelectDate(it)) }
+            )
+        }
         when {
             state.isLoading -> LoadingIndicator(Modifier.fillMaxSize())
             state.errorMessage != null -> ErrorMessage(
@@ -78,6 +92,7 @@ private fun DayHeader(
     day: MonthDay,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
+    onDateClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -88,9 +103,29 @@ private fun DayHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         TextButton(onClick = onPrevious) { Text("‹") }
-        Text(text = day.format(DAY_FORMAT), style = MaterialTheme.typography.titleLarge)
+        Text(
+            text = day.format(DAY_FORMAT),
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.clickable(onClick = onDateClick)
+        )
         TextButton(onClick = onNext) { Text("›") }
     }
+}
+
+/**
+ * A Material3 [DatePicker] used to jump straight to a day — year-agnostic domain, so only the
+ * tapped month/day matter; whatever year the picker happens to show is otherwise irrelevant.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DayCalendar(day: MonthDay, onDaySelected: (MonthDay) -> Unit, modifier: Modifier = Modifier) {
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = day.toUtcMillis())
+    LaunchedEffect(datePickerState.selectedDateMillis) {
+        val millis = datePickerState.selectedDateMillis ?: return@LaunchedEffect
+        val selected = MonthDay.from(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
+        if (selected != day) onDaySelected(selected)
+    }
+    DatePicker(state = datePickerState, modifier = modifier, showModeToggle = false)
 }
 
 @Composable
@@ -154,6 +189,16 @@ private fun AlbumRow(album: Album) {
 
 private val DAY_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM d", Locale.getDefault())
 
+// MonthDay carries no year, but DatePickerState needs a UTC millis timestamp — pick whatever
+// nearby year makes this day valid (matters only for Feb 29 landing in a non-leap year).
+private fun MonthDay.toUtcMillis(): Long {
+    val year = nearestValidYear(this, LocalDate.now().year)
+    return atYear(year).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+}
+
+private fun nearestValidYear(day: MonthDay, from: Int): Int =
+    generateSequence(from) { it + 1 }.first { day.isValidYear(it) }
+
 private val previewGroups = listOf(
     AlbumsByYear(
         year = 2001,
@@ -197,6 +242,22 @@ private fun OneDayLikeTodayScreenListPreview() {
                 day = MonthDay.of(6, 17),
                 isLoading = false,
                 albumsByYear = previewGroups
+            ),
+            onIntent = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OneDayLikeTodayScreenCalendarPreview() {
+    CassetteTheme {
+        OneDayLikeTodayScreenContent(
+            state = OneDayLikeTodayUiState(
+                day = MonthDay.of(6, 17),
+                isLoading = false,
+                albumsByYear = previewGroups,
+                isCalendarExpanded = true
             ),
             onIntent = {}
         )

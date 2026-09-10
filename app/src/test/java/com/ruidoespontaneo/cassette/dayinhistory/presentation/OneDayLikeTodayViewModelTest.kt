@@ -121,6 +121,42 @@ class OneDayLikeTodayViewModelTest {
     }
 
     @Test
+    fun `ToggleCalendar flips isCalendarExpanded`() {
+        val viewModel = viewModel { _, _ -> Result.success(emptyList()) }
+        dispatcher.scheduler.advanceUntilIdle()
+        assertFalse(viewModel.state.value.isCalendarExpanded)
+
+        viewModel.onIntent(OneDayLikeTodayIntent.ToggleCalendar)
+        assertTrue(viewModel.state.value.isCalendarExpanded)
+
+        viewModel.onIntent(OneDayLikeTodayIntent.ToggleCalendar)
+        assertFalse(viewModel.state.value.isCalendarExpanded)
+    }
+
+    @Test
+    fun `SelectDate loads the selected day and collapses the calendar`() {
+        var requestedMonth: Int? = null
+        var requestedDay: Int? = null
+        val viewModel = viewModel { month, day ->
+            requestedMonth = month
+            requestedDay = day
+            Result.success(emptyList())
+        }
+        dispatcher.scheduler.advanceUntilIdle()
+        viewModel.onIntent(OneDayLikeTodayIntent.ToggleCalendar)
+        assertTrue(viewModel.state.value.isCalendarExpanded)
+
+        val selected = MonthDay.from(LocalDate.now().plusDays(10))
+        viewModel.onIntent(OneDayLikeTodayIntent.SelectDate(selected))
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(selected.monthValue, requestedMonth)
+        assertEquals(selected.dayOfMonth, requestedDay)
+        assertEquals(selected, viewModel.state.value.day)
+        assertFalse(viewModel.state.value.isCalendarExpanded)
+    }
+
+    @Test
     fun `Retry reloads the current day`() {
         var calls = 0
         val viewModel = viewModel { _, _ ->
