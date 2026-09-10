@@ -4,7 +4,10 @@
     <string name="next_day">›</string>
     <string name="retry">Retry</string>
     <string name="no_albums_message">No albums released on this day</string>
-    <string name="account">Account</string>
+    <string name="tab_daily">Daily</string>
+    <string name="tab_profile">Profile</string>
+    <string name="profile_greeting">Hi there! 👋</string>
+    <string name="profile_sign_in_invitation">Sign in to see your profile.</string>
     <string name="email">Email</string>
     <string name="password">Password</string>
     <string name="sign_in">Sign in</string>
