@@ -28,6 +28,11 @@ auth entirely — no credentials needed for this path).
 Usage:
     python3 scripts/upload_day_index.py [--input PATH] [--project-id ID]
                                           [--credentials PATH] [--batch-size N]
+                                          [--limit N]
+
+--limit caps how many rows get uploaded, e.g. --limit 10000 to try a real
+project run within Firestore's daily free write quota (20,000/day) before
+committing to the full ~1.3M-row upload.
 """
 from __future__ import annotations
 
@@ -54,11 +59,16 @@ def init_firestore(project_id: str | None, credentials_path: str | None) -> fire
     return firestore.Client(project=project_id)
 
 
-def iter_albums(db_path: Path) -> Iterator[dict]:
+def iter_albums(db_path: Path, limit: int | None = None) -> Iterator[dict]:
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     try:
-        for row in conn.execute("SELECT id, title, artist_name, year, month, day FROM album"):
+        query = "SELECT id, title, artist_name, year, month, day FROM album"
+        params: tuple = ()
+        if limit is not None:
+            query += " LIMIT ?"
+            params = (limit,)
+        for row in conn.execute(query, params):
             yield dict(row)
     finally:
         conn.close()
@@ -101,6 +111,9 @@ def main() -> None:
     parser.add_argument("--project-id", default=None, help="Defaults to cassette-c8951.")
     parser.add_argument("--credentials", default=None, help="Path to a service account JSON key.")
     parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE)
+    parser.add_argument(
+        "--limit", type=int, default=None, help="Only upload the first N rows."
+    )
     args = parser.parse_args()
 
     if not args.input.exists():
@@ -109,8 +122,9 @@ def main() -> None:
         raise SystemExit("Firestore batched writes cap at 500 operations.")
 
     db = init_firestore(args.project_id or "cassette-c8951", args.credentials)
-    print(f"Uploading {args.input} -> Firestore collection '{COLLECTION}' ...")
-    total = upload(iter_albums(args.input), db, args.batch_size)
+    suffix = f" (limit {args.limit:,})" if args.limit is not None else ""
+    print(f"Uploading {args.input} -> Firestore collection '{COLLECTION}'{suffix} ...")
+    total = upload(iter_albums(args.input, args.limit), db, args.batch_size)
     print(f"Uploaded {total:,} albums to '{COLLECTION}'.")
 
 

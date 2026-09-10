@@ -21,3 +21,10 @@ __pycache__/
 *.pyc
 scripts/.mbdump-raw/
 scripts/day_index.sqlite
+scripts/.venv/
+
+# Firebase service account keys (real secrets — unlike google-services.json,
+# these must never be committed): download filenames look like
+# <project>-firebase-adminsdk-*.json
+*firebase-adminsdk*.json
+serviceAccountKey.json
