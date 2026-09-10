@@ -21,5 +21,5 @@ sealed interface CalendarIntent : UiIntent {
 }
 
 // No one-off events yet (nothing to navigate to or pop a snackbar for) —
-// this is here so CalendarViewModel has a concrete UiEffect to declare.
+// this is here so MonthlyViewModel has a concrete UiEffect to declare.
 sealed interface CalendarEffect : UiEffect

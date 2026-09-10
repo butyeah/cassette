@@ -34,12 +34,12 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
-fun CalendarScreen(
+fun MonthlyScreen(
     modifier: Modifier = Modifier,
-    viewModel: CalendarViewModel = hiltViewModel()
+    viewModel: MonthlyViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    CalendarScreenContent(
+    MonthlyScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
         modifier = modifier
@@ -47,7 +47,7 @@ fun CalendarScreen(
 }
 
 @Composable
-private fun CalendarScreenContent(
+private fun MonthlyScreenContent(
     state: CalendarUiState,
     onIntent: (CalendarIntent) -> Unit,
     modifier: Modifier = Modifier
@@ -157,9 +157,9 @@ private val previewAlbums = listOf(
 
 @Preview(showBackground = true)
 @Composable
-private fun CalendarScreenListPreview() {
+private fun MonthlyScreenListPreview() {
     CassetteTheme {
-        CalendarScreenContent(
+        MonthlyScreenContent(
             state = CalendarUiState(
                 month = YearMonth.of(2024, 2),
                 isLoading = false,
@@ -172,9 +172,9 @@ private fun CalendarScreenListPreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun CalendarScreenEmptyPreview() {
+private fun MonthlyScreenEmptyPreview() {
     CassetteTheme {
-        CalendarScreenContent(
+        MonthlyScreenContent(
             state = CalendarUiState(month = YearMonth.of(2024, 2), isLoading = false),
             onIntent = {}
         )
@@ -183,9 +183,9 @@ private fun CalendarScreenEmptyPreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun CalendarScreenLoadingPreview() {
+private fun MonthlyScreenLoadingPreview() {
     CassetteTheme {
-        CalendarScreenContent(
+        MonthlyScreenContent(
             state = CalendarUiState(month = YearMonth.of(2024, 2), isLoading = true),
             onIntent = {}
         )
@@ -194,9 +194,9 @@ private fun CalendarScreenLoadingPreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun CalendarScreenErrorPreview() {
+private fun MonthlyScreenErrorPreview() {
     CassetteTheme {
-        CalendarScreenContent(
+        MonthlyScreenContent(
             state = CalendarUiState(
                 month = YearMonth.of(2024, 2),
                 isLoading = false,
