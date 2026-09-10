@@ -1,0 +1,5 @@
+<resources>
+    <!-- The Web client OAuth client ID from google-services.json's oauth_client (client_type 3),
+         used as Credential Manager's serverClientId for Google Sign-In. -->
+    <string name="google_web_client_id" translatable="false">853770512073-f5hd8uh14t3vgbskgln3dfnieo6i2skq.apps.googleusercontent.com</string>
+</resources>

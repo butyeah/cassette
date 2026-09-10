@@ -23,15 +23,6 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        // MusicBrainz requires every client to send a meaningful User-Agent
-        // identifying the application and a way to reach its maintainer.
-        // See https://musicbrainz.org/doc/MusicBrainz_API/Rate_Limiting
-        buildConfigField(
-            "String",
-            "MUSICBRAINZ_CONTACT",
-            "\"https://github.com/butyeah/cassette\""
-        )
     }
 
     buildTypes {
@@ -64,6 +55,9 @@ android {
 }
 
 dependencies {
+    implementation(project(":domain"))
+    implementation(project(":data"))
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
@@ -73,12 +67,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.retrofit.core)
-    implementation(libs.retrofit.converter.moshi)
-    implementation(libs.moshi)
-    ksp(libs.moshi.kotlin.codegen)
-    implementation(libs.okhttp)
-    implementation(libs.okhttp.logging.interceptor)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     ksp(libs.androidx.hilt.compiler)
@@ -86,25 +74,22 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.kotlinx.coroutines.android)
-    // kotlinx-coroutines-play-services: bridges Firestore's Task-based API into
-    // suspend functions via `.await()`.
-    implementation(libs.kotlinx.coroutines.play.services)
-    // Firestore backs GetAlbumsByDayUseCase (dayinhistory package), reading the
-    // albumsByDay collection populated offline by scripts/build_day_index.py +
-    // the upload script (see the "This day in history" plan).
+    // Crashlytics stays app-side — it's app infra (CrashlyticsTree/CassetteApplication), not a
+    // repository, so it doesn't belong in :data.
     implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.firestore)
-    implementation(libs.firebase.auth)
     implementation(libs.firebase.crashlytics)
     // Logging facade — CrashlyticsTree (core/logging) forwards warnings/errors to Firebase.
     implementation(libs.timber)
     implementation(libs.androidx.navigation.compose)
-    // Credential Manager + Google ID: the current Google-recommended way to offer Google
-    // Sign-In, replacing the deprecated GoogleSignInClient API.
+    // LoginViewModel references CredentialManager/GetCredentialRequest/CustomCredential/
+    // GetCredentialException/GoogleIdTokenCredential directly; the concrete Google ID Credential
+    // Manager wiring lives in :data's GoogleCredentialModule.
     implementation(libs.androidx.credentials)
-    implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
-    // Daily reminder: WorkManager schedules the notification, DataStore persists the chosen time.
+    // Daily reminder: notifications/data + notifications/di stay in :app (see the module-split
+    // plan — DailyReminderWorker needs MainActivity/app resources, and
+    // NotificationScheduleRepositoryImpl enqueues it by class reference). WorkManager schedules
+    // the notification, DataStore persists the chosen time.
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)

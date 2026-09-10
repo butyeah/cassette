@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.ruidoespontaneo.cassette.R
+import com.ruidoespontaneo.cassette.data.R
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

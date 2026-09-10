@@ -23,4 +23,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Cassette"
-include(":app")
+include(":app", ":data", ":domain")
