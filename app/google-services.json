@@ -12,7 +12,20 @@
           "package_name": "com.ruidoespontaneo.cassette"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "853770512073-omg38mlme2gevbbgt6m7lsanfev5vr5i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ruidoespontaneo.cassette",
+            "certificate_hash": "9436ca848d30f115483d055af2d5e52e8deea227"
+          }
+        },
+        {
+          "client_id": "853770512073-f5hd8uh14t3vgbskgln3dfnieo6i2skq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD-p1IVxbEr-PconNJ6JtCHiJLOAxN7-2w"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "853770512073-f5hd8uh14t3vgbskgln3dfnieo6i2skq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
