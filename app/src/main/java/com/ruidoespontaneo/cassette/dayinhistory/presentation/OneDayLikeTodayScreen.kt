@@ -28,15 +28,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import java.time.Instant
-import java.time.LocalDate
 import java.time.MonthDay
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -45,12 +47,14 @@ import java.util.Locale
 @Composable
 fun OneDayLikeTodayScreen(
     modifier: Modifier = Modifier,
+    dayFormatter: DateTimeFormatter,
     viewModel: OneDayLikeTodayViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     OneDayLikeTodayScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
+        dayFormatter = dayFormatter,
         modifier = modifier
     )
 }
@@ -59,6 +63,7 @@ fun OneDayLikeTodayScreen(
 private fun OneDayLikeTodayScreenContent(
     state: OneDayLikeTodayUiState,
     onIntent: (OneDayLikeTodayIntent) -> Unit,
+    dayFormatter: DateTimeFormatter,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -66,7 +71,8 @@ private fun OneDayLikeTodayScreenContent(
             day = state.day,
             onPrevious = { onIntent(OneDayLikeTodayIntent.PreviousDay) },
             onNext = { onIntent(OneDayLikeTodayIntent.NextDay) },
-            onDateClick = { onIntent(OneDayLikeTodayIntent.ToggleCalendar) }
+            onDateClick = { onIntent(OneDayLikeTodayIntent.ToggleCalendar) },
+            dayFormatter = dayFormatter
         )
         if (state.isCalendarExpanded) {
             DayCalendar(
@@ -93,6 +99,7 @@ private fun DayHeader(
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     onDateClick: () -> Unit,
+    dayFormatter: DateTimeFormatter,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -102,13 +109,13 @@ private fun DayHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        TextButton(onClick = onPrevious) { Text("‹") }
+        TextButton(onClick = onPrevious) { Text(stringResource(R.string.previous_day)) }
         Text(
-            text = day.format(DAY_FORMAT),
+            text = day.format(dayFormatter),
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.clickable(onClick = onDateClick)
         )
-        TextButton(onClick = onNext) { Text("›") }
+        TextButton(onClick = onNext) { Text(stringResource(R.string.next_day)) }
     }
 }
 
@@ -144,7 +151,7 @@ private fun ErrorMessage(message: String, onRetry: () -> Unit, modifier: Modifie
     ) {
         Text(message)
         Spacer(Modifier.height(8.dp))
-        Button(onClick = onRetry) { Text("Retry") }
+        Button(onClick = onRetry) { Text(stringResource(R.string.retry)) }
     }
 }
 
@@ -152,7 +159,7 @@ private fun ErrorMessage(message: String, onRetry: () -> Unit, modifier: Modifie
 private fun AlbumsByYearList(groups: List<AlbumsByYear>, modifier: Modifier = Modifier) {
     if (groups.isEmpty()) {
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
-            Text("No albums released on this day")
+            Text(stringResource(R.string.no_albums_message))
         }
         return
     }
@@ -187,116 +194,15 @@ private fun AlbumRow(album: Album) {
     )
 }
 
-private val DAY_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM d", Locale.getDefault())
-
-// MonthDay carries no year, but DatePickerState needs a UTC millis timestamp — pick whatever
-// nearby year makes this day valid (matters only for Feb 29 landing in a non-leap year).
-private fun MonthDay.toUtcMillis(): Long {
-    val year = nearestValidYear(this, LocalDate.now().year)
-    return atYear(year).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-}
-
-private fun nearestValidYear(day: MonthDay, from: Int): Int =
-    generateSequence(from) { it + 1 }.first { day.isValidYear(it) }
-
-private val previewGroups = listOf(
-    AlbumsByYear(
-        year = 2001,
-        albums = listOf(
-            Album(
-                id = "1",
-                title = "Origin of Symmetry",
-                releaseDate = LocalDate.of(2001, 6, 17),
-                artistId = null,
-                artistName = "Muse"
-            )
-        )
-    ),
-    AlbumsByYear(
-        year = 1994,
-        albums = listOf(
-            Album(
-                id = "2",
-                title = "The Downward Spiral",
-                releaseDate = LocalDate.of(1994, 6, 17),
-                artistId = null,
-                artistName = "Nine Inch Nails"
-            ),
-            Album(
-                id = "3",
-                title = "Superunknown",
-                releaseDate = LocalDate.of(1994, 6, 17),
-                artistId = null,
-                artistName = "Soundgarden"
-            )
-        )
-    )
-)
+private val previewDayFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("MMMM d", Locale.getDefault())
 
 @Preview(showBackground = true)
 @Composable
-private fun OneDayLikeTodayScreenListPreview() {
+private fun OneDayLikeTodayScreenPreview(
+    @PreviewParameter(OneDayLikeTodayUiStatePreviewProvider::class) state: OneDayLikeTodayUiState
+) {
     CassetteTheme {
-        OneDayLikeTodayScreenContent(
-            state = OneDayLikeTodayUiState(
-                day = MonthDay.of(6, 17),
-                isLoading = false,
-                albumsByYear = previewGroups
-            ),
-            onIntent = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun OneDayLikeTodayScreenCalendarPreview() {
-    CassetteTheme {
-        OneDayLikeTodayScreenContent(
-            state = OneDayLikeTodayUiState(
-                day = MonthDay.of(6, 17),
-                isLoading = false,
-                albumsByYear = previewGroups,
-                isCalendarExpanded = true
-            ),
-            onIntent = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun OneDayLikeTodayScreenEmptyPreview() {
-    CassetteTheme {
-        OneDayLikeTodayScreenContent(
-            state = OneDayLikeTodayUiState(day = MonthDay.of(6, 17), isLoading = false),
-            onIntent = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun OneDayLikeTodayScreenLoadingPreview() {
-    CassetteTheme {
-        OneDayLikeTodayScreenContent(
-            state = OneDayLikeTodayUiState(day = MonthDay.of(6, 17), isLoading = true),
-            onIntent = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun OneDayLikeTodayScreenErrorPreview() {
-    CassetteTheme {
-        OneDayLikeTodayScreenContent(
-            state = OneDayLikeTodayUiState(
-                day = MonthDay.of(6, 17),
-                isLoading = false,
-                errorMessage = "Couldn't load albums"
-            ),
-            onIntent = {}
-        )
+        OneDayLikeTodayScreenContent(state = state, onIntent = {}, dayFormatter = previewDayFormatter)
     }
 }
