@@ -29,3 +29,8 @@ object TextSize {
     val extraLarge = 20.sp
     val headline = 28.sp
 }
+
+/** Fixed sizes for image/icon elements. */
+object IconSize {
+    val albumArt = 48.dp
+}
