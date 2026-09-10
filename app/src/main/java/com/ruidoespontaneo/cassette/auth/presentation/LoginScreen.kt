@@ -83,6 +83,9 @@ private fun SignedOutContent(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
+        Text(stringResource(R.string.profile_greeting), style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.profile_sign_in_invitation), style = MaterialTheme.typography.bodyMedium)
+        Spacer(Modifier.height(16.dp))
         OutlinedTextField(
             value = state.email,
             onValueChange = { onIntent(LoginIntent.EmailChanged(it)) },
