@@ -81,6 +81,13 @@ dependencies {
     // the upload script (see the "This day in history" plan).
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.auth)
+    implementation(libs.androidx.navigation.compose)
+    // Credential Manager + Google ID: the current Google-recommended way to offer Google
+    // Sign-In, replacing the deprecated GoogleSignInClient API.
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))

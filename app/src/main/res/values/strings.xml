@@ -4,4 +4,15 @@
     <string name="next_day">›</string>
     <string name="retry">Retry</string>
     <string name="no_albums_message">No albums released on this day</string>
+    <string name="account">Account</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="sign_in">Sign in</string>
+    <string name="sign_up">Sign up</string>
+    <string name="sign_out">Sign out</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="signed_in_as">Signed in as %1$s</string>
+    <!-- The Web client OAuth client ID from google-services.json's oauth_client (client_type 3),
+         used as Credential Manager's serverClientId for Google Sign-In. -->
+    <string name="google_web_client_id" translatable="false">853770512073-f5hd8uh14t3vgbskgln3dfnieo6i2skq.apps.googleusercontent.com</string>
 </resources>

@@ -4,12 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Modifier
 import com.ruidoespontaneo.cassette.dayinhistory.di.DayFormatter
-import com.ruidoespontaneo.cassette.dayinhistory.presentation.OneDayLikeTodayScreen
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import dagger.hilt.android.AndroidEntryPoint
 import java.time.format.DateTimeFormatter
@@ -27,12 +22,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CassetteTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    OneDayLikeTodayScreen(
-                        modifier = Modifier.padding(innerPadding),
-                        dayFormatter = dayFormatter
-                    )
-                }
+                CassetteApp(dayFormatter = dayFormatter)
             }
         }
     }
