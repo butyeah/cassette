@@ -49,6 +49,15 @@ android {
         compose = true
         buildConfig = true
     }
+    testOptions {
+        unitTests {
+            // Building a real androidx.credentials.CredentialOption (see LoginViewModelTest's
+            // fakes for LoginViewModel's Credential Manager deps) touches android.os.Bundle,
+            // which isn't mocked in plain JUnit tests by default — return defaults instead of
+            // throwing rather than pulling in Robolectric for this alone.
+            isReturnDefaultValues = true
+        }
+    }
 }
 
 dependencies {

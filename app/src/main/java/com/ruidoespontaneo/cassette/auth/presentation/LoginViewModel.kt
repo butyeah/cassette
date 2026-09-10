@@ -1,6 +1,12 @@
 package com.ruidoespontaneo.cassette.auth.presentation
 
+import android.content.Context
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.viewModelScope
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.ruidoespontaneo.cassette.auth.domain.usecase.ObserveAuthStateUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SignInWithEmailUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SignInWithGoogleUseCase
@@ -19,7 +25,9 @@ class LoginViewModel @Inject constructor(
     private val signInWithEmailUseCase: SignInWithEmailUseCase,
     private val signUpWithEmailUseCase: SignUpWithEmailUseCase,
     private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
-    private val signOutUseCase: SignOutUseCase
+    private val signOutUseCase: SignOutUseCase,
+    private val credentialManager: CredentialManager,
+    private val getCredentialRequest: GetCredentialRequest
 ) : MviViewModel<LoginUiState, LoginIntent, LoginEffect>(LoginUiState()) {
 
     init {
@@ -36,9 +44,29 @@ class LoginViewModel @Inject constructor(
 
             LoginIntent.SignIn -> signIn()
             LoginIntent.SignUp -> signUp()
-            is LoginIntent.GoogleSignInResult -> signInWithGoogle(intent.idToken)
             LoginIntent.SignOut -> signOutUseCase()
             LoginIntent.DismissError -> setState { copy(errorMessage = null) }
+        }
+    }
+
+    /**
+     * Signs in with Google via Credential Manager — the Google-recommended replacement for the
+     * deprecated GoogleSignInClient API. `getCredential` needs an activity [Context], so the
+     * caller (the composable button) passes its own rather than this ViewModel holding one.
+     */
+    fun signInWithGoogle(context: Context) {
+        viewModelScope.launch {
+            try {
+                val credential = credentialManager.getCredential(context, getCredentialRequest).credential
+                if (credential is CustomCredential &&
+                    credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                ) {
+                    signInWithGoogle(GoogleIdTokenCredential.createFrom(credential.data).idToken)
+                }
+            } catch (e: GetCredentialException) {
+                // The user dismissed the picker or no credential is available — not an
+                // app-level error worth surfacing.
+            }
         }
     }
 

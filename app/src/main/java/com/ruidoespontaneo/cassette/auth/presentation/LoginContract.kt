@@ -18,7 +18,6 @@ sealed interface LoginIntent : UiIntent {
     data class PasswordChanged(val password: String) : LoginIntent
     data object SignIn : LoginIntent
     data object SignUp : LoginIntent
-    data class GoogleSignInResult(val idToken: String) : LoginIntent
     data object SignOut : LoginIntent
     data object DismissError : LoginIntent
 }
