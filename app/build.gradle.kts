@@ -4,6 +4,9 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.google.services)
+    // Must come after google-services, which is what provisions the Firebase app this
+    // plugin uploads mapping/symbol files for.
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
@@ -92,6 +95,9 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.crashlytics)
+    // Logging facade — CrashlyticsTree (core/logging) forwards warnings/errors to Firebase.
+    implementation(libs.timber)
     implementation(libs.androidx.navigation.compose)
     // Credential Manager + Google ID: the current Google-recommended way to offer Google
     // Sign-In, replacing the deprecated GoogleSignInClient API.

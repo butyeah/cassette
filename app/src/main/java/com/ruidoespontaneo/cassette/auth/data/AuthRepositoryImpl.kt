@@ -11,6 +11,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 
 class AuthRepositoryImpl @Inject constructor(
     private val firebaseAuth: FirebaseAuth
@@ -47,6 +48,7 @@ class AuthRepositoryImpl @Inject constructor(
             // reporting cancellation as an auth failure.
             throw e
         } catch (e: Exception) {
+            Timber.e(e, "Firebase auth call failed")
             Result.failure(e)
         }
     }

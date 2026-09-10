@@ -18,6 +18,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
@@ -65,7 +66,8 @@ class LoginViewModel @Inject constructor(
                 }
             } catch (e: GetCredentialException) {
                 // The user dismissed the picker or no credential is available — not an
-                // app-level error worth surfacing.
+                // app-level error worth surfacing to the UI, but still worth a breadcrumb.
+                Timber.w(e, "Google credential request failed or was cancelled")
             }
         }
     }
