@@ -8,6 +8,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
+import timber.log.Timber
 
 class MusicBrainzRepositoryImpl @Inject constructor(
     private val api: MusicBrainzApi
@@ -34,6 +35,7 @@ class MusicBrainzRepositoryImpl @Inject constructor(
             // reporting cancellation as a search failure.
             throw e
         } catch (e: Exception) {
+            Timber.e(e, "MusicBrainz search failed")
             Result.failure(e)
         }
     }

@@ -8,6 +8,7 @@ import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 
 class DayInHistoryRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore
@@ -26,6 +27,7 @@ class DayInHistoryRepositoryImpl @Inject constructor(
             // reporting cancellation as a query failure.
             throw e
         } catch (e: Exception) {
+            Timber.e(e, "Failed to load albums for %02d-%02d", month, day)
             Result.failure(e)
         }
     }
