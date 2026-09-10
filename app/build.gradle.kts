@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -75,11 +76,9 @@ dependencies {
     // kotlinx-coroutines-play-services: bridges Firestore's Task-based API into
     // suspend functions via `.await()`.
     implementation(libs.kotlinx.coroutines.play.services)
-    // Firestore backs GetAlbumsByDayUseCase (dayinhistory package). This compiles
-    // and links, but won't initialize at runtime until the app has a real Firebase
-    // project: that also needs the com.google.gms.google-services plugin applied
-    // here and an app/google-services.json, both deliberately left out until the
-    // project exists (see the "This day in history" plan).
+    // Firestore backs GetAlbumsByDayUseCase (dayinhistory package), reading the
+    // albumsByDay collection populated offline by scripts/build_day_index.py +
+    // the upload script (see the "This day in history" plan).
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore)
     testImplementation(libs.junit)
