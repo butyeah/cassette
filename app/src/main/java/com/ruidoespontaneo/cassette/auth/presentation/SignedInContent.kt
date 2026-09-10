@@ -11,8 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.ruidoespontaneo.cassette.R
+import com.ruidoespontaneo.cassette.ui.theme.Spacing
 
 @Composable
 fun SignedInContent(
@@ -23,7 +23,7 @@ fun SignedInContent(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(stringResource(R.string.signed_in_as, email), style = MaterialTheme.typography.bodyLarge)
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(Spacing.large))
         Column {
             SettingsRow(label = stringResource(R.string.notifications_title), onClick = onNotificationsClick)
             SettingsRow(label = stringResource(R.string.sign_out), onClick = onSignOut)

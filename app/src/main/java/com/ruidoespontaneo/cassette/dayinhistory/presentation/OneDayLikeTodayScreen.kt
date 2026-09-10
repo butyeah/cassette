@@ -31,13 +31,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
+import com.ruidoespontaneo.cassette.ui.theme.Spacing
 import java.time.Instant
 import java.time.MonthDay
 import java.time.ZoneOffset
@@ -105,7 +105,7 @@ private fun DayHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .padding(horizontal = Spacing.small, vertical = Spacing.extraSmall),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -145,12 +145,12 @@ private fun LoadingIndicator(modifier: Modifier = Modifier) {
 @Composable
 private fun ErrorMessage(message: String, onRetry: () -> Unit, modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.padding(16.dp),
+        modifier = modifier.padding(Spacing.large),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Text(message)
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(Spacing.small))
         Button(onClick = onRetry) { Text(stringResource(R.string.retry)) }
     }
 }
@@ -165,8 +165,8 @@ private fun AlbumsByYearList(groups: List<AlbumsByYear>, modifier: Modifier = Mo
     }
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        contentPadding = PaddingValues(Spacing.large),
+        verticalArrangement = Arrangement.spacedBy(Spacing.medium)
     ) {
         items(groups, key = { it.year }) { group -> YearCard(group) }
     }
@@ -175,11 +175,11 @@ private fun AlbumsByYearList(groups: List<AlbumsByYear>, modifier: Modifier = Mo
 @Composable
 private fun YearCard(group: AlbumsByYear, modifier: Modifier = Modifier) {
     Card(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Column(modifier = Modifier.padding(vertical = Spacing.small)) {
             Text(
                 text = group.year.toString(),
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                modifier = Modifier.padding(horizontal = Spacing.large, vertical = Spacing.extraSmall)
             )
             group.albums.forEach { album -> AlbumRow(album) }
         }
