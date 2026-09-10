@@ -1,9 +1,8 @@
-package com.ruidoespontaneo.cassette.calendar.presentation
+package com.ruidoespontaneo.cassette.dayinhistory.presentation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,7 +15,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -28,18 +26,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import java.time.LocalDate
-import java.time.YearMonth
+import java.time.MonthDay
 import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
-fun MonthlyScreen(
+fun OneDayLikeTodayScreen(
     modifier: Modifier = Modifier,
-    viewModel: MonthlyViewModel = hiltViewModel()
+    viewModel: OneDayLikeTodayViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    MonthlyScreenContent(
+    OneDayLikeTodayScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
         modifier = modifier
@@ -47,22 +44,18 @@ fun MonthlyScreen(
 }
 
 @Composable
-private fun MonthlyScreenContent(
-    state: CalendarUiState,
-    onIntent: (CalendarIntent) -> Unit,
+private fun OneDayLikeTodayScreenContent(
+    state: OneDayLikeTodayUiState,
+    onIntent: (OneDayLikeTodayIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        MonthHeader(
-            month = state.month,
-            onPrevious = { onIntent(CalendarIntent.PreviousMonth) },
-            onNext = { onIntent(CalendarIntent.NextMonth) }
-        )
+        DayHeader(day = state.day)
         when {
             state.isLoading -> LoadingIndicator(Modifier.fillMaxSize())
             state.errorMessage != null -> ErrorMessage(
                 message = state.errorMessage,
-                onRetry = { onIntent(CalendarIntent.Retry) },
+                onRetry = { onIntent(OneDayLikeTodayIntent.Retry) },
                 modifier = Modifier.fillMaxSize()
             )
 
@@ -72,25 +65,17 @@ private fun MonthlyScreenContent(
 }
 
 @Composable
-private fun MonthHeader(
-    month: YearMonth,
-    onPrevious: () -> Unit,
-    onNext: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
+private fun DayHeader(day: MonthDay, modifier: Modifier = Modifier) {
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        contentAlignment = Alignment.Center
     ) {
-        TextButton(onClick = onPrevious) { Text("‹") }
         Text(
-            text = "${month.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${month.year}",
+            text = "One day like today: ${day.format(DAY_FORMAT)}",
             style = MaterialTheme.typography.titleLarge
         )
-        TextButton(onClick = onNext) { Text("›") }
     }
 }
 
@@ -118,12 +103,14 @@ private fun ErrorMessage(message: String, onRetry: () -> Unit, modifier: Modifie
 private fun AlbumList(albums: List<Album>, modifier: Modifier = Modifier) {
     if (albums.isEmpty()) {
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
-            Text("No albums released this month")
+            Text("No albums released on this day")
         }
         return
     }
+    // Newest first reads like a "on this day, through the years" timeline.
+    val sortedAlbums = albums.sortedByDescending { it.releaseDate?.year }
     LazyColumn(modifier = modifier) {
-        items(albums, key = { it.id }) { album -> AlbumRow(album) }
+        items(sortedAlbums, key = { it.id }) { album -> AlbumRow(album) }
     }
 }
 
@@ -133,35 +120,37 @@ private fun AlbumRow(album: Album) {
         headlineContent = { Text(album.title) },
         supportingContent = { Text(album.artistName) },
         trailingContent = {
-            album.releaseDate?.let { Text(it.format(DateTimeFormatter.ofPattern("MMM d"))) }
+            album.releaseDate?.let { Text(it.year.toString()) }
         }
     )
 }
+
+private val DAY_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM d", Locale.getDefault())
 
 private val previewAlbums = listOf(
     Album(
         id = "1",
         title = "Origin of Symmetry",
-        releaseDate = LocalDate.of(2001, 2, 19),
-        artistId = "muse",
+        releaseDate = LocalDate.of(2001, 6, 17),
+        artistId = null,
         artistName = "Muse"
     ),
     Album(
         id = "2",
         title = "The Downward Spiral",
-        releaseDate = LocalDate.of(1994, 3, 8),
-        artistId = "nin",
+        releaseDate = LocalDate.of(1994, 6, 17),
+        artistId = null,
         artistName = "Nine Inch Nails"
     )
 )
 
 @Preview(showBackground = true)
 @Composable
-private fun MonthlyScreenListPreview() {
+private fun OneDayLikeTodayScreenListPreview() {
     CassetteTheme {
-        MonthlyScreenContent(
-            state = CalendarUiState(
-                month = YearMonth.of(2024, 2),
+        OneDayLikeTodayScreenContent(
+            state = OneDayLikeTodayUiState(
+                day = MonthDay.of(6, 17),
                 isLoading = false,
                 albums = previewAlbums
             ),
@@ -172,10 +161,10 @@ private fun MonthlyScreenListPreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun MonthlyScreenEmptyPreview() {
+private fun OneDayLikeTodayScreenEmptyPreview() {
     CassetteTheme {
-        MonthlyScreenContent(
-            state = CalendarUiState(month = YearMonth.of(2024, 2), isLoading = false),
+        OneDayLikeTodayScreenContent(
+            state = OneDayLikeTodayUiState(day = MonthDay.of(6, 17), isLoading = false),
             onIntent = {}
         )
     }
@@ -183,10 +172,10 @@ private fun MonthlyScreenEmptyPreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun MonthlyScreenLoadingPreview() {
+private fun OneDayLikeTodayScreenLoadingPreview() {
     CassetteTheme {
-        MonthlyScreenContent(
-            state = CalendarUiState(month = YearMonth.of(2024, 2), isLoading = true),
+        OneDayLikeTodayScreenContent(
+            state = OneDayLikeTodayUiState(day = MonthDay.of(6, 17), isLoading = true),
             onIntent = {}
         )
     }
@@ -194,11 +183,11 @@ private fun MonthlyScreenLoadingPreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun MonthlyScreenErrorPreview() {
+private fun OneDayLikeTodayScreenErrorPreview() {
     CassetteTheme {
-        MonthlyScreenContent(
-            state = CalendarUiState(
-                month = YearMonth.of(2024, 2),
+        OneDayLikeTodayScreenContent(
+            state = OneDayLikeTodayUiState(
+                day = MonthDay.of(6, 17),
                 isLoading = false,
                 errorMessage = "Couldn't load albums"
             ),
