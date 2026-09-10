@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "853770512073",
+    "project_id": "cassette-c8951",
+    "storage_bucket": "cassette-c8951.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:853770512073:android:f1603af76d21f4e3408f18",
+        "android_client_info": {
+          "package_name": "com.ruidoespontaneo.cassette"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-p1IVxbEr-PconNJ6JtCHiJLOAxN7-2w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
