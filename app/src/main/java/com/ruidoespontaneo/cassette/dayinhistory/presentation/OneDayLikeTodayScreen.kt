@@ -39,6 +39,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.ruidoespontaneo.cassette.BuildConfig
 import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
@@ -85,7 +86,7 @@ private fun OneDayLikeTodayScreenContent(
             onDateClick = { onIntent(OneDayLikeTodayIntent.ToggleCalendar) },
             dayFormatter = dayFormatter
         )
-        if (state.isCalendarExpanded) {
+        if (BuildConfig.DEBUG && state.isCalendarExpanded) {
             DayCalendar(
                 day = state.day,
                 onDaySelected = { onIntent(OneDayLikeTodayIntent.SelectDate(it)) }
@@ -121,16 +122,23 @@ private fun DayHeader(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = Spacing.small, vertical = Spacing.extraSmall),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        // The day selector (previous/next, jump-to-date calendar) is still being tested — only
+        // expose it in dev builds. Center the date on its own once there's nothing to space it
+        // between.
+        horizontalArrangement = if (BuildConfig.DEBUG) Arrangement.SpaceBetween else Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        TextButton(onClick = onPrevious) { Text(stringResource(R.string.previous_day)) }
+        if (BuildConfig.DEBUG) {
+            TextButton(onClick = onPrevious) { Text(stringResource(R.string.previous_day)) }
+        }
         Text(
             text = day.format(dayFormatter),
             style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.clickable(onClick = onDateClick)
+            modifier = if (BuildConfig.DEBUG) Modifier.clickable(onClick = onDateClick) else Modifier
         )
-        TextButton(onClick = onNext) { Text(stringResource(R.string.next_day)) }
+        if (BuildConfig.DEBUG) {
+            TextButton(onClick = onNext) { Text(stringResource(R.string.next_day)) }
+        }
     }
 }
 
