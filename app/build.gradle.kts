@@ -73,6 +73,9 @@ dependencies {
     // Album art loading (AlbumDetailScreen, OneDayLikeTodayScreen).
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+    // Real-time backdrop blur for the Daily screen's frosted-glass cards over the animated
+    // background (AnimatedGradientBackground) — Compose has no built-in backdrop filter.
+    implementation(libs.haze)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.hilt.android)
