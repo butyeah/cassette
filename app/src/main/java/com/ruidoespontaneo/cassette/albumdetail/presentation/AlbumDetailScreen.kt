@@ -11,11 +11,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -41,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -54,9 +58,12 @@ import com.ruidoespontaneo.cassette.cover.components.CoverCard
 import com.ruidoespontaneo.cassette.cover.components.dominantColors
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
+import com.ruidoespontaneo.cassette.musicbrainz.domain.model.StreamingLinks
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
+import com.ruidoespontaneo.cassette.musicbrainz.presentation.asDisplayList
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.durationText
+import com.ruidoespontaneo.cassette.musicbrainz.presentation.hasAny
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
 import dev.chrisbanes.haze.HazeState
@@ -197,6 +204,9 @@ private fun AlbumDetailContent(
                 modifier = Modifier.padding(top = Spacing.medium)
             )
             Text(text = album.artistName, style = MaterialTheme.typography.titleMedium)
+            if (album.streamingLinks.hasAny()) {
+                StreamingLinksRow(album.streamingLinks, modifier = Modifier.padding(top = Spacing.small))
+            }
             AlbumTypeAndYear(album, modifier = Modifier.padding(top = Spacing.medium))
             if (album.genres.isNotEmpty()) {
                 Text(
@@ -241,6 +251,16 @@ private fun TrackRow(track: Track, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(start = Spacing.small)
             )
+        }
+    }
+}
+
+@Composable
+private fun StreamingLinksRow(streamingLinks: StreamingLinks, modifier: Modifier = Modifier) {
+    val uriHandler = LocalUriHandler.current
+    LazyRow(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+        items(streamingLinks.asDisplayList()) { (label, url) ->
+            AssistChip(onClick = { uriHandler.openUri(url) }, label = { Text(label) })
         }
     }
 }
