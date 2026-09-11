@@ -30,4 +30,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling.preview)
     // CoverCard's frosted-glass blur — Compose has no built-in backdrop filter.
     implementation(libs.haze)
+    // DominantColors' Palette-based color extraction.
+    implementation(libs.androidx.palette)
+    implementation(libs.kotlinx.coroutines.core)
 }
