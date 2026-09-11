@@ -1,5 +1,7 @@
 package com.ruidoespontaneo.cassette.albumdetail.presentation
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,14 +26,19 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -78,6 +85,14 @@ private fun AlbumDetailScreenContent(
     modifier: Modifier = Modifier
 ) {
     val hazeState = rememberHazeState()
+    val scrollState = rememberScrollState()
+    // Reveal the title once the header (cover art) has scrolled out of view, so it's still clear
+    // which album this is deep in a long tracklist — this screen has no visible bar chrome to
+    // collapse into, so a title fade-in stands in for the usual Material collapsing app bar.
+    val revealThresholdPx = with(LocalDensity.current) { IconSize.albumArtLarge.toPx() }
+    val showTitle by remember { derivedStateOf { scrollState.value > revealThresholdPx } }
+    val titleAlpha by animateFloatAsState(targetValue = if (showTitle) 1f else 0f, label = "titleAlpha")
+
     Box(modifier = modifier.fillMaxSize()) {
         AnimatedGradientBackground(Modifier.matchParentSize().hazeSource(hazeState))
         Scaffold(
@@ -85,7 +100,14 @@ private fun AlbumDetailScreenContent(
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
-                    title = {},
+                    title = {
+                        Text(
+                            text = state.album?.title.orEmpty(),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.alpha(titleAlpha)
+                        )
+                    },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
@@ -106,6 +128,7 @@ private fun AlbumDetailScreenContent(
                 state.album != null -> AlbumDetailContent(
                     album = state.album,
                     hazeState = hazeState,
+                    scrollState = scrollState,
                     modifier = Modifier.fillMaxSize().padding(innerPadding)
                 )
             }
@@ -132,9 +155,14 @@ private fun ErrorMessage(message: String, onRetry: () -> Unit, modifier: Modifie
 }
 
 @Composable
-private fun AlbumDetailContent(album: AlbumDetail, hazeState: HazeState, modifier: Modifier = Modifier) {
+private fun AlbumDetailContent(
+    album: AlbumDetail,
+    hazeState: HazeState,
+    scrollState: ScrollState,
+    modifier: Modifier = Modifier
+) {
     CoverCard(hazeState = hazeState, modifier = modifier) {
-        Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(Spacing.large)) {
+        Column(modifier = Modifier.verticalScroll(scrollState).padding(Spacing.large)) {
             val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
             AsyncImage(
                 model = album.coverArtUrl(),
