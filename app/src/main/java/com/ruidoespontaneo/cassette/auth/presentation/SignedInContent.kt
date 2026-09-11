@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.ruidoespontaneo.cassette.R
-import com.ruidoespontaneo.cassette.ui.theme.Spacing
+import com.ruidoespontaneo.cassette.cover.theme.Spacing
 
 @Composable
 fun SignedInContent(

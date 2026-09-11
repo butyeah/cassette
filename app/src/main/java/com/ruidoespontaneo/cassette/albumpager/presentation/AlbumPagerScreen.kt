@@ -26,7 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.albumdetail.presentation.AlbumDetailScreen
 import com.ruidoespontaneo.cassette.albumdetail.presentation.AlbumDetailViewModel
-import com.ruidoespontaneo.cassette.ui.theme.Spacing
+import com.ruidoespontaneo.cassette.cover.theme.Spacing
 
 /**
  * Swipes between every album released on one day (across years) — see [AlbumPagerViewModel].

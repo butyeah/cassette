@@ -34,7 +34,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.ruidoespontaneo.cassette.R
-import com.ruidoespontaneo.cassette.ui.theme.Spacing
+import com.ruidoespontaneo.cassette.cover.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

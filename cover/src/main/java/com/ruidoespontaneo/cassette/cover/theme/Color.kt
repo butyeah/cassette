@@ -1,4 +1,4 @@
-package com.ruidoespontaneo.cassette.ui.theme
+package com.ruidoespontaneo.cassette.cover.theme
 
 import androidx.compose.ui.graphics.Color
 

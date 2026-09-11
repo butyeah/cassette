@@ -51,7 +51,7 @@ import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
 import com.ruidoespontaneo.cassette.ui.theme.AnimatedGradientBackground
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
-import com.ruidoespontaneo.cassette.ui.theme.Spacing
+import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
