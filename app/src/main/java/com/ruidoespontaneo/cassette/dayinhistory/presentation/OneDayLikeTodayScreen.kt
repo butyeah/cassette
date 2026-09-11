@@ -42,6 +42,7 @@ import coil3.compose.AsyncImage
 import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
+import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
 import com.ruidoespontaneo.cassette.ui.theme.Spacing
