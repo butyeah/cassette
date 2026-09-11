@@ -1,6 +1,5 @@
 package com.ruidoespontaneo.cassette.albumdetail.presentation
 
-import com.ruidoespontaneo.cassette.musicbrainz.domain.AlbumCacheExtras
 import com.ruidoespontaneo.cassette.musicbrainz.domain.AlbumTracksRepository
 import com.ruidoespontaneo.cassette.musicbrainz.domain.MusicBrainzRepository
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
@@ -108,15 +107,15 @@ class AlbumDetailViewModelTest {
 
             override suspend fun getAlbumDetail(id: String): Result<AlbumDetail> = getAlbumDetail(id)
 
-            override suspend fun getAlbumTracks(id: String): Result<List<Track>> =
-                error("not used by this test")
+            // GetAlbumDetailUseCase's live-fallback path always calls this too; returning the
+            // fixture's own tracks keeps `state.album` equal to `album` in the success tests.
+            override suspend fun getAlbumTracks(id: String): Result<List<Track>> = Result.success(album.tracks)
         }
-        // The album fixture already carries its tracks/streamingLinks, so the cache is left
-        // empty — GetAlbumDetailUseCase.invoke() then just passes the repository's own tracks
-        // (already on `album`) straight through, since a live-fallback call would fail loudly.
+        // Always a cache miss, so GetAlbumDetailUseCase.invoke() exercises the live
+        // getAlbumDetail/getAlbumTracks lambdas this test actually cares about — the cache-hit
+        // path has its own dedicated coverage in GetAlbumDetailUseCaseTest.
         val albumTracksRepository = object : AlbumTracksRepository {
-            override suspend fun getCachedExtras(id: String): Result<AlbumCacheExtras> =
-                Result.success(AlbumCacheExtras(tracks = album.tracks, streamingLinks = album.streamingLinks))
+            override suspend fun getCachedAlbumDetail(id: String): Result<AlbumDetail?> = Result.success(null)
         }
         return AlbumDetailViewModel(albumId, GetAlbumDetailUseCase(repository, albumTracksRepository))
     }

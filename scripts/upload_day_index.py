@@ -4,11 +4,14 @@ Uploads scripts/day_index.sqlite (built by build_day_index.py) into Firestore
 for two features:
   - albumsByDay — the "on this day in history" feature (see
     DayInHistoryRepositoryImpl / GetAlbumsByDayUseCase in the app).
-  - albumTracks — per-album tracklist + streaming-service links (Spotify,
-    Apple Music, YouTube Music), read by AlbumTracksRepositoryImpl so
-    AlbumDetailScreen doesn't need a live, rate-limited MusicBrainz call for
-    that data on every open. One document per album, id = the same
-    release-group gid used in albumsByDay.
+  - albumTracks — everything AlbumDetailScreen needs for an album except its
+    rating (title, artist, release date, genres, tracklist, streaming-service
+    links), read by AlbumTracksRepositoryImpl so AlbumDetailScreen doesn't
+    need a live MusicBrainz call at all for a cached album — only a genuine
+    cache miss falls back to one. One document per album, id = the same
+    release-group gid used in albumsByDay. Rating has no offline snapshot —
+    it changes too often to freeze into a dump — so it's deliberately left
+    out; a cache-served album just shows no rating.
 
 Writes are batched (Firestore's batch cap is 500 operations) and use each
 album's MusicBrainz release-group gid as the document id, so re-running this
@@ -92,61 +95,67 @@ def _load_streaming_links(conn: sqlite3.Connection) -> dict[str, dict[str, str]]
 
 
 def iter_album_extras(db_path: Path, limit: int | None = None) -> Iterator[dict]:
-    """One dict per album that has cached tracks and/or streaming links:
-    {"id", "tracks", "streaming_links"}. `track` rows are grouped by
-    release_group_gid in Python (SQL alone can't build a nested list per
-    group) — ordering the query by (release_group_gid, medium_position,
-    position) means each group's rows already arrive in the right tracklist
-    order, so grouping is just "start a new list when the gid changes"."""
+    """One dict per row of `album` (i.e. every cached album, so every one gets a full
+    getReleaseGroup-replacement document even if it has no tracks/genres/links yet):
+    {"id", "title", "artist_name", "year", "month", "day", "genres", "tracks",
+    "streaming_links"}.
+
+    `album` drives the iteration (every album must be emitted, tracks or not); `track` and
+    `genre` are merged in via a synchronized ordered scan — all three queries are ordered by
+    id/release_group_gid, so advancing a small "peek" cursor per side table and consuming its
+    matching run is enough, without ever loading either table (both can be tens of millions of
+    rows) into memory whole. `streaming_link` stays a plain preloaded dict — only a minority of
+    albums have one at all, so it's small regardless of how big the other tables get.
+    """
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     try:
         streaming_links = _load_streaming_links(conn)
-        emitted = 0
-        current_gid: str | None = None
-        current_tracks: list[dict] = []
-
-        def flush() -> dict | None:
-            if current_gid is None:
-                return None
-            return {
-                "id": current_gid,
-                "tracks": current_tracks,
-                "streaming_links": streaming_links.pop(current_gid, {}),
-            }
-
-        for row in conn.execute(
+        album_rows = conn.execute("SELECT id, title, artist_name, year, month, day FROM album ORDER BY id")
+        track_rows = conn.execute(
             "SELECT release_group_gid, position, title, length_ms FROM track "
             "ORDER BY release_group_gid, medium_position, position"
-        ):
-            if limit is not None and emitted >= limit:
-                break
-            if row["release_group_gid"] != current_gid:
-                extras = flush()
-                if extras is not None:
-                    emitted += 1
-                    yield extras
-                current_gid, current_tracks = row["release_group_gid"], []
-            current_tracks.append(
-                {"position": row["position"], "title": row["title"], "lengthMs": row["length_ms"]}
-            )
-        # The loop above only flushes the *previous* group when a new gid starts, so whatever
-        # group was accumulating when the query ran out of rows is still pending here — unless
-        # the limit was already hit, in which case it must stay unflushed rather than sneak one
-        # more album past the cap.
-        if limit is None or emitted < limit:
-            extras = flush()
-            if extras is not None:
-                emitted += 1
-                yield extras
+        )
+        genre_rows = conn.execute(
+            "SELECT release_group_gid, name FROM genre ORDER BY release_group_gid, count DESC, name"
+        )
+        track_peek = next(track_rows, None)
+        genre_peek = next(genre_rows, None)
 
-        # Albums with streaming links but no cached tracks at all (rare, but
-        # possible — e.g. the tracklist join came up empty for that release).
-        for gid, links in streaming_links.items():
+        emitted = 0
+        for album in album_rows:
             if limit is not None and emitted >= limit:
                 break
+            album_id = album["id"]
+
+            tracks: list[dict] = []
+            while track_peek is not None and track_peek["release_group_gid"] == album_id:
+                tracks.append(
+                    {
+                        "position": track_peek["position"],
+                        "title": track_peek["title"],
+                        "lengthMs": track_peek["length_ms"],
+                    }
+                )
+                track_peek = next(track_rows, None)
+
+            genres: list[str] = []
+            while genre_peek is not None and genre_peek["release_group_gid"] == album_id:
+                genres.append(genre_peek["name"])
+                genre_peek = next(genre_rows, None)
+
             emitted += 1
-            yield {"id": gid, "tracks": [], "streaming_links": links}
+            yield {
+                "id": album_id,
+                "title": album["title"],
+                "artist_name": album["artist_name"],
+                "year": album["year"],
+                "month": album["month"],
+                "day": album["day"],
+                "genres": genres,
+                "tracks": tracks,
+                "streaming_links": streaming_links.get(album_id, {}),
+            }
     finally:
         conn.close()
 
@@ -197,7 +206,16 @@ def upload(albums: Iterator[dict], db: firestore.Client, batch_size: int) -> int
 
 def upload_album_extras(extras: Iterator[dict], db: firestore.Client, batch_size: int) -> int:
     def build_doc(item: dict) -> dict:
-        doc: dict = {"tracks": item["tracks"]}
+        doc: dict = {
+            "title": item["title"],
+            "artistName": item["artist_name"],
+            "year": item["year"],
+            "month": item["month"],
+            "day": item["day"],
+            "tracks": item["tracks"],
+        }
+        if item["genres"]:
+            doc["genres"] = item["genres"]
         if item["streaming_links"]:
             doc["streamingLinks"] = item["streaming_links"]
         return doc

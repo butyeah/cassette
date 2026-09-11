@@ -1,6 +1,5 @@
 package com.ruidoespontaneo.cassette.musicbrainz.domain.usecase
 
-import com.ruidoespontaneo.cassette.musicbrainz.domain.AlbumCacheExtras
 import com.ruidoespontaneo.cassette.musicbrainz.domain.AlbumTracksRepository
 import com.ruidoespontaneo.cassette.musicbrainz.domain.MusicBrainzRepository
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
@@ -16,7 +15,7 @@ import org.junit.Test
 
 class GetAlbumDetailUseCaseTest {
 
-    private val detail = AlbumDetail(
+    private val liveDetail = AlbumDetail(
         id = "album-1",
         title = "Origin of Symmetry",
         artistName = "Muse",
@@ -28,47 +27,49 @@ class GetAlbumDetailUseCaseTest {
     )
 
     @Test
-    fun `uses the cached tracklist and streaming links when the cache has tracks`() = runBlocking {
-        val cachedTracks = listOf(Track(position = 1, title = "New Born", lengthMs = 400_000))
-        val cachedLinks = StreamingLinks(spotify = "https://open.spotify.com/album/abc")
+    fun `uses the cached album detail as-is when the cache has it, without any live call`() = runBlocking {
+        val cachedDetail = liveDetail.copy(
+            ratingValue = null,
+            ratingVotesCount = 0,
+            tracks = listOf(Track(position = 1, title = "New Born", lengthMs = 400_000)),
+            streamingLinks = StreamingLinks(spotify = "https://open.spotify.com/album/abc")
+        )
         val useCase = useCase(
             musicBrainzRepository = fakeMusicBrainz(
-                getAlbumDetail = { Result.success(detail) },
-                getAlbumTracks = { error("must not fall back to a live lookup when the cache has tracks") }
+                getAlbumDetail = { error("must not call the live metadata lookup on a cache hit") },
+                getAlbumTracks = { error("must not call the live tracklist lookup on a cache hit") }
             ),
-            albumTracksRepository = fakeTracksRepository {
-                Result.success(AlbumCacheExtras(tracks = cachedTracks, streamingLinks = cachedLinks))
-            }
+            albumTracksRepository = fakeTracksRepository { Result.success(cachedDetail) }
         )
 
         val result = useCase("album-1")
 
-        assertEquals(cachedTracks, result.getOrNull()?.tracks)
-        assertEquals(cachedLinks, result.getOrNull()?.streamingLinks)
+        assertEquals(cachedDetail, result.getOrNull())
     }
 
     @Test
-    fun `falls back to a live tracklist lookup when the cache has no tracks`() = runBlocking {
+    fun `falls back to a full live lookup when the cache has nothing for this album`() = runBlocking {
         val liveTracks = listOf(Track(position = 1, title = "Bliss", lengthMs = 350_000))
         val useCase = useCase(
             musicBrainzRepository = fakeMusicBrainz(
-                getAlbumDetail = { Result.success(detail) },
+                getAlbumDetail = { Result.success(liveDetail) },
                 getAlbumTracks = { Result.success(liveTracks) }
             ),
-            albumTracksRepository = fakeTracksRepository { Result.success(AlbumCacheExtras()) }
+            albumTracksRepository = fakeTracksRepository { Result.success(null) }
         )
 
         val result = useCase("album-1")
 
         assertEquals(liveTracks, result.getOrNull()?.tracks)
+        assertEquals(4.0, result.getOrNull()?.ratingValue)
     }
 
     @Test
-    fun `falls back to a live tracklist lookup when the cache read fails`() = runBlocking {
+    fun `falls back to a full live lookup when the cache read fails`() = runBlocking {
         val liveTracks = listOf(Track(position = 1, title = "Bliss", lengthMs = 350_000))
         val useCase = useCase(
             musicBrainzRepository = fakeMusicBrainz(
-                getAlbumDetail = { Result.success(detail) },
+                getAlbumDetail = { Result.success(liveDetail) },
                 getAlbumTracks = { Result.success(liveTracks) }
             ),
             albumTracksRepository = fakeTracksRepository { Result.failure(IllegalStateException("offline")) }
@@ -80,13 +81,13 @@ class GetAlbumDetailUseCaseTest {
     }
 
     @Test
-    fun `a failed live fallback still succeeds with an empty tracklist`() = runBlocking {
+    fun `a failed live tracklist fallback still succeeds with an empty tracklist`() = runBlocking {
         val useCase = useCase(
             musicBrainzRepository = fakeMusicBrainz(
-                getAlbumDetail = { Result.success(detail) },
+                getAlbumDetail = { Result.success(liveDetail) },
                 getAlbumTracks = { Result.failure(IllegalStateException("rate limited")) }
             ),
-            albumTracksRepository = fakeTracksRepository { Result.success(AlbumCacheExtras()) }
+            albumTracksRepository = fakeTracksRepository { Result.success(null) }
         )
 
         val result = useCase("album-1")
@@ -96,14 +97,14 @@ class GetAlbumDetailUseCaseTest {
     }
 
     @Test
-    fun `returns the metadata lookup's failure unchanged, without touching the tracks cache`() = runBlocking {
+    fun `returns the live metadata lookup's failure unchanged, on a cache miss`() = runBlocking {
         val error = IllegalStateException("boom")
         val useCase = useCase(
             musicBrainzRepository = fakeMusicBrainz(
                 getAlbumDetail = { Result.failure(error) },
                 getAlbumTracks = { error("must not be called") }
             ),
-            albumTracksRepository = fakeTracksRepository { error("must not be called") }
+            albumTracksRepository = fakeTracksRepository { Result.success(null) }
         )
 
         val result = useCase("album-1")
@@ -134,8 +135,8 @@ class GetAlbumDetailUseCaseTest {
     }
 
     private fun fakeTracksRepository(
-        getCachedExtras: suspend (id: String) -> Result<AlbumCacheExtras>
+        getCachedAlbumDetail: suspend (id: String) -> Result<AlbumDetail?>
     ) = object : AlbumTracksRepository {
-        override suspend fun getCachedExtras(id: String): Result<AlbumCacheExtras> = getCachedExtras(id)
+        override suspend fun getCachedAlbumDetail(id: String): Result<AlbumDetail?> = getCachedAlbumDetail(id)
     }
 }

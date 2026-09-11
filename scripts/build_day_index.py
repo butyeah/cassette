@@ -34,13 +34,33 @@ musicbrainz-server as of 2026-09):
   - track                       tracks within a medium — position, name,
                                  length
   - url                         a URL entity (id -> the URL string itself)
-  - l_release_group_url         release-group <-> url relationships
+  - l_release_url               release <-> url relationships — streaming
+                                 links are relationships on a *release*, not
+                                 the release group (confirmed against the
+                                 real link_type table: "streaming"/"free
+                                 streaming" only exist for entity_type0 in
+                                 {artist, label, recording, release}, never
+                                 release_group), so this joins against the
+                                 same chosen release build_track_index picks
+                                 for the tracklist, not release_group_url
   - link                        one row per relationship instance -> its type
   - link_type                   relationship type catalog (id -> name,
                                  entity types), used to find "streaming"/
-                                 "free streaming" release-group-url links and
+                                 "free streaming" release-url links and
                                  classify them (Spotify/Apple Music/YouTube
                                  Music) by the URL's host
+
+Title/artist/release-date and tracks/streaming-links together cover most of
+what `MusicBrainzRepository.getAlbumDetail`'s live `getReleaseGroup` call
+returns. Two fields are deliberately NOT in this offline cache:
+  - rating — no offline snapshot; it changes too often to freeze into a
+    dump, so a cache-served album just shows no rating.
+  - genres — would need MusicBrainz's `tag`/`release_group_tag` tables to
+    associate a genre name with a specific release group, but neither table
+    exists anywhere in MusicBrainz's public bulk export (confirmed by
+    listing every member of every archive in a dump directory directly —
+    not a download flake, not fixable by retrying). build_genre_index()
+    writes an always-empty `genre` table documenting exactly this.
 
 Usage:
     python3 scripts/build_day_index.py [--export-base-url URL] [--raw-dir DIR] [--output PATH]
@@ -81,10 +101,19 @@ TABLE_ARCHIVES: dict[str, str] = {
     "medium": "mbdump.tar.bz2",
     "track": "mbdump.tar.bz2",
     "url": "mbdump.tar.bz2",
-    "l_release_group_url": "mbdump.tar.bz2",
+    "l_release_url": "mbdump.tar.bz2",
     "link": "mbdump.tar.bz2",
     "link_type": "mbdump.tar.bz2",
 }
+# `genre` (the curated genre-name catalog) ships in mbdump.tar.bz2 — confirmed by listing every
+# member of the 20260909-002431 dump directly — but `tag` and `release_group_tag`, the tables
+# that would actually *associate* a genre with a release group, do not exist anywhere in
+# MusicBrainz's public bulk export (checked the full mbdump.tar.bz2 listing and every other
+# archive in the same dump directory — neither table appears at all, not a download flake).
+# `genre` alone can't produce a release-group -> genre mapping without them, so it isn't worth
+# downloading either: genres just aren't obtainable from the offline dump, full stop. This is a
+# structural limitation of MusicBrainz's export, not something a retry or a different table name
+# would fix — see build_genre_index().
 # Resolved at runtime from release_group_primary_type/release_status/link_type
 # themselves (not hardcoded as magic ids) in case MusicBrainz ever renumbers
 # them.
@@ -118,10 +147,23 @@ def make_ssl_context() -> ssl.SSLContext:
     return ssl.create_default_context()
 
 
+# How long a single socket read may block before it's treated as a stalled connection rather
+# than a slow-but-alive one — without this, a connection that goes silent mid-transfer (server or
+# intermediate NAT/proxy drops the stream without ever sending FIN/RST) hangs the read() syscall
+# forever: the OS still reports the TCP connection as ESTABLISHED, CPU sits at 0%, and nothing
+# in the process ever raises — it just looks stuck indefinitely with no error to react to.
+SOCKET_TIMEOUT_SECONDS = 60
+# How many times to retry one archive's download+extraction after a stall/network error before
+# giving up on it entirely.
+MAX_DOWNLOAD_ATTEMPTS = 5
+
+
 def resolve_dump_base_url(export_base_url: str, ssl_context: ssl.SSLContext) -> str:
     """LATEST is a plain-text file (not a directory alias) containing the
     current dated export directory's name, e.g. `20260909-002431`."""
-    with urllib.request.urlopen(f"{export_base_url}/LATEST", context=ssl_context) as resp:
+    with urllib.request.urlopen(
+        f"{export_base_url}/LATEST", context=ssl_context, timeout=SOCKET_TIMEOUT_SECONDS
+    ) as resp:
         latest_dir = resp.read().decode("ascii").strip()
     return f"{export_base_url}/{latest_dir}"
 
@@ -139,29 +181,67 @@ def download_tables(dump_base_url: str, raw_dir: Path, ssl_context: ssl.SSLConte
     archives_needed = {TABLE_ARCHIVES[t] for t in missing}
     for archive in sorted(archives_needed):
         wanted_from_archive = {t for t in missing if TABLE_ARCHIVES[t] == archive}
-        archive_url = f"{dump_base_url}/{archive}"
-        print(f"Downloading and extracting {sorted(wanted_from_archive)} from {archive_url} ...")
-        with urllib.request.urlopen(archive_url, context=ssl_context) as response:
-            with tarfile.open(fileobj=response, mode="r|bz2") as tar:
-                for member in tar:
-                    name = Path(member.name).name
-                    if name not in wanted_from_archive:
-                        continue
-                    extracted = tar.extractfile(member)
-                    if extracted is None:
-                        continue
-                    dest = raw_dir / name
-                    with open(dest, "wb") as out:
-                        _copy_stream(extracted, out)
-                    print(f"  extracted {name} ({dest.stat().st_size:,} bytes)")
-                    wanted_from_archive.discard(name)
-                    missing.discard(name)
-                    if not wanted_from_archive:
-                        break  # stop reading this archive early
-        if wanted_from_archive:
-            raise RuntimeError(f"Never found these tables in {archive}: {sorted(wanted_from_archive)}")
+        still_missing = download_archive(dump_base_url, archive, raw_dir, wanted_from_archive, ssl_context)
+        missing -= (wanted_from_archive - still_missing)
+        if still_missing:
+            raise RuntimeError(f"Never found these tables in {archive}: {sorted(still_missing)}")
     if missing:
         raise RuntimeError(f"Never found these tables in any archive: {sorted(missing)}")
+
+
+def download_archive(
+    dump_base_url: str,
+    archive: str,
+    raw_dir: Path,
+    wanted_from_archive: set[str],
+    ssl_context: ssl.SSLContext
+) -> set[str]:
+    """Downloads+extracts [wanted_from_archive] from one dump archive, retrying up to
+    [MAX_DOWNLOAD_ATTEMPTS] times on a stalled/dropped connection (a [SOCKET_TIMEOUT_SECONDS]
+    read timeout is what turns a silent hang into a retriable error in the first place — see
+    its comment).
+
+    @return whichever of [wanted_from_archive] are still missing after all retries — empty if
+    every one was found. [wanted_from_archive] itself is read-only here.
+    """
+    archive_url = f"{dump_base_url}/{archive}"
+    still_wanted = set(wanted_from_archive)
+    for attempt in range(1, MAX_DOWNLOAD_ATTEMPTS + 1):
+        if not still_wanted:
+            break
+        print(f"Downloading and extracting {sorted(still_wanted)} from {archive_url} (attempt {attempt}) ...")
+        in_progress_dest: Path | None = None
+        try:
+            with urllib.request.urlopen(archive_url, context=ssl_context, timeout=SOCKET_TIMEOUT_SECONDS) as response:
+                with tarfile.open(fileobj=response, mode="r|bz2") as tar:
+                    for member in tar:
+                        name = Path(member.name).name
+                        if name not in still_wanted:
+                            continue
+                        extracted = tar.extractfile(member)
+                        if extracted is None:
+                            continue
+                        dest = raw_dir / name
+                        in_progress_dest = dest
+                        with open(dest, "wb") as out:
+                            _copy_stream(extracted, out)
+                        in_progress_dest = None
+                        print(f"  extracted {name} ({dest.stat().st_size:,} bytes)")
+                        still_wanted.discard(name)
+                        if not still_wanted:
+                            break  # stop reading this archive early
+        except (OSError, TimeoutError, tarfile.TarError) as e:
+            # A file left mid-write when the stall/error hit is truncated, not complete — leaving
+            # it in place would make the *next* attempt's existence check think it's done.
+            if in_progress_dest is not None:
+                in_progress_dest.unlink(missing_ok=True)
+            if attempt == MAX_DOWNLOAD_ATTEMPTS:
+                raise RuntimeError(
+                    f"Giving up on {archive} after {MAX_DOWNLOAD_ATTEMPTS} attempts — still missing "
+                    f"{sorted(still_wanted)}. Last error: {e!r}"
+                ) from e
+            print(f"  {e!r} — retrying ({MAX_DOWNLOAD_ATTEMPTS - attempt} attempt(s) left)")
+    return still_wanted
 
 
 def _copy_stream(src: BinaryIO, dst: BinaryIO, chunk_size: int = 1024 * 1024) -> None:
@@ -292,18 +372,24 @@ def build_index(raw_dir: Path, output: Path) -> None:
     conn.commit()
     print(f"Considered {considered:,} release groups with a full date, kept {matched:,} albums.")
 
-    build_track_index(raw_dir, wanted_rg_ids, conn)
-    build_streaming_link_index(raw_dir, wanted_rg_ids, conn)
+    release_id_to_rg_gid = choose_releases(raw_dir, wanted_rg_ids)
+    build_track_index(raw_dir, release_id_to_rg_gid, conn)
+    build_streaming_link_index(raw_dir, release_id_to_rg_gid, conn)
+    build_genre_index(conn)
 
     conn.close()
     print(f"Wrote {output}")
 
 
-def build_track_index(raw_dir: Path, wanted_rg_ids: dict[str, str], conn: sqlite3.Connection) -> None:
-    """Writes the `track` table: one row per track of one representative
-    release per release group in [wanted_rg_ids] — the same release/tracklist
-    shape `MusicBrainzRepositoryImpl.getAlbumDetail` picks live today
-    (releases-browse, preferring an Official release)."""
+def choose_releases(raw_dir: Path, wanted_rg_ids: dict[str, str]) -> dict[str, str]:
+    """One representative release per release group in [wanted_rg_ids] — the same release
+    `MusicBrainzRepositoryImpl.getAlbumDetail` picks live today (releases-browse, preferring an
+    Official release). Both the tracklist (build_track_index) and streaming links
+    (build_streaming_link_index) are relationships on a *release*, not the release group, so both
+    join against this same chosen release rather than each picking their own.
+
+    @return release id -> release group gid, one entry per chosen release.
+    """
     print("Loading release_status ...")
     official_status_id: str | None = None
     for row in read_copy_file(raw_dir / "release_status"):
@@ -335,7 +421,12 @@ def build_track_index(raw_dir: Path, wanted_rg_ids: dict[str, str], conn: sqlite
         release_id: wanted_rg_ids[rg_id] for rg_id, release_id in chosen_release_id.items()
     }
     print(f"  {len(release_id_to_rg_gid):,} releases chosen (one per release group)")
+    return release_id_to_rg_gid
 
+
+def build_track_index(raw_dir: Path, release_id_to_rg_gid: dict[str, str], conn: sqlite3.Connection) -> None:
+    """Writes the `track` table: one row per track of the release [release_id_to_rg_gid] (from
+    choose_releases()) chose to represent each release group."""
     print("Loading medium ...")
     # medium id -> (release group gid, disc position) — only for media on a
     # chosen release.
@@ -390,25 +481,32 @@ def build_track_index(raw_dir: Path, wanted_rg_ids: dict[str, str], conn: sqlite
     print(f"Wrote {len(batch):,} track rows for {len(tracks_by_rg):,} albums.")
 
 
-def build_streaming_link_index(raw_dir: Path, wanted_rg_ids: dict[str, str], conn: sqlite3.Connection) -> None:
-    """Writes the `streaming_link` table: each release group's Spotify/Apple
-    Music/YouTube Music link, from MusicBrainz's own release-group-url
-    "streaming"/"free streaming" relationships — the same data an
-    `inc=url-rels` release-group lookup would return, joined offline instead
-    of live so it costs nothing per AlbumDetailScreen open."""
+def build_streaming_link_index(
+    raw_dir: Path, release_id_to_rg_gid: dict[str, str], conn: sqlite3.Connection
+) -> None:
+    """Writes the `streaming_link` table: each release group's Spotify/Apple Music/YouTube Music
+    link, from MusicBrainz's own release-url "streaming"/"free streaming" relationships — the
+    same data an `inc=url-rels` lookup on the chosen release would return, joined offline instead
+    of live so it costs nothing per AlbumDetailScreen open.
+
+    Streaming links are a relationship on a *release*, never the release group — confirmed
+    against the real link_type table (entity_type0 is one of artist/label/recording/release for
+    "streaming"/"free streaming", release_group is never among them) — so this joins
+    `l_release_url` against [release_id_to_rg_gid] (the same chosen release
+    choose_releases()/build_track_index() use), not a release-group-url table."""
     print("Loading link_type ...")
     wanted_link_type_ids: set[str] = set()
     for row in read_copy_file(raw_dir / "link_type"):
         type_id, entity_type0, entity_type1, name = row[0], row[4], row[5], row[6]
         if (
-            entity_type0 == "release_group"
+            entity_type0 == "release"
             and entity_type1 == "url"
             and name in STREAMING_LINK_TYPE_NAMES
         ):
             wanted_link_type_ids.add(type_id)
     if not wanted_link_type_ids:
         raise RuntimeError(
-            f"No release_group-url link_type named any of {STREAMING_LINK_TYPE_NAMES} — "
+            f"No release-url link_type named any of {STREAMING_LINK_TYPE_NAMES} — "
             "MusicBrainz's schema may have changed; check this table by hand."
         )
     print(f"  {len(wanted_link_type_ids)} matching link types")
@@ -421,14 +519,15 @@ def build_streaming_link_index(raw_dir: Path, wanted_rg_ids: dict[str, str], con
             wanted_link_ids.add(link_id)
     print(f"  {len(wanted_link_ids):,} streaming link instances")
 
-    print("Loading l_release_group_url ...")
+    print("Loading l_release_url ...")
     rg_url_pairs: list[tuple[str, str]] = []  # (release group gid, url id)
     wanted_url_ids: set[str] = set()
-    for row in read_copy_file(raw_dir / "l_release_group_url"):
-        link_id, rg_id, url_id = row[1], row[2], row[3]
-        if link_id not in wanted_link_ids or rg_id not in wanted_rg_ids:
+    for row in read_copy_file(raw_dir / "l_release_url"):
+        link_id, release_id, url_id = row[1], row[2], row[3]
+        rg_gid = release_id_to_rg_gid.get(release_id)
+        if link_id not in wanted_link_ids or rg_gid is None:
             continue
-        rg_url_pairs.append((wanted_rg_ids[rg_id], url_id))
+        rg_url_pairs.append((rg_gid, url_id))
         wanted_url_ids.add(url_id)
     print(f"  {len(rg_url_pairs):,} release-group/url pairs kept")
 
@@ -471,6 +570,31 @@ def build_streaming_link_index(raw_dir: Path, wanted_rg_ids: dict[str, str], con
     conn.commit()
     albums_with_links = len({rg_gid for rg_gid, _service in best})
     print(f"Wrote {len(batch):,} streaming links for {albums_with_links:,} albums.")
+
+
+def build_genre_index(conn: sqlite3.Connection) -> None:
+    """Writes an always-empty `genre` table: (release_group_gid, name, count), never populated.
+
+    Genres would need MusicBrainz's `tag`/`release_group_tag` tables (to associate a curated
+    `genre` name with a specific release group — `genre` alone is just the name catalog, not a
+    mapping) — confirmed, by listing every single member of mbdump.tar.bz2 and every other
+    archive in the same dump directory directly, that neither table is included in MusicBrainz's
+    public bulk export at all. Not a download flake, not fixable by retrying: genres are
+    structurally unavailable from the offline dump, so this just documents that rather than
+    pretending to compute something it can't. If MusicBrainz ever starts shipping these tables,
+    this is where the join from the old (now-removed) version of this function would go again."""
+    conn.execute(
+        """
+        CREATE TABLE genre (
+            release_group_gid TEXT NOT NULL,
+            name TEXT NOT NULL,
+            count INTEGER NOT NULL
+        )
+        """
+    )
+    conn.execute("CREATE INDEX idx_genre_release_group_gid ON genre (release_group_gid)")
+    conn.commit()
+    print("genre table left empty — MusicBrainz's public dump has no tag/release_group_tag data to build it from.")
 
 
 def classify_streaming_service(url: str) -> str | None:
