@@ -28,4 +28,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.material3)
     debugImplementation(libs.androidx.compose.ui.tooling.preview)
+    // CoverCard's frosted-glass blur — Compose has no built-in backdrop filter.
+    implementation(libs.haze)
 }

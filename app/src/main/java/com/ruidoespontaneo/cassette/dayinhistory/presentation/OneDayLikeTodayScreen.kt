@@ -16,8 +16,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,23 +37,20 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.ruidoespontaneo.cassette.BuildConfig
 import com.ruidoespontaneo.cassette.R
+import com.ruidoespontaneo.cassette.cover.components.AnimatedGradientBackground
+import com.ruidoespontaneo.cassette.cover.components.CoverCard
+import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
-import com.ruidoespontaneo.cassette.ui.theme.AnimatedGradientBackground
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
-import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.HazeTint
-import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import java.time.Instant
@@ -225,19 +220,9 @@ private fun YearCard(
     hazeState: HazeState,
     modifier: Modifier = Modifier
 ) {
-    // A frosted-glass "crystal" card: transparent container so YearCard's own background doesn't
-    // paint over the blur, tinted by hazeEffect's HazeStyle instead — the blur samples whatever's
-    // marked with Modifier.hazeSource() behind it (AnimatedGradientBackground). AlbumRow's ListItem
-    // needs the same transparent treatment — it paints its own background over this Card's.
-    val surfaceTint = MaterialTheme.colorScheme.surface.copy(alpha = CardTintAlpha)
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .hazeEffect(hazeState) {
-                style = HazeStyle(tint = HazeTint(surfaceTint), blurRadius = CardBlurRadius)
-            },
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-    ) {
+    // AlbumRow's ListItem needs a transparent containerColor too, per CoverCard's own doc — it
+    // otherwise paints its own background over the blur.
+    CoverCard(hazeState = hazeState, modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(vertical = Spacing.small)) {
             Text(
                 text = group.year.toString(),
@@ -248,9 +233,6 @@ private fun YearCard(
         }
     }
 }
-
-private val CardBlurRadius = 20.dp
-private const val CardTintAlpha = 0.5f
 
 @Composable
 private fun AlbumRow(album: Album, onClick: () -> Unit) {

@@ -1,4 +1,4 @@
-package com.ruidoespontaneo.cassette.ui.theme
+package com.ruidoespontaneo.cassette.cover.components
 
 import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.LinearEasing
@@ -22,7 +22,9 @@ import kotlin.math.sin
 
 /**
  * Three soft, blurred color blobs drifting in slow, independent orbits — a Gemini-style "living"
- * gradient background, meant to sit behind other content (see [com.ruidoespontaneo.cassette.dayinhistory.presentation.OneDayLikeTodayScreen]).
+ * gradient background, meant to sit behind other content (typically full-screen, e.g. behind a
+ * `LazyColumn`). Pair it with [CoverCard] via a shared `HazeState` for a frosted-glass look on
+ * whatever sits on top of it.
  *
  * Each blob's angle is its own [State], read inside [Canvas]'s draw lambda rather than in this
  * composable's body — Compose treats that as a draw-phase invalidation, so every animation frame
