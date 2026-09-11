@@ -11,6 +11,14 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Cached tracklist + streaming-service links per album (AlbumDetailScreen),
+    // keyed by the same release-group MBID as albumsByDay — same offline
+    // pipeline, same read-only shape (see scripts/upload_day_index.py).
+    match /albumTracks/{document} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Deny everything else by default.
     match /{document=**} {
       allow read, write: if false;
