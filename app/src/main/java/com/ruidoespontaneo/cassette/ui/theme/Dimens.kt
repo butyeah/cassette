@@ -29,3 +29,9 @@ object TextSize {
     val extraLarge = 20.sp
     val headline = 28.sp
 }
+
+/** Fixed sizes for image/icon elements. */
+object IconSize {
+    /** Hero-sized cover art, e.g. on AlbumDetailScreen. */
+    val albumArtLarge = 200.dp
+}
