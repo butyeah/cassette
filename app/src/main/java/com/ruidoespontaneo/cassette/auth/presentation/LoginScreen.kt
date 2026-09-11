@@ -26,7 +26,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruidoespontaneo.cassette.R
-import com.ruidoespontaneo.cassette.ui.theme.Spacing
+import com.ruidoespontaneo.cassette.cover.theme.Spacing
 
 @Composable
 fun LoginScreen(
