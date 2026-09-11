@@ -27,6 +27,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        // java.time (DayInHistoryRepositoryImpl, MusicBrainzRepositoryImpl) needs desugaring
+        // below API 26, and minSdk here is 24 — matches app/build.gradle.kts's compileOptions.
+        isCoreLibraryDesugaringEnabled = true
     }
     buildFeatures {
         buildConfig = true
@@ -35,6 +38,7 @@ android {
 
 dependencies {
     api(project(":domain"))
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.android)
