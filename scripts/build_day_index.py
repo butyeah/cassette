@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 """
 Builds a local SQLite "day index" of albums (title, artist name, release
-year/month/day) from MusicBrainz's public data dump, for the "on this day in
-history" feature (see the app's Firestore-backed GetAlbumsByDayUseCase).
+year/month/day, tracklist, streaming-service links) from MusicBrainz's public
+data dump, for the "on this day in history" feature and AlbumDetailScreen's
+tracklist/streaming-link display (see the app's Firestore-backed
+GetAlbumsByDayUseCase and AlbumTracksRepository).
 
 MusicBrainz's search API can't answer "every album released on this day,
 across all years" — no leading wildcards on `date`, and one query per year
 would be far too slow given their rate limit — so this script does the
 equivalent join offline, once, against MusicBrainz's bulk data dump:
 https://musicbrainz.org/doc/MusicBrainz_Database/Download
+Tracks and streaming links are joined the same way, for the same reason:
+avoiding a live, rate-limited MusicBrainz API call per album on every
+AlbumDetailScreen open (see AlbumTracksRepositoryImpl).
 
-Only 4 of MusicBrainz's ~30 core tables are needed (column layouts confirmed
-against admin/sql/CreateTables.sql in musicbrainz-server as of 2026-09):
+Tables needed (column layouts confirmed against admin/sql/CreateTables.sql in
+musicbrainz-server as of 2026-09):
   - release_group              title, artist_credit id, primary type id
   - release_group_meta         first_release_date_year/month/day — a
                                 *computed/derived* table, so it actually ships
@@ -21,14 +26,30 @@ against admin/sql/CreateTables.sql in musicbrainz-server as of 2026-09):
                                  artist_credit_name/artist join tables aren't
                                  needed just to show a display name
   - release_group_primary_type  id -> 'Album'/'Single'/'EP'/... name
+  - release_status              id -> 'Official'/'Promotion'/... name, used
+                                 to prefer an official release's tracklist
+  - release                     one row per release; picks the release used
+                                 for a release group's tracklist
+  - medium                      discs within a release
+  - track                       tracks within a medium — position, name,
+                                 length
+  - url                         a URL entity (id -> the URL string itself)
+  - l_release_group_url         release-group <-> url relationships
+  - link                        one row per relationship instance -> its type
+  - link_type                   relationship type catalog (id -> name,
+                                 entity types), used to find "streaming"/
+                                 "free streaming" release-group-url links and
+                                 classify them (Spotify/Apple Music/YouTube
+                                 Music) by the URL's host
 
 Usage:
     python3 scripts/build_day_index.py [--export-base-url URL] [--raw-dir DIR] [--output PATH]
 
 Safe to re-run: the download step is skipped if the raw table files already
 exist in --raw-dir. Downloads mbdump-derived.tar.bz2 (~500MB compressed) and
-mbdump.tar.bz2 (~7GB compressed) on first run — that's the one genuinely
-slow/expensive step here.
+mbdump.tar.bz2 (~7GB compressed, now streamed further into it for the
+release/medium/track/url/link tables above) on first run — that's the one
+genuinely slow/expensive step here.
 """
 from __future__ import annotations
 
@@ -36,6 +57,7 @@ import argparse
 import sqlite3
 import ssl
 import tarfile
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import BinaryIO, Iterator
@@ -54,10 +76,29 @@ TABLE_ARCHIVES: dict[str, str] = {
     "artist_credit": "mbdump.tar.bz2",
     "release_group_primary_type": "mbdump.tar.bz2",
     "release_group_meta": "mbdump-derived.tar.bz2",
+    "release_status": "mbdump.tar.bz2",
+    "release": "mbdump.tar.bz2",
+    "medium": "mbdump.tar.bz2",
+    "track": "mbdump.tar.bz2",
+    "url": "mbdump.tar.bz2",
+    "l_release_group_url": "mbdump.tar.bz2",
+    "link": "mbdump.tar.bz2",
+    "link_type": "mbdump.tar.bz2",
 }
-# Resolved at runtime from release_group_primary_type itself (not hardcoded
-# as a magic id) in case MusicBrainz ever renumbers it.
+# Resolved at runtime from release_group_primary_type/release_status/link_type
+# themselves (not hardcoded as magic ids) in case MusicBrainz ever renumbers
+# them.
 ALBUM_TYPE_NAME = "Album"
+OFFICIAL_STATUS_NAME = "Official"
+# MusicBrainz has two release-group-url relationship types for this ("streaming"
+# is paid/subscription, "free streaming" is free) — both count.
+STREAMING_LINK_TYPE_NAMES = ("streaming", "free streaming")
+# Which streaming services we surface, keyed by the linked URL's host.
+STREAMING_HOSTS = {
+    "open.spotify.com": "spotify",
+    "music.apple.com": "appleMusic",
+    "music.youtube.com": "youtubeMusic",
+}
 
 
 def make_ssl_context() -> ssl.SSLContext:
@@ -216,6 +257,10 @@ def build_index(raw_dir: Path, output: Path) -> None:
     considered = 0
     matched = 0
     batch: list[tuple[str, str, str, int, int, int]] = []
+    # rg_id (release_group.id, the internal integer key) -> gid (MBID) — the
+    # release groups actually kept in `album`, i.e. exactly the ones
+    # build_track_index/build_streaming_link_index below should bother with.
+    wanted_rg_ids: dict[str, str] = {}
 
     def flush() -> None:
         if batch:
@@ -237,6 +282,7 @@ def build_index(raw_dir: Path, output: Path) -> None:
         if artist_name is None:
             continue
         batch.append((gid, title, artist_name, int(year), int(month), int(day)))
+        wanted_rg_ids[rg_id] = gid
         matched += 1
         if len(batch) >= 5000:
             flush()
@@ -244,9 +290,194 @@ def build_index(raw_dir: Path, output: Path) -> None:
 
     conn.execute("CREATE INDEX idx_album_month_day ON album (month, day)")
     conn.commit()
-    conn.close()
     print(f"Considered {considered:,} release groups with a full date, kept {matched:,} albums.")
+
+    build_track_index(raw_dir, wanted_rg_ids, conn)
+    build_streaming_link_index(raw_dir, wanted_rg_ids, conn)
+
+    conn.close()
     print(f"Wrote {output}")
+
+
+def build_track_index(raw_dir: Path, wanted_rg_ids: dict[str, str], conn: sqlite3.Connection) -> None:
+    """Writes the `track` table: one row per track of one representative
+    release per release group in [wanted_rg_ids] — the same release/tracklist
+    shape `MusicBrainzRepositoryImpl.getAlbumDetail` picks live today
+    (releases-browse, preferring an Official release)."""
+    print("Loading release_status ...")
+    official_status_id: str | None = None
+    for row in read_copy_file(raw_dir / "release_status"):
+        status_id, name = row[0], row[1]
+        if name == OFFICIAL_STATUS_NAME:
+            official_status_id = status_id
+    if official_status_id is None:
+        raise RuntimeError(
+            f"No release_status row named {OFFICIAL_STATUS_NAME!r} — "
+            "MusicBrainz's schema may have changed; check this table by hand."
+        )
+    print(f"  {OFFICIAL_STATUS_NAME!r} == status id {official_status_id}")
+
+    print("Loading release (picking one release per release group) ...")
+    # For each release group, keep the release with the smallest
+    # (is_not_official, release_id) key — i.e. prefer Official, then the
+    # lowest release id for a stable, deterministic pick.
+    best_release_key: dict[str, tuple[int, int]] = {}
+    chosen_release_id: dict[str, str] = {}
+    for row in read_copy_file(raw_dir / "release"):
+        release_id, rg_id, status_id = row[0], row[4], row[5]
+        if rg_id not in wanted_rg_ids:
+            continue
+        key = (0 if status_id == official_status_id else 1, int(release_id))
+        if rg_id not in best_release_key or key < best_release_key[rg_id]:
+            best_release_key[rg_id] = key
+            chosen_release_id[rg_id] = release_id
+    release_id_to_rg_gid = {
+        release_id: wanted_rg_ids[rg_id] for rg_id, release_id in chosen_release_id.items()
+    }
+    print(f"  {len(release_id_to_rg_gid):,} releases chosen (one per release group)")
+
+    print("Loading medium ...")
+    # medium id -> (release group gid, disc position) — only for media on a
+    # chosen release.
+    medium_index: dict[str, tuple[str, int]] = {}
+    for row in read_copy_file(raw_dir / "medium"):
+        medium_id, release_id, position = row[0], row[1], row[2]
+        rg_gid = release_id_to_rg_gid.get(release_id)
+        if rg_gid is None:
+            continue
+        medium_index[medium_id] = (rg_gid, int(position))
+    print(f"  {len(medium_index):,} media kept")
+
+    conn.execute(
+        """
+        CREATE TABLE track (
+            release_group_gid TEXT NOT NULL,
+            medium_position INTEGER NOT NULL,
+            position INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            length_ms INTEGER
+        )
+        """
+    )
+
+    print("Loading track and writing the track index ...")
+    # Buffered per album so multi-disc tracklists can be written out in
+    # (medium_position, position) order — the dump's row order isn't
+    # guaranteed to already be sorted that way.
+    tracks_by_rg: dict[str, list[tuple[int, int, str, str | None]]] = {}
+    kept = 0
+    for row in read_copy_file(raw_dir / "track"):
+        medium_id, position, name, length = row[3], row[4], row[6], row[8]
+        entry = medium_index.get(medium_id)
+        if entry is None:
+            continue
+        rg_gid, medium_position = entry
+        tracks_by_rg.setdefault(rg_gid, []).append((medium_position, int(position), name, length))
+        kept += 1
+    print(f"  {kept:,} tracks matched")
+
+    batch: list[tuple[str, int, int, str, int | None]] = []
+    for rg_gid, tracks in tracks_by_rg.items():
+        tracks.sort(key=lambda t: (t[0], t[1]))
+        for medium_position, position, title, length in tracks:
+            length_ms = int(length) if length is not None else None
+            batch.append((rg_gid, medium_position, position, title, length_ms))
+    conn.executemany("INSERT INTO track VALUES (?, ?, ?, ?, ?)", batch)
+    conn.execute(
+        "CREATE INDEX idx_track_release_group_gid ON track (release_group_gid, medium_position, position)"
+    )
+    conn.commit()
+    print(f"Wrote {len(batch):,} track rows for {len(tracks_by_rg):,} albums.")
+
+
+def build_streaming_link_index(raw_dir: Path, wanted_rg_ids: dict[str, str], conn: sqlite3.Connection) -> None:
+    """Writes the `streaming_link` table: each release group's Spotify/Apple
+    Music/YouTube Music link, from MusicBrainz's own release-group-url
+    "streaming"/"free streaming" relationships — the same data an
+    `inc=url-rels` release-group lookup would return, joined offline instead
+    of live so it costs nothing per AlbumDetailScreen open."""
+    print("Loading link_type ...")
+    wanted_link_type_ids: set[str] = set()
+    for row in read_copy_file(raw_dir / "link_type"):
+        type_id, entity_type0, entity_type1, name = row[0], row[4], row[5], row[6]
+        if (
+            entity_type0 == "release_group"
+            and entity_type1 == "url"
+            and name in STREAMING_LINK_TYPE_NAMES
+        ):
+            wanted_link_type_ids.add(type_id)
+    if not wanted_link_type_ids:
+        raise RuntimeError(
+            f"No release_group-url link_type named any of {STREAMING_LINK_TYPE_NAMES} — "
+            "MusicBrainz's schema may have changed; check this table by hand."
+        )
+    print(f"  {len(wanted_link_type_ids)} matching link types")
+
+    print("Loading link ...")
+    wanted_link_ids: set[str] = set()
+    for row in read_copy_file(raw_dir / "link"):
+        link_id, link_type_id = row[0], row[1]
+        if link_type_id in wanted_link_type_ids:
+            wanted_link_ids.add(link_id)
+    print(f"  {len(wanted_link_ids):,} streaming link instances")
+
+    print("Loading l_release_group_url ...")
+    rg_url_pairs: list[tuple[str, str]] = []  # (release group gid, url id)
+    wanted_url_ids: set[str] = set()
+    for row in read_copy_file(raw_dir / "l_release_group_url"):
+        link_id, rg_id, url_id = row[1], row[2], row[3]
+        if link_id not in wanted_link_ids or rg_id not in wanted_rg_ids:
+            continue
+        rg_url_pairs.append((wanted_rg_ids[rg_id], url_id))
+        wanted_url_ids.add(url_id)
+    print(f"  {len(rg_url_pairs):,} release-group/url pairs kept")
+
+    print("Loading url ...")
+    url_id_to_url: dict[str, str] = {}
+    for row in read_copy_file(raw_dir / "url"):
+        url_id, url_value = row[0], row[2]
+        if url_id in wanted_url_ids:
+            url_id_to_url[url_id] = url_value
+
+    conn.execute(
+        """
+        CREATE TABLE streaming_link (
+            release_group_gid TEXT NOT NULL,
+            service TEXT NOT NULL,
+            url TEXT NOT NULL
+        )
+        """
+    )
+
+    print("Classifying streaming links by host and writing the index ...")
+    # (release group gid, service) -> (url id as int, url) — lowest url id
+    # wins on a rare duplicate, for a deterministic pick.
+    best: dict[tuple[str, str], tuple[int, str]] = {}
+    for rg_gid, url_id in rg_url_pairs:
+        url_value = url_id_to_url.get(url_id)
+        if url_value is None:
+            continue
+        service = classify_streaming_service(url_value)
+        if service is None:
+            continue
+        candidate = (int(url_id), url_value)
+        key = (rg_gid, service)
+        if key not in best or candidate < best[key]:
+            best[key] = candidate
+
+    batch = [(rg_gid, service, url_value) for (rg_gid, service), (_url_id, url_value) in best.items()]
+    conn.executemany("INSERT INTO streaming_link VALUES (?, ?, ?)", batch)
+    conn.execute("CREATE INDEX idx_streaming_link_release_group_gid ON streaming_link (release_group_gid)")
+    conn.commit()
+    albums_with_links = len({rg_gid for rg_gid, _service in best})
+    print(f"Wrote {len(batch):,} streaming links for {albums_with_links:,} albums.")
+
+
+def classify_streaming_service(url: str) -> str | None:
+    """Which of [STREAMING_HOSTS] (if any) a URL belongs to, by its host —
+    e.g. "https://open.spotify.com/album/..." -> "spotify"."""
+    host = urllib.parse.urlparse(url).netloc.lower().removeprefix("www.")
+    return STREAMING_HOSTS.get(host)
 
 
 def main() -> None:
