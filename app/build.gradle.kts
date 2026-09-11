@@ -32,6 +32,11 @@ android {
             }
         }
     }
+    lint {
+        // A single `:app:lint` run should cover the whole app, including :data/:domain — not
+        // just :app's own sources.
+        checkDependencies = true
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
