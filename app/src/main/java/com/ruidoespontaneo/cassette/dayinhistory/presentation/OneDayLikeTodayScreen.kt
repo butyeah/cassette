@@ -53,6 +53,7 @@ import java.util.Locale
 
 @Composable
 fun OneDayLikeTodayScreen(
+    onAlbumClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     dayFormatter: DateTimeFormatter,
     viewModel: OneDayLikeTodayViewModel = hiltViewModel()
@@ -61,6 +62,7 @@ fun OneDayLikeTodayScreen(
     OneDayLikeTodayScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
+        onAlbumClick = onAlbumClick,
         dayFormatter = dayFormatter,
         modifier = modifier
     )
@@ -70,6 +72,7 @@ fun OneDayLikeTodayScreen(
 private fun OneDayLikeTodayScreenContent(
     state: OneDayLikeTodayUiState,
     onIntent: (OneDayLikeTodayIntent) -> Unit,
+    onAlbumClick: (String) -> Unit,
     dayFormatter: DateTimeFormatter,
     modifier: Modifier = Modifier
 ) {
@@ -95,7 +98,11 @@ private fun OneDayLikeTodayScreenContent(
                 modifier = Modifier.fillMaxSize()
             )
 
-            else -> AlbumsByYearList(groups = state.albumsByYear, modifier = Modifier.fillMaxSize())
+            else -> AlbumsByYearList(
+                groups = state.albumsByYear,
+                onAlbumClick = onAlbumClick,
+                modifier = Modifier.fillMaxSize()
+            )
         }
     }
 }
@@ -163,7 +170,11 @@ private fun ErrorMessage(message: String, onRetry: () -> Unit, modifier: Modifie
 }
 
 @Composable
-private fun AlbumsByYearList(groups: List<AlbumsByYear>, modifier: Modifier = Modifier) {
+private fun AlbumsByYearList(
+    groups: List<AlbumsByYear>,
+    onAlbumClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
     if (groups.isEmpty()) {
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.no_albums_message))
@@ -175,12 +186,12 @@ private fun AlbumsByYearList(groups: List<AlbumsByYear>, modifier: Modifier = Mo
         contentPadding = PaddingValues(Spacing.large),
         verticalArrangement = Arrangement.spacedBy(Spacing.medium)
     ) {
-        items(groups, key = { it.year }) { group -> YearCard(group) }
+        items(groups, key = { it.year }) { group -> YearCard(group, onAlbumClick = onAlbumClick) }
     }
 }
 
 @Composable
-private fun YearCard(group: AlbumsByYear, modifier: Modifier = Modifier) {
+private fun YearCard(group: AlbumsByYear, onAlbumClick: (String) -> Unit, modifier: Modifier = Modifier) {
     Card(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(vertical = Spacing.small)) {
             Text(
@@ -188,13 +199,13 @@ private fun YearCard(group: AlbumsByYear, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = Spacing.large, vertical = Spacing.extraSmall)
             )
-            group.albums.forEach { album -> AlbumRow(album) }
+            group.albums.forEach { album -> AlbumRow(album, onClick = { onAlbumClick(album.id) }) }
         }
     }
 }
 
 @Composable
-private fun AlbumRow(album: Album) {
+private fun AlbumRow(album: Album, onClick: () -> Unit) {
     ListItem(
         leadingContent = {
             val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
@@ -210,7 +221,8 @@ private fun AlbumRow(album: Album) {
             )
         },
         headlineContent = { Text(album.title) },
-        supportingContent = { Text(album.artistName) }
+        supportingContent = { Text(album.artistName) },
+        modifier = Modifier.clickable(onClick = onClick)
     )
 }
 
@@ -223,6 +235,11 @@ private fun OneDayLikeTodayScreenPreview(
     @PreviewParameter(OneDayLikeTodayUiStatePreviewProvider::class) state: OneDayLikeTodayUiState
 ) {
     CassetteTheme {
-        OneDayLikeTodayScreenContent(state = state, onIntent = {}, dayFormatter = previewDayFormatter)
+        OneDayLikeTodayScreenContent(
+            state = state,
+            onIntent = {},
+            onAlbumClick = {},
+            dayFormatter = previewDayFormatter
+        )
     }
 }
