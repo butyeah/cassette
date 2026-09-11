@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.ruidoespontaneo.cassette.musicbrainz.domain.MusicBrainzRepository
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
+import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
 import com.ruidoespontaneo.cassette.musicbrainz.domain.usecase.GetAlbumDetailUseCase
 import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +43,8 @@ class AlbumDetailViewModelTest {
         firstReleaseDate = LocalDate.of(2001, 6, 17),
         genres = listOf("Rock"),
         ratingValue = 4.0,
-        ratingVotesCount = 10
+        ratingVotesCount = 10,
+        tracks = listOf(Track(position = 1, title = "Track One", lengthMs = 200_000))
     )
 
     @Test

@@ -1,8 +1,11 @@
 package com.ruidoespontaneo.cassette.albumdetail.presentation
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,7 +35,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
+import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
+import com.ruidoespontaneo.cassette.musicbrainz.presentation.durationText
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
 import com.ruidoespontaneo.cassette.ui.theme.Spacing
@@ -140,6 +145,36 @@ private fun AlbumDetailContent(album: AlbumDetail, modifier: Modifier = Modifier
             Text(
                 text = stringResource(R.string.rating_format, ratingValue, album.ratingVotesCount),
                 modifier = Modifier.padding(top = Spacing.small)
+            )
+        }
+        if (album.tracks.isNotEmpty()) {
+            Tracklist(album.tracks, modifier = Modifier.padding(top = Spacing.large))
+        }
+    }
+}
+
+@Composable
+private fun Tracklist(tracks: List<Track>, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Text(text = stringResource(R.string.tracklist_title), style = MaterialTheme.typography.titleMedium)
+        tracks.forEach { track -> TrackRow(track, modifier = Modifier.padding(top = Spacing.small)) }
+    }
+}
+
+@Composable
+private fun TrackRow(track: Track, modifier: Modifier = Modifier) {
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(
+            text = "${track.position}. ${track.title}",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f)
+        )
+        val durationText = track.durationText()
+        if (durationText != null) {
+            Text(
+                text = durationText,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(start = Spacing.small)
             )
         }
     }
