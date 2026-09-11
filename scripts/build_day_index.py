@@ -34,11 +34,19 @@ musicbrainz-server as of 2026-09):
   - track                       tracks within a medium — position, name,
                                  length
   - url                         a URL entity (id -> the URL string itself)
-  - l_release_group_url         release-group <-> url relationships
+  - l_release_url               release <-> url relationships — streaming
+                                 links are relationships on a *release*, not
+                                 the release group (confirmed against the
+                                 real link_type table: "streaming"/"free
+                                 streaming" only exist for entity_type0 in
+                                 {artist, label, recording, release}, never
+                                 release_group), so this joins against the
+                                 same chosen release build_track_index picks
+                                 for the tracklist, not release_group_url
   - link                        one row per relationship instance -> its type
   - link_type                   relationship type catalog (id -> name,
                                  entity types), used to find "streaming"/
-                                 "free streaming" release-group-url links and
+                                 "free streaming" release-url links and
                                  classify them (Spotify/Apple Music/YouTube
                                  Music) by the URL's host
 
@@ -93,7 +101,7 @@ TABLE_ARCHIVES: dict[str, str] = {
     "medium": "mbdump.tar.bz2",
     "track": "mbdump.tar.bz2",
     "url": "mbdump.tar.bz2",
-    "l_release_group_url": "mbdump.tar.bz2",
+    "l_release_url": "mbdump.tar.bz2",
     "link": "mbdump.tar.bz2",
     "link_type": "mbdump.tar.bz2",
 }
@@ -364,19 +372,24 @@ def build_index(raw_dir: Path, output: Path) -> None:
     conn.commit()
     print(f"Considered {considered:,} release groups with a full date, kept {matched:,} albums.")
 
-    build_track_index(raw_dir, wanted_rg_ids, conn)
-    build_streaming_link_index(raw_dir, wanted_rg_ids, conn)
+    release_id_to_rg_gid = choose_releases(raw_dir, wanted_rg_ids)
+    build_track_index(raw_dir, release_id_to_rg_gid, conn)
+    build_streaming_link_index(raw_dir, release_id_to_rg_gid, conn)
     build_genre_index(conn)
 
     conn.close()
     print(f"Wrote {output}")
 
 
-def build_track_index(raw_dir: Path, wanted_rg_ids: dict[str, str], conn: sqlite3.Connection) -> None:
-    """Writes the `track` table: one row per track of one representative
-    release per release group in [wanted_rg_ids] — the same release/tracklist
-    shape `MusicBrainzRepositoryImpl.getAlbumDetail` picks live today
-    (releases-browse, preferring an Official release)."""
+def choose_releases(raw_dir: Path, wanted_rg_ids: dict[str, str]) -> dict[str, str]:
+    """One representative release per release group in [wanted_rg_ids] — the same release
+    `MusicBrainzRepositoryImpl.getAlbumDetail` picks live today (releases-browse, preferring an
+    Official release). Both the tracklist (build_track_index) and streaming links
+    (build_streaming_link_index) are relationships on a *release*, not the release group, so both
+    join against this same chosen release rather than each picking their own.
+
+    @return release id -> release group gid, one entry per chosen release.
+    """
     print("Loading release_status ...")
     official_status_id: str | None = None
     for row in read_copy_file(raw_dir / "release_status"):
@@ -408,7 +421,12 @@ def build_track_index(raw_dir: Path, wanted_rg_ids: dict[str, str], conn: sqlite
         release_id: wanted_rg_ids[rg_id] for rg_id, release_id in chosen_release_id.items()
     }
     print(f"  {len(release_id_to_rg_gid):,} releases chosen (one per release group)")
+    return release_id_to_rg_gid
 
+
+def build_track_index(raw_dir: Path, release_id_to_rg_gid: dict[str, str], conn: sqlite3.Connection) -> None:
+    """Writes the `track` table: one row per track of the release [release_id_to_rg_gid] (from
+    choose_releases()) chose to represent each release group."""
     print("Loading medium ...")
     # medium id -> (release group gid, disc position) — only for media on a
     # chosen release.
@@ -463,25 +481,32 @@ def build_track_index(raw_dir: Path, wanted_rg_ids: dict[str, str], conn: sqlite
     print(f"Wrote {len(batch):,} track rows for {len(tracks_by_rg):,} albums.")
 
 
-def build_streaming_link_index(raw_dir: Path, wanted_rg_ids: dict[str, str], conn: sqlite3.Connection) -> None:
-    """Writes the `streaming_link` table: each release group's Spotify/Apple
-    Music/YouTube Music link, from MusicBrainz's own release-group-url
-    "streaming"/"free streaming" relationships — the same data an
-    `inc=url-rels` release-group lookup would return, joined offline instead
-    of live so it costs nothing per AlbumDetailScreen open."""
+def build_streaming_link_index(
+    raw_dir: Path, release_id_to_rg_gid: dict[str, str], conn: sqlite3.Connection
+) -> None:
+    """Writes the `streaming_link` table: each release group's Spotify/Apple Music/YouTube Music
+    link, from MusicBrainz's own release-url "streaming"/"free streaming" relationships — the
+    same data an `inc=url-rels` lookup on the chosen release would return, joined offline instead
+    of live so it costs nothing per AlbumDetailScreen open.
+
+    Streaming links are a relationship on a *release*, never the release group — confirmed
+    against the real link_type table (entity_type0 is one of artist/label/recording/release for
+    "streaming"/"free streaming", release_group is never among them) — so this joins
+    `l_release_url` against [release_id_to_rg_gid] (the same chosen release
+    choose_releases()/build_track_index() use), not a release-group-url table."""
     print("Loading link_type ...")
     wanted_link_type_ids: set[str] = set()
     for row in read_copy_file(raw_dir / "link_type"):
         type_id, entity_type0, entity_type1, name = row[0], row[4], row[5], row[6]
         if (
-            entity_type0 == "release_group"
+            entity_type0 == "release"
             and entity_type1 == "url"
             and name in STREAMING_LINK_TYPE_NAMES
         ):
             wanted_link_type_ids.add(type_id)
     if not wanted_link_type_ids:
         raise RuntimeError(
-            f"No release_group-url link_type named any of {STREAMING_LINK_TYPE_NAMES} — "
+            f"No release-url link_type named any of {STREAMING_LINK_TYPE_NAMES} — "
             "MusicBrainz's schema may have changed; check this table by hand."
         )
     print(f"  {len(wanted_link_type_ids)} matching link types")
@@ -494,14 +519,15 @@ def build_streaming_link_index(raw_dir: Path, wanted_rg_ids: dict[str, str], con
             wanted_link_ids.add(link_id)
     print(f"  {len(wanted_link_ids):,} streaming link instances")
 
-    print("Loading l_release_group_url ...")
+    print("Loading l_release_url ...")
     rg_url_pairs: list[tuple[str, str]] = []  # (release group gid, url id)
     wanted_url_ids: set[str] = set()
-    for row in read_copy_file(raw_dir / "l_release_group_url"):
-        link_id, rg_id, url_id = row[1], row[2], row[3]
-        if link_id not in wanted_link_ids or rg_id not in wanted_rg_ids:
+    for row in read_copy_file(raw_dir / "l_release_url"):
+        link_id, release_id, url_id = row[1], row[2], row[3]
+        rg_gid = release_id_to_rg_gid.get(release_id)
+        if link_id not in wanted_link_ids or rg_gid is None:
             continue
-        rg_url_pairs.append((wanted_rg_ids[rg_id], url_id))
+        rg_url_pairs.append((rg_gid, url_id))
         wanted_url_ids.add(url_id)
     print(f"  {len(rg_url_pairs):,} release-group/url pairs kept")
 

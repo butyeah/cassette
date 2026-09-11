@@ -55,8 +55,10 @@ class ClassifyStreamingServiceTest(unittest.TestCase):
 def _write_fixtures(raw_dir: Path) -> None:
     """Every table build_index()/build_track_index()/build_streaming_link_index() reads,
     covering: the existing album join, a two-release/two-disc tracklist pick, and a
-    streaming-link join with a wrong-entity-type link_type, an unrelated release group,
-    and a non-streaming host all present as things that must be filtered out."""
+    streaming-link join (on the *release*, not the release group — see
+    build_streaming_link_index()) with a wrong-entity-type link_type, a link on the losing
+    (non-chosen) release, and a non-streaming host all present as things that must be
+    filtered out."""
     # release_group_primary_type: id, name, parent, child_order, description, gid
     (raw_dir / "release_group_primary_type").write_text(
         "1\tAlbum\t\\N\t1\t\\N\tsome-gid-1\n"
@@ -120,21 +122,22 @@ def _write_fixtures(raw_dir: Path) -> None:
 
     # link_type: id, parent, child_order, gid, entity_type0, entity_type1, name
     (raw_dir / "link_type").write_text(
-        "1\t\\N\t1\tlt-gid-1\trelease_group\turl\tstreaming\n"
-        "2\t\\N\t2\tlt-gid-2\trelease_group\turl\tfree streaming\n"
-        # right name, wrong entity types — must not count as a release-group streaming link
+        "1\t\\N\t1\tlt-gid-1\trelease\turl\tstreaming\n"
+        "2\t\\N\t2\tlt-gid-2\trelease\turl\tfree streaming\n"
+        # right name, wrong entity types (this is really where MusicBrainz puts artist-url
+        # streaming links, but they must never count as a *release*'s streaming link)
         "3\t\\N\t3\tlt-gid-3\tartist\turl\tstreaming\n"
     )
     # link: id, link_type
     (raw_dir / "link").write_text("5000\t1\n5001\t2\n5002\t3\n")
-    # l_release_group_url: id, link, entity0 (release_group id), entity1 (url id)
-    (raw_dir / "l_release_group_url").write_text(
-        "1\t5000\t100\t9000\n"  # rg 100 -> spotify
-        "2\t5001\t100\t9001\n"  # rg 100 -> apple music (free streaming)
-        "3\t5002\t100\t9002\n"  # wrong link_type (artist-url) — must be dropped
-        "4\t5000\t999\t9003\n"  # rg 999 isn't a wanted release group — must be dropped
-        "5\t5000\t102\t9004\n"  # rg 102 -> youtube music
-        "6\t5000\t100\t9005\n"  # rg 100 -> a non-streaming host — must be dropped
+    # l_release_url: id, link, entity0 (release id), entity1 (url id)
+    (raw_dir / "l_release_url").write_text(
+        "1\t5000\t1001\t9000\n"  # rg 100's chosen (Official) release -> spotify
+        "2\t5001\t1001\t9001\n"  # rg 100's chosen release -> apple music (free streaming)
+        "3\t5002\t1001\t9002\n"  # wrong link_type (artist-url) — must be dropped
+        "4\t5000\t1000\t9003\n"  # the *losing* Promotion release for rg 100 — must be dropped
+        "5\t5000\t1002\t9004\n"  # rg 102's chosen release -> youtube music
+        "6\t5000\t1001\t9005\n"  # rg 100's chosen release -> a non-streaming host — must be dropped
     )
     # url: id, gid, url
     (raw_dir / "url").write_text(
