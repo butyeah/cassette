@@ -1,29 +1,34 @@
 package com.ruidoespontaneo.cassette.albumdetail.presentation
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.ruidoespontaneo.cassette.core.mvi.MviViewModel
 import com.ruidoespontaneo.cassette.musicbrainz.domain.usecase.GetAlbumDetailUseCase
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 /**
- * Nav-graph argument name for the album's MBID. The nav graph itself is wired up in a follow-up
- * PR; this constant is defined here so the route destination can reuse it verbatim.
+ * One instance per album, constructed with an explicit [albumId] rather than pulling it from a
+ * [androidx.lifecycle.SavedStateHandle] nav argument — AlbumPagerScreen hosts many albums' worth
+ * of this ViewModel inside a single nav destination (one per HorizontalPager page), so there's no
+ * one-to-one nav-arg-to-ViewModel relationship to rely on. Built via [Factory] and
+ * `androidx.hilt.navigation.compose.hiltViewModel`'s assisted-injection overload, keyed by
+ * [albumId] so each page keeps its own instance (and its already-loaded state) for as long as the
+ * pager's nav destination is on the back stack.
  */
-const val ALBUM_DETAIL_ARG_ALBUM_ID = "albumId"
-
-@HiltViewModel
-class AlbumDetailViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
+@HiltViewModel(assistedFactory = AlbumDetailViewModel.Factory::class)
+class AlbumDetailViewModel @AssistedInject constructor(
+    @Assisted private val albumId: String,
     private val getAlbumDetailUseCase: GetAlbumDetailUseCase
 ) : MviViewModel<AlbumDetailUiState, AlbumDetailIntent, AlbumDetailEffect>(
     AlbumDetailUiState()
 ) {
 
-    private val albumId: String = checkNotNull(savedStateHandle[ALBUM_DETAIL_ARG_ALBUM_ID]) {
-        "AlbumDetailViewModel requires a non-null $ALBUM_DETAIL_ARG_ALBUM_ID nav argument"
+    @AssistedFactory
+    interface Factory {
+        fun create(albumId: String): AlbumDetailViewModel
     }
 
     init {

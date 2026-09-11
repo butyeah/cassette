@@ -27,7 +27,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.ruidoespontaneo.cassette.R
@@ -37,11 +36,15 @@ import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
 import com.ruidoespontaneo.cassette.ui.theme.Spacing
 
+/**
+ * [viewModel] has no default — it's assisted-injected per album (see [AlbumDetailViewModel]), so
+ * the caller must build it via `hiltViewModel`'s assisted-injection overload, keyed by albumId.
+ */
 @Composable
 fun AlbumDetailScreen(
     onBack: () -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: AlbumDetailViewModel = hiltViewModel()
+    viewModel: AlbumDetailViewModel,
+    modifier: Modifier = Modifier
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     AlbumDetailScreenContent(

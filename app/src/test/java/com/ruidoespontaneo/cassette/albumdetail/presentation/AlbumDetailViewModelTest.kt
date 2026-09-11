@@ -1,6 +1,5 @@
 package com.ruidoespontaneo.cassette.albumdetail.presentation
 
-import androidx.lifecycle.SavedStateHandle
 import com.ruidoespontaneo.cassette.musicbrainz.domain.MusicBrainzRepository
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
@@ -105,7 +104,6 @@ class AlbumDetailViewModelTest {
 
             override suspend fun getAlbumDetail(id: String): Result<AlbumDetail> = getAlbumDetail(id)
         }
-        val savedStateHandle = SavedStateHandle(mapOf(ALBUM_DETAIL_ARG_ALBUM_ID to albumId))
-        return AlbumDetailViewModel(savedStateHandle, GetAlbumDetailUseCase(repository))
+        return AlbumDetailViewModel(albumId, GetAlbumDetailUseCase(repository))
     }
 }
