@@ -22,11 +22,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
@@ -35,13 +37,18 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.ruidoespontaneo.cassette.R
+import com.ruidoespontaneo.cassette.cover.components.AnimatedGradientBackground
+import com.ruidoespontaneo.cassette.cover.components.CoverCard
+import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.durationText
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
-import com.ruidoespontaneo.cassette.cover.theme.Spacing
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 
 /**
  * [viewModel] has no default — it's assisted-injected per album (see [AlbumDetailViewModel]), so
@@ -70,31 +77,38 @@ private fun AlbumDetailScreenContent(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {},
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        when {
-            state.isLoading -> LoadingIndicator(Modifier.fillMaxSize().padding(innerPadding))
-            state.errorMessage != null -> ErrorMessage(
-                message = state.errorMessage,
-                onRetry = { onIntent(AlbumDetailIntent.Retry) },
-                modifier = Modifier.fillMaxSize().padding(innerPadding)
-            )
+    val hazeState = rememberHazeState()
+    Box(modifier = modifier.fillMaxSize()) {
+        AnimatedGradientBackground(Modifier.matchParentSize().hazeSource(hazeState))
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    title = {},
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                )
+            }
+        ) { innerPadding ->
+            when {
+                state.isLoading -> LoadingIndicator(Modifier.fillMaxSize().padding(innerPadding))
+                state.errorMessage != null -> ErrorMessage(
+                    message = state.errorMessage,
+                    onRetry = { onIntent(AlbumDetailIntent.Retry) },
+                    modifier = Modifier.fillMaxSize().padding(innerPadding)
+                )
 
-            state.album != null -> AlbumDetailContent(
-                album = state.album,
-                modifier = Modifier.fillMaxSize().padding(innerPadding)
-            )
+                state.album != null -> AlbumDetailContent(
+                    album = state.album,
+                    hazeState = hazeState,
+                    modifier = Modifier.fillMaxSize().padding(innerPadding)
+                )
+            }
         }
     }
 }
@@ -118,42 +132,44 @@ private fun ErrorMessage(message: String, onRetry: () -> Unit, modifier: Modifie
 }
 
 @Composable
-private fun AlbumDetailContent(album: AlbumDetail, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.verticalScroll(rememberScrollState()).padding(Spacing.large)) {
-        val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
-        AsyncImage(
-            model = album.coverArtUrl(),
-            contentDescription = null, // decorative — title/artist are already read by the screen
-            placeholder = placeholder,
-            error = placeholder,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .size(IconSize.albumArtLarge)
-                .clip(RoundedCornerShape(Spacing.small))
-        )
-        Text(
-            text = album.title,
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(top = Spacing.medium)
-        )
-        Text(text = album.artistName, style = MaterialTheme.typography.titleMedium)
-        AlbumTypeAndYear(album, modifier = Modifier.padding(top = Spacing.medium))
-        if (album.genres.isNotEmpty()) {
-            Text(
-                text = stringResource(R.string.genres_format, album.genres.joinToString()),
-                modifier = Modifier.padding(top = Spacing.small)
+private fun AlbumDetailContent(album: AlbumDetail, hazeState: HazeState, modifier: Modifier = Modifier) {
+    CoverCard(hazeState = hazeState, modifier = modifier) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(Spacing.large)) {
+            val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
+            AsyncImage(
+                model = album.coverArtUrl(),
+                contentDescription = null, // decorative — title/artist are already read by the screen
+                placeholder = placeholder,
+                error = placeholder,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .size(IconSize.albumArtLarge)
+                    .clip(RoundedCornerShape(Spacing.small))
             )
-        }
-        val ratingValue = album.ratingValue
-        if (ratingValue != null) {
             Text(
-                text = stringResource(R.string.rating_format, ratingValue, album.ratingVotesCount),
-                modifier = Modifier.padding(top = Spacing.small)
+                text = album.title,
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(top = Spacing.medium)
             )
-        }
-        if (album.tracks.isNotEmpty()) {
-            Tracklist(album.tracks, modifier = Modifier.padding(top = Spacing.large))
+            Text(text = album.artistName, style = MaterialTheme.typography.titleMedium)
+            AlbumTypeAndYear(album, modifier = Modifier.padding(top = Spacing.medium))
+            if (album.genres.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.genres_format, album.genres.joinToString()),
+                    modifier = Modifier.padding(top = Spacing.small)
+                )
+            }
+            val ratingValue = album.ratingValue
+            if (ratingValue != null) {
+                Text(
+                    text = stringResource(R.string.rating_format, ratingValue, album.ratingVotesCount),
+                    modifier = Modifier.padding(top = Spacing.small)
+                )
+            }
+            if (album.tracks.isNotEmpty()) {
+                Tracklist(album.tracks, modifier = Modifier.padding(top = Spacing.large))
+            }
         }
     }
 }
