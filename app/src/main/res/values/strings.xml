@@ -30,4 +30,5 @@
     <string name="album_detail_default_title">Album</string>
     <string name="genres_format">Genres: %1$s</string>
     <string name="rating_format">%1$.1f / 5 (%2$d ratings)</string>
+    <string name="tracklist_title">Tracklist</string>
 </resources>

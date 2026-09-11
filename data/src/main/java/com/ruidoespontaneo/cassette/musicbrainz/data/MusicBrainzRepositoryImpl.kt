@@ -3,9 +3,11 @@ package com.ruidoespontaneo.cassette.musicbrainz.data
 import com.ruidoespontaneo.cassette.musicbrainz.data.api.MusicBrainzApi
 import com.ruidoespontaneo.cassette.musicbrainz.data.model.ReleaseDto
 import com.ruidoespontaneo.cassette.musicbrainz.data.model.ReleaseGroupDetailDto
+import com.ruidoespontaneo.cassette.musicbrainz.data.model.ReleaseWithMediaDto
 import com.ruidoespontaneo.cassette.musicbrainz.domain.MusicBrainzRepository
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
+import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -44,7 +46,8 @@ class MusicBrainzRepositoryImpl @Inject constructor(
 
     override suspend fun getAlbumDetail(id: String): Result<AlbumDetail> {
         return try {
-            Result.success(api.getReleaseGroup(id).toDomain())
+            val album = api.getReleaseGroup(id).toDomain()
+            Result.success(album.copy(tracks = getTracks(id)))
         } catch (e: CancellationException) {
             // Let structured concurrency cancel this coroutine instead of
             // reporting cancellation as a lookup failure.
@@ -52,6 +55,23 @@ class MusicBrainzRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "MusicBrainz release-group lookup failed for %s", id)
             Result.failure(e)
+        }
+    }
+
+    /**
+     * Tracklist for release group [releaseGroupId], taken from one of its releases — a release
+     * group has no tracks of its own (see [MusicBrainzApi.getReleasesForReleaseGroup]). Falls
+     * back to an empty list rather than failing the whole album-detail load, since a tracklist
+     * is a nice-to-have on top of the release group's own metadata.
+     */
+    private suspend fun getTracks(releaseGroupId: String): List<Track> {
+        return try {
+            api.getReleasesForReleaseGroup(releaseGroupId).releases.firstOrNull()?.toTracks().orEmpty()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "MusicBrainz tracklist lookup failed for release group %s", releaseGroupId)
+            emptyList()
         }
     }
 
@@ -72,6 +92,12 @@ class MusicBrainzRepositoryImpl @Inject constructor(
         ratingValue = rating?.value,
         ratingVotesCount = rating?.votesCount ?: 0
     )
+
+    // Most releases have a single medium (disc); flattening keeps a multi-disc release's
+    // tracks in position order without the app needing to know about discs at all.
+    private fun ReleaseWithMediaDto.toTracks(): List<Track> = media.flatMap { medium ->
+        medium.tracks.map { track -> Track(position = track.position, title = track.title, lengthMs = track.length) }
+    }
 
     private fun ReleaseDto.toDomain() = Album(
         id = id,
