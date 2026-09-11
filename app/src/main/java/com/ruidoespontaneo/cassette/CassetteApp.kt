@@ -10,8 +10,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.ruidoespontaneo.cassette.albumdetail.presentation.ALBUM_DETAIL_ARG_ALBUM_ID
-import com.ruidoespontaneo.cassette.albumdetail.presentation.AlbumDetailScreen
+import com.ruidoespontaneo.cassette.albumpager.presentation.ALBUM_PAGER_ARG_ALBUM_ID
+import com.ruidoespontaneo.cassette.albumpager.presentation.ALBUM_PAGER_ARG_DAY
+import com.ruidoespontaneo.cassette.albumpager.presentation.ALBUM_PAGER_ARG_MONTH
+import com.ruidoespontaneo.cassette.albumpager.presentation.AlbumPagerScreen
 import com.ruidoespontaneo.cassette.auth.presentation.LoginScreen
 import com.ruidoespontaneo.cassette.dayinhistory.presentation.OneDayLikeTodayScreen
 import com.ruidoespontaneo.cassette.notifications.presentation.NotificationsScreen
@@ -20,9 +22,12 @@ import java.time.format.DateTimeFormatter
 const val ROUTE_ONE_DAY_LIKE_TODAY = "oneDayLikeToday"
 const val ROUTE_LOGIN = "login"
 const val ROUTE_NOTIFICATIONS = "notifications"
-const val ROUTE_ALBUM_DETAIL = "albumDetail/{$ALBUM_DETAIL_ARG_ALBUM_ID}"
 
-fun albumDetailRoute(albumId: String) = "albumDetail/$albumId"
+const val ROUTE_ALBUM_DETAIL =
+    "albumDetail/{$ALBUM_PAGER_ARG_MONTH}/{$ALBUM_PAGER_ARG_DAY}/{$ALBUM_PAGER_ARG_ALBUM_ID}"
+
+/** [albumId] is which album the pager should open on — every album released on [month]/[day] is swipeable from there. */
+fun albumDetailRoute(month: Int, day: Int, albumId: String) = "albumDetail/$month/$day/$albumId"
 
 @Composable
 fun CassetteApp(dayFormatter: DateTimeFormatter) {
@@ -39,14 +44,20 @@ fun CassetteApp(dayFormatter: DateTimeFormatter) {
             composable(ROUTE_ONE_DAY_LIKE_TODAY) {
                 OneDayLikeTodayScreen(
                     dayFormatter = dayFormatter,
-                    onAlbumClick = { albumId -> navController.navigate(albumDetailRoute(albumId)) }
+                    onAlbumClick = { day, albumId ->
+                        navController.navigate(albumDetailRoute(day.monthValue, day.dayOfMonth, albumId))
+                    }
                 )
             }
             composable(
                 ROUTE_ALBUM_DETAIL,
-                arguments = listOf(navArgument(ALBUM_DETAIL_ARG_ALBUM_ID) { type = NavType.StringType })
+                arguments = listOf(
+                    navArgument(ALBUM_PAGER_ARG_MONTH) { type = NavType.IntType },
+                    navArgument(ALBUM_PAGER_ARG_DAY) { type = NavType.IntType },
+                    navArgument(ALBUM_PAGER_ARG_ALBUM_ID) { type = NavType.StringType }
+                )
             ) {
-                AlbumDetailScreen(onBack = { navController.popBackStack() })
+                AlbumPagerScreen(onBack = { navController.popBackStack() })
             }
             composable(ROUTE_LOGIN) {
                 // Profile is a permanent tab, not a pushed destination, so there's nothing to
