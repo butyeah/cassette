@@ -55,7 +55,7 @@ import java.util.Locale
 
 @Composable
 fun OneDayLikeTodayScreen(
-    onAlbumClick: (String) -> Unit,
+    onAlbumClick: (MonthDay, String) -> Unit,
     modifier: Modifier = Modifier,
     dayFormatter: DateTimeFormatter,
     viewModel: OneDayLikeTodayViewModel = hiltViewModel()
@@ -74,7 +74,7 @@ fun OneDayLikeTodayScreen(
 private fun OneDayLikeTodayScreenContent(
     state: OneDayLikeTodayUiState,
     onIntent: (OneDayLikeTodayIntent) -> Unit,
-    onAlbumClick: (String) -> Unit,
+    onAlbumClick: (MonthDay, String) -> Unit,
     dayFormatter: DateTimeFormatter,
     modifier: Modifier = Modifier
 ) {
@@ -102,7 +102,7 @@ private fun OneDayLikeTodayScreenContent(
 
             else -> AlbumsByYearList(
                 groups = state.albumsByYear,
-                onAlbumClick = onAlbumClick,
+                onAlbumClick = { albumId -> onAlbumClick(state.day, albumId) },
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -247,7 +247,7 @@ private fun OneDayLikeTodayScreenPreview(
         OneDayLikeTodayScreenContent(
             state = state,
             onIntent = {},
-            onAlbumClick = {},
+            onAlbumClick = { _, _ -> },
             dayFormatter = previewDayFormatter
         )
     }

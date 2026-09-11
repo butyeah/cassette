@@ -67,7 +67,7 @@ private fun AlbumDetailScreenContent(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(state.album?.title ?: stringResource(R.string.album_detail_default_title)) },
+                title = {},
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
