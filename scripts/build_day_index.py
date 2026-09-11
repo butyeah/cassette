@@ -138,10 +138,23 @@ def make_ssl_context() -> ssl.SSLContext:
     return ssl.create_default_context()
 
 
+# How long a single socket read may block before it's treated as a stalled connection rather
+# than a slow-but-alive one — without this, a connection that goes silent mid-transfer (server or
+# intermediate NAT/proxy drops the stream without ever sending FIN/RST) hangs the read() syscall
+# forever: the OS still reports the TCP connection as ESTABLISHED, CPU sits at 0%, and nothing
+# in the process ever raises — it just looks stuck indefinitely with no error to react to.
+SOCKET_TIMEOUT_SECONDS = 60
+# How many times to retry one archive's download+extraction after a stall/network error before
+# giving up on it entirely.
+MAX_DOWNLOAD_ATTEMPTS = 5
+
+
 def resolve_dump_base_url(export_base_url: str, ssl_context: ssl.SSLContext) -> str:
     """LATEST is a plain-text file (not a directory alias) containing the
     current dated export directory's name, e.g. `20260909-002431`."""
-    with urllib.request.urlopen(f"{export_base_url}/LATEST", context=ssl_context) as resp:
+    with urllib.request.urlopen(
+        f"{export_base_url}/LATEST", context=ssl_context, timeout=SOCKET_TIMEOUT_SECONDS
+    ) as resp:
         latest_dir = resp.read().decode("ascii").strip()
     return f"{export_base_url}/{latest_dir}"
 
@@ -159,29 +172,67 @@ def download_tables(dump_base_url: str, raw_dir: Path, ssl_context: ssl.SSLConte
     archives_needed = {TABLE_ARCHIVES[t] for t in missing}
     for archive in sorted(archives_needed):
         wanted_from_archive = {t for t in missing if TABLE_ARCHIVES[t] == archive}
-        archive_url = f"{dump_base_url}/{archive}"
-        print(f"Downloading and extracting {sorted(wanted_from_archive)} from {archive_url} ...")
-        with urllib.request.urlopen(archive_url, context=ssl_context) as response:
-            with tarfile.open(fileobj=response, mode="r|bz2") as tar:
-                for member in tar:
-                    name = Path(member.name).name
-                    if name not in wanted_from_archive:
-                        continue
-                    extracted = tar.extractfile(member)
-                    if extracted is None:
-                        continue
-                    dest = raw_dir / name
-                    with open(dest, "wb") as out:
-                        _copy_stream(extracted, out)
-                    print(f"  extracted {name} ({dest.stat().st_size:,} bytes)")
-                    wanted_from_archive.discard(name)
-                    missing.discard(name)
-                    if not wanted_from_archive:
-                        break  # stop reading this archive early
-        if wanted_from_archive:
-            raise RuntimeError(f"Never found these tables in {archive}: {sorted(wanted_from_archive)}")
+        still_missing = download_archive(dump_base_url, archive, raw_dir, wanted_from_archive, ssl_context)
+        missing -= (wanted_from_archive - still_missing)
+        if still_missing:
+            raise RuntimeError(f"Never found these tables in {archive}: {sorted(still_missing)}")
     if missing:
         raise RuntimeError(f"Never found these tables in any archive: {sorted(missing)}")
+
+
+def download_archive(
+    dump_base_url: str,
+    archive: str,
+    raw_dir: Path,
+    wanted_from_archive: set[str],
+    ssl_context: ssl.SSLContext
+) -> set[str]:
+    """Downloads+extracts [wanted_from_archive] from one dump archive, retrying up to
+    [MAX_DOWNLOAD_ATTEMPTS] times on a stalled/dropped connection (a [SOCKET_TIMEOUT_SECONDS]
+    read timeout is what turns a silent hang into a retriable error in the first place — see
+    its comment).
+
+    @return whichever of [wanted_from_archive] are still missing after all retries — empty if
+    every one was found. [wanted_from_archive] itself is read-only here.
+    """
+    archive_url = f"{dump_base_url}/{archive}"
+    still_wanted = set(wanted_from_archive)
+    for attempt in range(1, MAX_DOWNLOAD_ATTEMPTS + 1):
+        if not still_wanted:
+            break
+        print(f"Downloading and extracting {sorted(still_wanted)} from {archive_url} (attempt {attempt}) ...")
+        in_progress_dest: Path | None = None
+        try:
+            with urllib.request.urlopen(archive_url, context=ssl_context, timeout=SOCKET_TIMEOUT_SECONDS) as response:
+                with tarfile.open(fileobj=response, mode="r|bz2") as tar:
+                    for member in tar:
+                        name = Path(member.name).name
+                        if name not in still_wanted:
+                            continue
+                        extracted = tar.extractfile(member)
+                        if extracted is None:
+                            continue
+                        dest = raw_dir / name
+                        in_progress_dest = dest
+                        with open(dest, "wb") as out:
+                            _copy_stream(extracted, out)
+                        in_progress_dest = None
+                        print(f"  extracted {name} ({dest.stat().st_size:,} bytes)")
+                        still_wanted.discard(name)
+                        if not still_wanted:
+                            break  # stop reading this archive early
+        except (OSError, TimeoutError, tarfile.TarError) as e:
+            # A file left mid-write when the stall/error hit is truncated, not complete — leaving
+            # it in place would make the *next* attempt's existence check think it's done.
+            if in_progress_dest is not None:
+                in_progress_dest.unlink(missing_ok=True)
+            if attempt == MAX_DOWNLOAD_ATTEMPTS:
+                raise RuntimeError(
+                    f"Giving up on {archive} after {MAX_DOWNLOAD_ATTEMPTS} attempts — still missing "
+                    f"{sorted(still_wanted)}. Last error: {e!r}"
+                ) from e
+            print(f"  {e!r} — retrying ({MAX_DOWNLOAD_ATTEMPTS - attempt} attempt(s) left)")
+    return still_wanted
 
 
 def _copy_stream(src: BinaryIO, dst: BinaryIO, chunk_size: int = 1024 * 1024) -> None:
