@@ -44,6 +44,7 @@ import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
+import com.ruidoespontaneo.cassette.ui.theme.AnimatedGradientBackground
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
 import com.ruidoespontaneo.cassette.ui.theme.Spacing
@@ -78,33 +79,36 @@ private fun OneDayLikeTodayScreenContent(
     dayFormatter: DateTimeFormatter,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxSize()) {
-        DayHeader(
-            day = state.day,
-            onPrevious = { onIntent(OneDayLikeTodayIntent.PreviousDay) },
-            onNext = { onIntent(OneDayLikeTodayIntent.NextDay) },
-            onDateClick = { onIntent(OneDayLikeTodayIntent.ToggleCalendar) },
-            dayFormatter = dayFormatter
-        )
-        if (BuildConfig.DEBUG && state.isCalendarExpanded) {
-            DayCalendar(
+    Box(modifier = modifier.fillMaxSize()) {
+        AnimatedGradientBackground(Modifier.matchParentSize())
+        Column(modifier = Modifier.fillMaxSize()) {
+            DayHeader(
                 day = state.day,
-                onDaySelected = { onIntent(OneDayLikeTodayIntent.SelectDate(it)) }
+                onPrevious = { onIntent(OneDayLikeTodayIntent.PreviousDay) },
+                onNext = { onIntent(OneDayLikeTodayIntent.NextDay) },
+                onDateClick = { onIntent(OneDayLikeTodayIntent.ToggleCalendar) },
+                dayFormatter = dayFormatter
             )
-        }
-        when {
-            state.isLoading -> LoadingIndicator(Modifier.fillMaxSize())
-            state.errorMessage != null -> ErrorMessage(
-                message = state.errorMessage,
-                onRetry = { onIntent(OneDayLikeTodayIntent.Retry) },
-                modifier = Modifier.fillMaxSize()
-            )
+            if (BuildConfig.DEBUG && state.isCalendarExpanded) {
+                DayCalendar(
+                    day = state.day,
+                    onDaySelected = { onIntent(OneDayLikeTodayIntent.SelectDate(it)) }
+                )
+            }
+            when {
+                state.isLoading -> LoadingIndicator(Modifier.fillMaxSize())
+                state.errorMessage != null -> ErrorMessage(
+                    message = state.errorMessage,
+                    onRetry = { onIntent(OneDayLikeTodayIntent.Retry) },
+                    modifier = Modifier.fillMaxSize()
+                )
 
-            else -> AlbumsByYearList(
-                groups = state.albumsByYear,
-                onAlbumClick = { albumId -> onAlbumClick(state.day, albumId) },
-                modifier = Modifier.fillMaxSize()
-            )
+                else -> AlbumsByYearList(
+                    groups = state.albumsByYear,
+                    onAlbumClick = { albumId -> onAlbumClick(state.day, albumId) },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
     }
 }
