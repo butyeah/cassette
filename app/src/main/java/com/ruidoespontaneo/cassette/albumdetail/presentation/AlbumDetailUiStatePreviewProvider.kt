@@ -2,6 +2,7 @@ package com.ruidoespontaneo.cassette.albumdetail.presentation
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
+import com.ruidoespontaneo.cassette.musicbrainz.domain.model.StreamingLinks
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
 import java.time.LocalDate
 
@@ -20,6 +21,11 @@ private val previewAlbum = AlbumDetail(
         Track(position = 3, title = "Space Dementia", lengthMs = 344_000),
         // No recorded length, to exercise the row without a duration.
         Track(position = 4, title = "Hyper Music", lengthMs = null)
+    ),
+    streamingLinks = StreamingLinks(
+        spotify = "https://open.spotify.com/album/preview",
+        appleMusic = "https://music.apple.com/us/album/preview"
+        // No YouTube Music link, to exercise the row with only some services present.
     )
 )
 

@@ -46,8 +46,7 @@ class MusicBrainzRepositoryImpl @Inject constructor(
 
     override suspend fun getAlbumDetail(id: String): Result<AlbumDetail> {
         return try {
-            val album = api.getReleaseGroup(id).toDomain()
-            Result.success(album.copy(tracks = getTracks(id)))
+            Result.success(api.getReleaseGroup(id).toDomain())
         } catch (e: CancellationException) {
             // Let structured concurrency cancel this coroutine instead of
             // reporting cancellation as a lookup failure.
@@ -59,19 +58,21 @@ class MusicBrainzRepositoryImpl @Inject constructor(
     }
 
     /**
-     * Tracklist for release group [releaseGroupId], taken from one of its releases — a release
-     * group has no tracks of its own (see [MusicBrainzApi.getReleasesForReleaseGroup]). Falls
-     * back to an empty list rather than failing the whole album-detail load, since a tracklist
-     * is a nice-to-have on top of the release group's own metadata.
+     * Tracklist for release group [id], taken from one of its releases — a release group has no
+     * tracks of its own (see [MusicBrainzApi.getReleasesForReleaseGroup]). This is the live
+     * fallback [GetAlbumDetailUseCase][com.ruidoespontaneo.cassette.musicbrainz.domain.usecase.GetAlbumDetailUseCase]
+     * uses when the offline Firestore cache has nothing for [id] — see
+     * [com.ruidoespontaneo.cassette.musicbrainz.domain.AlbumTracksRepository].
      */
-    private suspend fun getTracks(releaseGroupId: String): List<Track> {
+    override suspend fun getAlbumTracks(id: String): Result<List<Track>> {
         return try {
-            api.getReleasesForReleaseGroup(releaseGroupId).releases.firstOrNull()?.toTracks().orEmpty()
+            val tracks = api.getReleasesForReleaseGroup(id).releases.firstOrNull()?.toTracks().orEmpty()
+            Result.success(tracks)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "MusicBrainz tracklist lookup failed for release group %s", releaseGroupId)
-            emptyList()
+            Timber.e(e, "MusicBrainz tracklist lookup failed for release group %s", id)
+            Result.failure(e)
         }
     }
 

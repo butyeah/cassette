@@ -2,6 +2,7 @@ package com.ruidoespontaneo.cassette.musicbrainz.domain
 
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
+import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
 import java.time.LocalDate
 
 interface MusicBrainzRepository {
@@ -31,4 +32,15 @@ interface MusicBrainzRepository {
      * decide how to surface that to the UI.
      */
     suspend fun getAlbumDetail(id: String): Result<AlbumDetail>
+
+    /**
+     * Live tracklist lookup for album (release group) [id] — a release-group has no tracks of
+     * its own, so this browses that group's releases and picks one to represent it. Used as a
+     * fallback when [AlbumTracksRepository.getCachedExtras] has nothing for [id] (not yet
+     * backfilled, or added to MusicBrainz after the last offline dump).
+     *
+     * @return [Result.success] with the tracklist (empty if MusicBrainz has none), or
+     * [Result.failure] on a network or HTTP error.
+     */
+    suspend fun getAlbumTracks(id: String): Result<List<Track>>
 }

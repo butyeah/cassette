@@ -27,5 +27,7 @@ data class AlbumDetail(
      * data, or the lookup for it failed — see
      * [com.ruidoespontaneo.cassette.musicbrainz.domain.MusicBrainzRepository.getAlbumDetail].
      */
-    val tracks: List<Track> = emptyList()
+    val tracks: List<Track> = emptyList(),
+    /** See [StreamingLinks] — empty (all fields `null`) when none are cached for this album. */
+    val streamingLinks: StreamingLinks = StreamingLinks()
 )
