@@ -29,25 +29,36 @@ import kotlin.math.sin
  * Each blob's angle is its own [State], read inside [Canvas]'s draw lambda rather than in this
  * composable's body — Compose treats that as a draw-phase invalidation, so every animation frame
  * just redraws this layer instead of recomposing whatever it sits behind.
+ *
+ * [colors] overrides the three blobs' colors, most-dominant first (see [dominantColors]) — e.g.
+ * an album's own cover art instead of the theme palette. Left `null` (the default), or shorter
+ * than three colors, falls back to the theme per missing slot, so a partial list is never wrong,
+ * just less colorful than a full one.
  */
 @Composable
-fun AnimatedGradientBackground(modifier: Modifier = Modifier) {
+fun AnimatedGradientBackground(modifier: Modifier = Modifier, colors: List<Color>? = null) {
     val transition = rememberInfiniteTransition(label = "gradientBackground")
+    val themeColors = listOf(
+        MaterialTheme.colorScheme.primary,
+        MaterialTheme.colorScheme.secondary,
+        MaterialTheme.colorScheme.tertiary
+    )
+    val blobColor = { index: Int -> colors?.getOrNull(index) ?: themeColors[index] }
     val blobs = listOf(
         Blob(
             angle = transition.orbitAngle(periodMillis = 9_000, label = "blob1"),
             anchor = Offset(0.3f, 0.3f),
-            color = MaterialTheme.colorScheme.primary
+            color = blobColor(0)
         ),
         Blob(
             angle = transition.orbitAngle(periodMillis = 13_000, label = "blob2"),
             anchor = Offset(0.7f, 0.5f),
-            color = MaterialTheme.colorScheme.secondary
+            color = blobColor(1)
         ),
         Blob(
             angle = transition.orbitAngle(periodMillis = 17_000, label = "blob3"),
             anchor = Offset(0.5f, 0.8f),
-            color = MaterialTheme.colorScheme.tertiary
+            color = blobColor(2)
         )
     )
 
