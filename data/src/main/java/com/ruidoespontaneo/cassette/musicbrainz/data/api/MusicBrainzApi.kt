@@ -1,5 +1,6 @@
 package com.ruidoespontaneo.cassette.musicbrainz.data.api
 
+import com.ruidoespontaneo.cassette.musicbrainz.data.model.ReleaseBrowseResponse
 import com.ruidoespontaneo.cassette.musicbrainz.data.model.ReleaseGroupDetailDto
 import com.ruidoespontaneo.cassette.musicbrainz.data.model.ReleaseSearchResponse
 import retrofit2.http.GET
@@ -41,4 +42,20 @@ interface MusicBrainzApi {
         @Path("id") id: String,
         @Query("inc") inc: String = "artist-credits+genres+ratings"
     ): ReleaseGroupDetailDto
+
+    /**
+     * Releases belonging to release group [releaseGroupId], each with its tracklist.
+     * https://musicbrainz.org/doc/MusicBrainz_API#Browse
+     *
+     * A release group has no tracks of its own — different releases of the same group
+     * (reissues, remasters, regional editions) can have different tracklists — so
+     * [com.ruidoespontaneo.cassette.musicbrainz.data.MusicBrainzRepositoryImpl] picks one
+     * of these to represent the group's tracklist on [com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail].
+     */
+    @GET("release")
+    suspend fun getReleasesForReleaseGroup(
+        @Query("release-group") releaseGroupId: String,
+        @Query("inc") inc: String = "recordings",
+        @Query("status") status: String = "official"
+    ): ReleaseBrowseResponse
 }
