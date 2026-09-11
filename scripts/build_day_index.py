@@ -41,6 +41,19 @@ musicbrainz-server as of 2026-09):
                                  "free streaming" release-group-url links and
                                  classify them (Spotify/Apple Music/YouTube
                                  Music) by the URL's host
+  - genre                       the curated list of tag names that count as
+                                 genres (genres are "promoted" tags, not a
+                                 separate namespace — see the genre_id/tag
+                                 join in build_genre_index)
+  - tag                         id -> tag name (free-form folksonomy tags;
+                                 only the ones matching a `genre` name apply)
+  - release_group_tag           release_group <-> tag, with a net vote count
+
+Genres, title/artist/release-date and tracks/streaming-links together cover
+everything `MusicBrainzRepository.getAlbumDetail`'s live `getReleaseGroup`
+call returns except its rating (rating has no offline snapshot — it changes
+too often to freeze into a dump, so it's deliberately left out of this
+cache; AlbumDetailScreen just shows no rating for a cache-served album).
 
 Usage:
     python3 scripts/build_day_index.py [--export-base-url URL] [--raw-dir DIR] [--output PATH]
@@ -48,8 +61,8 @@ Usage:
 Safe to re-run: the download step is skipped if the raw table files already
 exist in --raw-dir. Downloads mbdump-derived.tar.bz2 (~500MB compressed) and
 mbdump.tar.bz2 (~7GB compressed, now streamed further into it for the
-release/medium/track/url/link tables above) on first run — that's the one
-genuinely slow/expensive step here.
+release/medium/track/url/link/genre/tag tables above) on first run — that's
+the one genuinely slow/expensive step here.
 """
 from __future__ import annotations
 
@@ -84,6 +97,9 @@ TABLE_ARCHIVES: dict[str, str] = {
     "l_release_group_url": "mbdump.tar.bz2",
     "link": "mbdump.tar.bz2",
     "link_type": "mbdump.tar.bz2",
+    "genre": "mbdump.tar.bz2",
+    "tag": "mbdump.tar.bz2",
+    "release_group_tag": "mbdump.tar.bz2",
 }
 # Resolved at runtime from release_group_primary_type/release_status/link_type
 # themselves (not hardcoded as magic ids) in case MusicBrainz ever renumbers
@@ -99,6 +115,10 @@ STREAMING_HOSTS = {
     "music.apple.com": "appleMusic",
     "music.youtube.com": "youtubeMusic",
 }
+# A tag only counts as a genre on a release group once its net vote count
+# (upvotes minus downvotes) is positive — matches how MusicBrainz's own
+# `inc=genres` filters folksonomy tags down to genres with real consensus.
+MIN_GENRE_TAG_COUNT = 1
 
 
 def make_ssl_context() -> ssl.SSLContext:
@@ -294,6 +314,7 @@ def build_index(raw_dir: Path, output: Path) -> None:
 
     build_track_index(raw_dir, wanted_rg_ids, conn)
     build_streaming_link_index(raw_dir, wanted_rg_ids, conn)
+    build_genre_index(raw_dir, wanted_rg_ids, conn)
 
     conn.close()
     print(f"Wrote {output}")
@@ -471,6 +492,60 @@ def build_streaming_link_index(raw_dir: Path, wanted_rg_ids: dict[str, str], con
     conn.commit()
     albums_with_links = len({rg_gid for rg_gid, _service in best})
     print(f"Wrote {len(batch):,} streaming links for {albums_with_links:,} albums.")
+
+
+def build_genre_index(raw_dir: Path, wanted_rg_ids: dict[str, str], conn: sqlite3.Connection) -> None:
+    """Writes the `genre` table: each release group's genres, from MusicBrainz's own
+    release_group_tag folksonomy — genres are simply the subset of tags whose name is also a
+    curated `genre` entity, with a positive net vote count (see MIN_GENRE_TAG_COUNT) — the same
+    filter `inc=genres` applies live. (Table name clash note: this sqlite output table is also
+    called `genre`, like the source mbdump table it's derived from, but holds
+    (release_group_gid, name) pairs rather than the curated genre catalog itself.)"""
+    print("Loading genre (the curated genre-name catalog) ...")
+    genre_names: set[str] = set()
+    for row in read_copy_file(raw_dir / "genre"):
+        name = row[2]
+        if name is not None:
+            genre_names.add(name)
+    print(f"  {len(genre_names):,} curated genre names")
+
+    print("Loading tag (keeping only tags that are also genre names) ...")
+    wanted_tag_ids: dict[str, str] = {}  # tag id -> genre name
+    for row in read_copy_file(raw_dir / "tag"):
+        tag_id, name = row[0], row[1]
+        if name in genre_names:
+            wanted_tag_ids[tag_id] = name
+    print(f"  {len(wanted_tag_ids):,} matching tags")
+
+    conn.execute(
+        """
+        CREATE TABLE genre (
+            release_group_gid TEXT NOT NULL,
+            name TEXT NOT NULL,
+            count INTEGER NOT NULL
+        )
+        """
+    )
+
+    print("Loading release_group_tag and writing the genre index ...")
+    batch: list[tuple[str, str, int]] = []
+    kept = 0
+    for row in read_copy_file(raw_dir / "release_group_tag"):
+        rg_id, tag_id, count = row[0], row[1], row[2]
+        rg_gid = wanted_rg_ids.get(rg_id)
+        genre_name = wanted_tag_ids.get(tag_id)
+        if rg_gid is None or genre_name is None:
+            continue
+        count_int = int(count)
+        if count_int < MIN_GENRE_TAG_COUNT:
+            continue
+        batch.append((rg_gid, genre_name, count_int))
+        kept += 1
+    conn.executemany("INSERT INTO genre VALUES (?, ?, ?)", batch)
+    conn.execute("CREATE INDEX idx_genre_release_group_gid ON genre (release_group_gid)")
+    conn.commit()
+    albums_with_genres = len({rg_gid for rg_gid, _name, _count in batch})
+    print(f"Wrote {kept:,} genre tags for {albums_with_genres:,} albums.")
 
 
 def classify_streaming_service(url: str) -> str | None:

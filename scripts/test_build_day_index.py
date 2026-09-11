@@ -146,6 +146,27 @@ def _write_fixtures(raw_dir: Path) -> None:
         "9005\tu-gid-9005\thttps://bandcamp.com/album/def\n"
     )
 
+    # genre: id, gid, name, comment, edits_pending, last_updated
+    (raw_dir / "genre").write_text(
+        "1\tgenre-gid-1\talternative rock\t\t0\t2020-01-01\n"
+        "2\tgenre-gid-2\tspace rock\t\t0\t2020-01-01\n"
+    )
+    # tag: id, name, ref_count
+    (raw_dir / "tag").write_text(
+        "10\talternative rock\t5\n"
+        "11\tspace rock\t3\n"
+        # not a genre name — must never end up in the genre index, however it's tagged
+        "12\t90s\t8\n"
+    )
+    # release_group_tag: release_group, tag, count, last_updated
+    (raw_dir / "release_group_tag").write_text(
+        "100\t10\t5\t2020-01-01\n"  # rg 100 -> alternative rock (kept, positive count)
+        "100\t11\t1\t2020-01-01\n"  # rg 100 -> space rock (kept, positive count)
+        "100\t12\t9\t2020-01-01\n"  # not a genre tag — dropped regardless of count
+        "102\t10\t0\t2020-01-01\n"  # net-zero count — no consensus, dropped
+        "999\t10\t5\t2020-01-01\n"  # rg 999 isn't a wanted release group — dropped
+    )
+
 
 class BuildIndexTest(unittest.TestCase):
     def test_join_filters_and_writes_expected_albums(self):
@@ -218,6 +239,29 @@ class BuildIndexTest(unittest.TestCase):
                     ("rg-gid-100", "appleMusic", "https://music.apple.com/us/album/xyz"),
                     ("rg-gid-100", "spotify", "https://open.spotify.com/album/abc"),
                     ("rg-gid-102", "youtubeMusic", "https://music.youtube.com/playlist?list=abc"),
+                ],
+                rows,
+            )
+
+    def test_genre_table_keeps_only_positive_count_genre_tags(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            raw_dir = Path(tmp) / "raw"
+            raw_dir.mkdir()
+            output = Path(tmp) / "day_index.sqlite"
+            _write_fixtures(raw_dir)
+
+            build_index(raw_dir, output)
+
+            conn = sqlite3.connect(output)
+            rows = conn.execute(
+                "SELECT release_group_gid, name, count FROM genre ORDER BY release_group_gid, name"
+            ).fetchall()
+            conn.close()
+
+            self.assertEqual(
+                [
+                    ("rg-gid-100", "alternative rock", 5),
+                    ("rg-gid-100", "space rock", 1),
                 ],
                 rows,
             )
