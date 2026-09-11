@@ -1,6 +1,7 @@
 package com.ruidoespontaneo.cassette.cover.components
 
 import android.graphics.Bitmap
+import android.os.Build
 import androidx.compose.ui.graphics.Color
 import androidx.palette.graphics.Palette
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +16,17 @@ import kotlinx.coroutines.withContext
  * during composition/on the UI thread even for a small, already-downsampled bitmap.
  */
 suspend fun Bitmap.dominantColors(count: Int = 3): List<Color> = withContext(Dispatchers.Default) {
-    Palette.Builder(this@dominantColors).generate()
+    // Image loaders (Coil included) decode into a Bitmap.Config.HARDWARE bitmap by default for
+    // performance — it lives in GPU memory and Palette (like anything calling getPixels())
+    // crashes on it with "pixel access is not supported on Config#HARDWARE bitmaps". Copy to a
+    // readable config first; HARDWARE itself doesn't exist before API 26, so nothing below that
+    // can ever be one.
+    val readableBitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && config == Bitmap.Config.HARDWARE) {
+        copy(Bitmap.Config.ARGB_8888, false)
+    } else {
+        this@dominantColors
+    }
+    Palette.Builder(readableBitmap).generate()
         .swatches
         .sortedByDescending { it.population }
         .take(count)
