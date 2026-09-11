@@ -1,5 +1,6 @@
 package com.ruidoespontaneo.cassette.albumdetail.presentation
 
+import android.graphics.Bitmap
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
@@ -26,9 +27,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -43,9 +47,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import coil3.toBitmap
 import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.cover.components.AnimatedGradientBackground
 import com.ruidoespontaneo.cassette.cover.components.CoverCard
+import com.ruidoespontaneo.cassette.cover.components.dominantColors
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
@@ -93,8 +99,15 @@ private fun AlbumDetailScreenContent(
     val showTitle by remember { derivedStateOf { scrollState.value > revealThresholdPx } }
     val titleAlpha by animateFloatAsState(targetValue = if (showTitle) 1f else 0f, label = "titleAlpha")
 
+    // The background takes on the cover art's own dominant colors once it's decoded — falls back
+    // to AnimatedGradientBackground's theme-colored default (null) until then, or if extraction
+    // comes up short.
+    var coverBitmap by remember(state.album?.id) { mutableStateOf<Bitmap?>(null) }
+    var dominantColors by remember(state.album?.id) { mutableStateOf<List<Color>?>(null) }
+    LaunchedEffect(coverBitmap) { dominantColors = coverBitmap?.dominantColors() }
+
     Box(modifier = modifier.fillMaxSize()) {
-        AnimatedGradientBackground(Modifier.matchParentSize().hazeSource(hazeState))
+        AnimatedGradientBackground(Modifier.matchParentSize().hazeSource(hazeState), colors = dominantColors)
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
@@ -129,6 +142,7 @@ private fun AlbumDetailScreenContent(
                     album = state.album,
                     hazeState = hazeState,
                     scrollState = scrollState,
+                    onCoverLoaded = { coverBitmap = it },
                     modifier = Modifier.fillMaxSize().padding(innerPadding)
                 )
             }
@@ -159,6 +173,7 @@ private fun AlbumDetailContent(
     album: AlbumDetail,
     hazeState: HazeState,
     scrollState: ScrollState,
+    onCoverLoaded: (Bitmap) -> Unit,
     modifier: Modifier = Modifier
 ) {
     CoverCard(hazeState = hazeState, modifier = modifier) {
@@ -170,6 +185,7 @@ private fun AlbumDetailContent(
                 placeholder = placeholder,
                 error = placeholder,
                 contentScale = ContentScale.Crop,
+                onSuccess = { onCoverLoaded(it.result.image.toBitmap()) },
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .size(IconSize.albumArtLarge)
