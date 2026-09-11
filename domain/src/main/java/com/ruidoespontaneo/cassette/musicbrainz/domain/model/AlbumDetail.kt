@@ -21,5 +21,11 @@ data class AlbumDetail(
     val genres: List<String>,
     /** `null` when the album has no community rating yet. */
     val ratingValue: Double?,
-    val ratingVotesCount: Int
+    val ratingVotesCount: Int,
+    /**
+     * Empty when MusicBrainz has no release under this group with track
+     * data, or the lookup for it failed — see
+     * [com.ruidoespontaneo.cassette.musicbrainz.domain.MusicBrainzRepository.getAlbumDetail].
+     */
+    val tracks: List<Track> = emptyList()
 )
