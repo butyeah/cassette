@@ -17,11 +17,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.albumdetail.presentation.AlbumDetailScreen
@@ -68,6 +73,7 @@ private fun AlbumPagerScreenContent(
             albumIds = state.albumIds,
             initialPage = state.initialPage,
             onBack = onBack,
+            onStopPreview = { onIntent(AlbumPagerIntent.StopPreview) },
             modifier = modifier.fillMaxSize()
         )
     }
@@ -78,9 +84,17 @@ private fun AlbumPager(
     albumIds: List<String>,
     initialPage: Int,
     onBack: () -> Unit,
+    onStopPreview: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState(initialPage = initialPage) { albumIds.size }
+    // A preview belongs to the page it was started on, and shouldn't keep playing under another
+    // album's tracklist or with the app in the background.
+    val currentOnStopPreview by rememberUpdatedState(onStopPreview)
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }.collect { currentOnStopPreview() }
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { currentOnStopPreview() }
     HorizontalPager(state = pagerState, modifier = modifier, key = { albumIds[it] }) { page ->
         val albumId = albumIds[page]
         AlbumDetailScreen(
