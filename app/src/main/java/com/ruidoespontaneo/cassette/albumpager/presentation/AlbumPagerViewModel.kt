@@ -2,6 +2,7 @@ package com.ruidoespontaneo.cassette.albumpager.presentation
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewPlayer
 import com.ruidoespontaneo.cassette.core.mvi.MviViewModel
 import com.ruidoespontaneo.cassette.dayinhistory.domain.usecase.GetAlbumsByDayUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,11 +20,16 @@ const val ALBUM_PAGER_ARG_ALBUM_ID = "albumId"
  * HorizontalPager. Fetching each page's own [com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail]
  * (title, tracklist, ...) stays with [com.ruidoespontaneo.cassette.albumdetail.presentation.AlbumDetailViewModel],
  * one instance per page.
+ *
+ * Also owns stopping the shared [PreviewPlayer] when the pager is left, since it's the one
+ * ViewModel that lives exactly as long as the pager's nav destination — the per-page
+ * AlbumDetailViewModels can't tell "paged away" from "still on screen".
  */
 @HiltViewModel
 class AlbumPagerViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val getAlbumsByDayUseCase: GetAlbumsByDayUseCase
+    private val getAlbumsByDayUseCase: GetAlbumsByDayUseCase,
+    private val previewPlayer: PreviewPlayer
 ) : MviViewModel<AlbumPagerUiState, AlbumPagerIntent, AlbumPagerEffect>(
     AlbumPagerUiState()
 ) {
@@ -45,7 +51,13 @@ class AlbumPagerViewModel @Inject constructor(
     override fun onIntent(intent: AlbumPagerIntent) {
         when (intent) {
             AlbumPagerIntent.Retry -> loadAlbumIds()
+            AlbumPagerIntent.StopPreview -> previewPlayer.stop()
         }
+    }
+
+    override fun onCleared() {
+        previewPlayer.stop()
+        super.onCleared()
     }
 
     private fun loadAlbumIds() {

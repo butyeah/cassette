@@ -32,6 +32,20 @@ private val previewAlbum = AlbumDetail(
 class AlbumDetailUiStatePreviewProvider : PreviewParameterProvider<AlbumDetailUiState> {
     override val values = sequenceOf(
         AlbumDetailUiState(isLoading = false, album = previewAlbum),
+        // Previews for all but the last track: one playing, one buffering would need two states,
+        // so this shows "playing" on track 2 with play buttons on 1 and 3 and none on track 4.
+        AlbumDetailUiState(
+            isLoading = false,
+            album = previewAlbum,
+            previews = mapOf(1 to "https://p/1", 2 to "https://p/2", 3 to "https://p/3"),
+            previewPlayback = TrackPlayback(position = 2, isLoading = false)
+        ),
+        AlbumDetailUiState(
+            isLoading = false,
+            album = previewAlbum,
+            previews = mapOf(1 to "https://p/1", 2 to "https://p/2", 3 to "https://p/3"),
+            previewPlayback = TrackPlayback(position = 1, isLoading = true)
+        ),
         AlbumDetailUiState(
             isLoading = false,
             album = previewAlbum.copy(genres = emptyList(), ratingValue = null, tracks = emptyList())

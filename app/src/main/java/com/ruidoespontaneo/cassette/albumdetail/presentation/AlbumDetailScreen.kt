@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,6 +47,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -64,6 +67,7 @@ import com.ruidoespontaneo.cassette.musicbrainz.presentation.asDisplayList
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.durationText
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.hasAny
+import com.ruidoespontaneo.cassette.ui.icons.Pause
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
 import dev.chrisbanes.haze.HazeState
@@ -147,6 +151,9 @@ private fun AlbumDetailScreenContent(
 
                 state.album != null -> AlbumDetailContent(
                     album = state.album,
+                    previews = state.previews,
+                    previewPlayback = state.previewPlayback,
+                    onTogglePreview = { onIntent(AlbumDetailIntent.TogglePreview(it)) },
                     hazeState = hazeState,
                     scrollState = scrollState,
                     onCoverLoaded = { coverBitmap = it },
@@ -178,6 +185,9 @@ private fun ErrorMessage(message: String, onRetry: () -> Unit, modifier: Modifie
 @Composable
 private fun AlbumDetailContent(
     album: AlbumDetail,
+    previews: Map<Int, String>,
+    previewPlayback: TrackPlayback?,
+    onTogglePreview: (trackPosition: Int) -> Unit,
     hazeState: HazeState,
     scrollState: ScrollState,
     onCoverLoaded: (Bitmap) -> Unit,
@@ -222,23 +232,54 @@ private fun AlbumDetailContent(
                 )
             }
             if (album.tracks.isNotEmpty()) {
-                Tracklist(album.tracks, modifier = Modifier.padding(top = Spacing.large))
+                Tracklist(
+                    tracks = album.tracks,
+                    previews = previews,
+                    previewPlayback = previewPlayback,
+                    onTogglePreview = onTogglePreview,
+                    modifier = Modifier.padding(top = Spacing.large)
+                )
             }
         }
     }
 }
 
 @Composable
-private fun Tracklist(tracks: List<Track>, modifier: Modifier = Modifier) {
+private fun Tracklist(
+    tracks: List<Track>,
+    previews: Map<Int, String>,
+    previewPlayback: TrackPlayback?,
+    onTogglePreview: (trackPosition: Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Column(modifier = modifier) {
         Text(text = stringResource(R.string.tracklist_title), style = MaterialTheme.typography.titleMedium)
-        tracks.forEach { track -> TrackRow(track, modifier = Modifier.padding(top = Spacing.small)) }
+        tracks.forEach { track ->
+            TrackRow(
+                track = track,
+                hasPreview = track.position in previews,
+                playback = previewPlayback?.takeIf { it.position == track.position },
+                onTogglePreview = { onTogglePreview(track.position) },
+                modifier = Modifier.padding(top = Spacing.small)
+            )
+        }
     }
 }
 
+/** [playback] is non-null only for the one track whose preview is buffering or playing. */
 @Composable
-private fun TrackRow(track: Track, modifier: Modifier = Modifier) {
-    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+private fun TrackRow(
+    track: Track,
+    hasPreview: Boolean,
+    playback: TrackPlayback?,
+    onTogglePreview: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Text(
             text = "${track.position}. ${track.title}",
             style = MaterialTheme.typography.bodyMedium,
@@ -251,6 +292,29 @@ private fun TrackRow(track: Track, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(start = Spacing.small)
             )
+        }
+        if (hasPreview) {
+            PreviewButton(track.title, playback, onTogglePreview)
+        }
+    }
+}
+
+@Composable
+private fun PreviewButton(trackTitle: String, playback: TrackPlayback?, onClick: () -> Unit) {
+    val description = stringResource(
+        if (playback == null) R.string.play_preview else R.string.stop_preview,
+        trackTitle
+    )
+    // The description sits on the button rather than its icon, since a buffering clip shows a
+    // spinner in the icon's place — and tapping it then stops the clip, same as while playing.
+    IconButton(onClick = onClick, modifier = Modifier.semantics { contentDescription = description }) {
+        when {
+            playback == null -> Icon(Icons.Filled.PlayArrow, contentDescription = null)
+            playback.isLoading -> CircularProgressIndicator(
+                strokeWidth = IconSize.previewSpinnerStroke,
+                modifier = Modifier.size(IconSize.previewSpinner)
+            )
+            else -> Icon(Icons.Filled.Pause, contentDescription = null)
         }
     }
 }

@@ -31,4 +31,6 @@
     <string name="genres_format">Genres: %1$s</string>
     <string name="rating_format">%1$.1f / 5 (%2$d ratings)</string>
     <string name="tracklist_title">Tracklist</string>
+    <string name="play_preview">Play preview of %1$s</string>
+    <string name="stop_preview">Stop preview of %1$s</string>
 </resources>

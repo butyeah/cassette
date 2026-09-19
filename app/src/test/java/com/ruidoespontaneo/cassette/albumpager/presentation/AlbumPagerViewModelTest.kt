@@ -1,6 +1,11 @@
 package com.ruidoespontaneo.cassette.albumpager.presentation
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.ruidoespontaneo.cassette.albumdetail.preview.FakePreviewPlayer
 import com.ruidoespontaneo.cassette.dayinhistory.domain.DayInHistoryRepository
 import com.ruidoespontaneo.cassette.dayinhistory.domain.usecase.GetAlbumsByDayUseCase
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
@@ -102,6 +107,36 @@ class AlbumPagerViewModelTest {
         assertNull(viewModel.state.value.errorMessage)
     }
 
+    @Test
+    fun `StopPreview stops the shared player`() {
+        val player = FakePreviewPlayer()
+        val viewModel = viewModel(initialAlbumId = "late", previewPlayer = player) { _, _ ->
+            Result.success(listOf(late))
+        }
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onIntent(AlbumPagerIntent.StopPreview)
+
+        assertEquals(1, player.stopCount)
+    }
+
+    @Test
+    fun `leaving the pager stops the shared player`() {
+        val player = FakePreviewPlayer()
+        val store = ViewModelStore()
+        val viewModel = ViewModelProvider(
+            store,
+            viewModelFactory { initializer { viewModel(initialAlbumId = "late", previewPlayer = player) { _, _ -> Result.success(listOf(late)) } } }
+        )[AlbumPagerViewModel::class.java]
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(0, player.stopCount)
+
+        store.clear()
+
+        assertEquals(1, player.stopCount)
+        assertNull(viewModel.state.value.errorMessage)
+    }
+
     private fun album(id: String, year: Int) = Album(
         id = id,
         title = "Title",
@@ -112,6 +147,7 @@ class AlbumPagerViewModelTest {
 
     private fun viewModel(
         initialAlbumId: String,
+        previewPlayer: FakePreviewPlayer = FakePreviewPlayer(),
         getAlbumsByDay: suspend (month: Int, day: Int) -> Result<List<Album>>
     ): AlbumPagerViewModel {
         val repository = object : DayInHistoryRepository {
@@ -125,6 +161,6 @@ class AlbumPagerViewModelTest {
                 ALBUM_PAGER_ARG_ALBUM_ID to initialAlbumId
             )
         )
-        return AlbumPagerViewModel(savedStateHandle, GetAlbumsByDayUseCase(repository))
+        return AlbumPagerViewModel(savedStateHandle, GetAlbumsByDayUseCase(repository), previewPlayer)
     }
 }

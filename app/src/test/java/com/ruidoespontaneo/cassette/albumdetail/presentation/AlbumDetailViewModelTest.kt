@@ -1,5 +1,10 @@
 package com.ruidoespontaneo.cassette.albumdetail.presentation
 
+import com.ruidoespontaneo.cassette.albumdetail.preview.FakePreviewPlayer
+import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewPlayback
+import com.ruidoespontaneo.cassette.itunes.domain.ItunesRepository
+import com.ruidoespontaneo.cassette.itunes.domain.model.TrackPreview
+import com.ruidoespontaneo.cassette.itunes.domain.usecase.GetTrackPreviewsUseCase
 import com.ruidoespontaneo.cassette.musicbrainz.domain.AlbumTracksRepository
 import com.ruidoespontaneo.cassette.musicbrainz.domain.MusicBrainzRepository
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
@@ -7,6 +12,7 @@ import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
 import com.ruidoespontaneo.cassette.musicbrainz.domain.usecase.GetAlbumDetailUseCase
 import java.time.LocalDate
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -44,7 +50,10 @@ class AlbumDetailViewModelTest {
         genres = listOf("Rock"),
         ratingValue = 4.0,
         ratingVotesCount = 10,
-        tracks = listOf(Track(position = 1, title = "Track One", lengthMs = 200_000))
+        tracks = listOf(
+            Track(position = 1, title = "Track One", lengthMs = 200_000),
+            Track(position = 2, title = "Track Two", lengthMs = 180_000)
+        )
     )
 
     @Test
@@ -93,9 +102,134 @@ class AlbumDetailViewModelTest {
         assertTrue(viewModel.state.value.errorMessage == null)
     }
 
+    @Test
+    fun `loads previews after the album and keys them by track position`() {
+        val viewModel = viewModel("album-1")
+
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(mapOf(1 to ONE_URL, 2 to TWO_URL), viewModel.state.value.previews)
+    }
+
+    @Test
+    fun `the album is shown before its previews arrive`() {
+        val gate = CompletableDeferred<Unit>()
+        val viewModel = viewModel("album-1", getPreviews = { gate.await(); Result.success(previewsFor(it)) })
+
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(album, viewModel.state.value.album)
+        assertFalse(viewModel.state.value.isLoading)
+        assertTrue(viewModel.state.value.previews.isEmpty())
+
+        gate.complete(Unit)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(2, viewModel.state.value.previews.size)
+    }
+
+    @Test
+    fun `a failed preview lookup leaves the album visible with no previews and no error`() {
+        val viewModel = viewModel("album-1", getPreviews = { Result.failure(IllegalStateException("offline")) })
+
+        dispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertEquals(album, state.album)
+        assertNull(state.errorMessage)
+        assertTrue(state.previews.isEmpty())
+    }
+
+    @Test
+    fun `TogglePreview plays that track's clip`() {
+        val player = FakePreviewPlayer()
+        val viewModel = viewModel("album-1", player = player)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onIntent(AlbumDetailIntent.TogglePreview(2))
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(TWO_URL), player.played)
+        assertEquals(TrackPlayback(position = 2, isLoading = true), viewModel.state.value.previewPlayback)
+    }
+
+    @Test
+    fun `playback reports playing once the player has buffered`() {
+        val player = FakePreviewPlayer()
+        val viewModel = viewModel("album-1", player = player)
+        dispatcher.scheduler.advanceUntilIdle()
+        viewModel.onIntent(AlbumDetailIntent.TogglePreview(1))
+
+        player.setStatus(PreviewPlayback.Status.Playing)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(TrackPlayback(position = 1, isLoading = false), viewModel.state.value.previewPlayback)
+    }
+
+    @Test
+    fun `TogglePreview on the track that is playing stops it`() {
+        val player = FakePreviewPlayer()
+        val viewModel = viewModel("album-1", player = player)
+        dispatcher.scheduler.advanceUntilIdle()
+        viewModel.onIntent(AlbumDetailIntent.TogglePreview(1))
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onIntent(AlbumDetailIntent.TogglePreview(1))
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, player.stopCount)
+        assertEquals(listOf(ONE_URL), player.played)
+        assertNull(viewModel.state.value.previewPlayback)
+    }
+
+    @Test
+    fun `TogglePreview on another track switches to it`() {
+        val player = FakePreviewPlayer()
+        val viewModel = viewModel("album-1", player = player)
+        dispatcher.scheduler.advanceUntilIdle()
+        viewModel.onIntent(AlbumDetailIntent.TogglePreview(1))
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onIntent(AlbumDetailIntent.TogglePreview(2))
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(ONE_URL, TWO_URL), player.played)
+        assertEquals(2, viewModel.state.value.previewPlayback?.position)
+    }
+
+    @Test
+    fun `TogglePreview on a track with no preview does nothing`() {
+        val player = FakePreviewPlayer()
+        val viewModel = viewModel("album-1", player = player)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onIntent(AlbumDetailIntent.TogglePreview(99))
+
+        assertTrue(player.played.isEmpty())
+        assertEquals(0, player.stopCount)
+    }
+
+    @Test
+    fun `ignores playback of a clip that belongs to another album`() {
+        val player = FakePreviewPlayer()
+        val viewModel = viewModel("album-1", player = player)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        player.play("https://p/other-album")
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(viewModel.state.value.previewPlayback)
+    }
+
+    private fun previewsFor(album: AlbumDetail) = listOf(
+        TrackPreview(title = "Track One", url = ONE_URL),
+        TrackPreview(title = "Track Two", url = TWO_URL)
+    )
+
     private fun viewModel(
         albumId: String,
-        getAlbumDetail: suspend (id: String) -> Result<AlbumDetail>
+        player: FakePreviewPlayer = FakePreviewPlayer(),
+        getPreviews: suspend (AlbumDetail) -> Result<List<TrackPreview>> = { Result.success(previewsFor(it)) },
+        getAlbumDetail: suspend (id: String) -> Result<AlbumDetail> = { Result.success(album) }
     ): AlbumDetailViewModel {
         val repository = object : MusicBrainzRepository {
             override suspend fun getAlbumsByDate(
@@ -117,6 +251,19 @@ class AlbumDetailViewModelTest {
         val albumTracksRepository = object : AlbumTracksRepository {
             override suspend fun getCachedAlbumDetail(id: String): Result<AlbumDetail?> = Result.success(null)
         }
-        return AlbumDetailViewModel(albumId, GetAlbumDetailUseCase(repository, albumTracksRepository))
+        val itunesRepository = object : ItunesRepository {
+            override suspend fun getPreviews(album: AlbumDetail): Result<List<TrackPreview>> = getPreviews(album)
+        }
+        return AlbumDetailViewModel(
+            albumId,
+            GetAlbumDetailUseCase(repository, albumTracksRepository),
+            GetTrackPreviewsUseCase(itunesRepository),
+            player
+        )
+    }
+
+    private companion object {
+        const val ONE_URL = "https://p/one"
+        const val TWO_URL = "https://p/two"
     }
 }
