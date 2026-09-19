@@ -77,6 +77,8 @@ dependencies {
     // Real-time backdrop blur for the Daily screen's frosted-glass cards over the animated
     // background (AnimatedGradientBackground) — Compose has no built-in backdrop filter.
     implementation(libs.haze)
+    // 30-second iTunes track previews on AlbumDetailScreen (albumdetail/preview).
+    implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.hilt.android)
