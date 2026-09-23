@@ -24,12 +24,7 @@ class OneDayLikeTodayViewModel @Inject constructor(
             OneDayLikeTodayIntent.Retry -> loadAlbums(currentState.day)
             OneDayLikeTodayIntent.NextDay -> loadAlbums(currentState.day.plusOneDay())
             OneDayLikeTodayIntent.PreviousDay -> loadAlbums(currentState.day.minusOneDay())
-            OneDayLikeTodayIntent.ToggleCalendar ->
-                setState { copy(isCalendarExpanded = !isCalendarExpanded) }
-            is OneDayLikeTodayIntent.SelectDate -> {
-                setState { copy(isCalendarExpanded = false) }
-                loadAlbums(intent.day)
-            }
+            is OneDayLikeTodayIntent.SelectDate -> loadAlbums(intent.day)
         }
     }
 

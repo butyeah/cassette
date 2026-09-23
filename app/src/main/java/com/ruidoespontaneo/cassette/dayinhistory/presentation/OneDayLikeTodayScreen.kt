@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -63,6 +64,8 @@ import java.util.Locale
 @Composable
 fun OneDayLikeTodayScreen(
     onAlbumClick: (MonthDay, String) -> Unit,
+    isCalendarOpen: Boolean,
+    onCalendarDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     dayFormatter: DateTimeFormatter,
     viewModel: OneDayLikeTodayViewModel = hiltViewModel()
@@ -72,6 +75,8 @@ fun OneDayLikeTodayScreen(
         state = state,
         onIntent = viewModel::onIntent,
         onAlbumClick = onAlbumClick,
+        isCalendarOpen = isCalendarOpen,
+        onCalendarDismiss = onCalendarDismiss,
         dayFormatter = dayFormatter,
         modifier = modifier
     )
@@ -82,6 +87,8 @@ private fun OneDayLikeTodayScreenContent(
     state: OneDayLikeTodayUiState,
     onIntent: (OneDayLikeTodayIntent) -> Unit,
     onAlbumClick: (MonthDay, String) -> Unit,
+    isCalendarOpen: Boolean,
+    onCalendarDismiss: () -> Unit,
     dayFormatter: DateTimeFormatter,
     modifier: Modifier = Modifier
 ) {
@@ -93,15 +100,8 @@ private fun OneDayLikeTodayScreenContent(
                 day = state.day,
                 onPrevious = { onIntent(OneDayLikeTodayIntent.PreviousDay) },
                 onNext = { onIntent(OneDayLikeTodayIntent.NextDay) },
-                onDateClick = { onIntent(OneDayLikeTodayIntent.ToggleCalendar) },
                 dayFormatter = dayFormatter
             )
-            if (BuildConfig.DEBUG && state.isCalendarExpanded) {
-                DayCalendar(
-                    day = state.day,
-                    onDaySelected = { onIntent(OneDayLikeTodayIntent.SelectDate(it)) }
-                )
-            }
             when {
                 state.isLoading -> LoadingIndicator(Modifier.fillMaxSize())
                 state.errorMessage != null -> ErrorMessage(
@@ -119,6 +119,16 @@ private fun OneDayLikeTodayScreenContent(
             }
         }
     }
+    if (isCalendarOpen) {
+        DayCalendarDialog(
+            day = state.day,
+            onDaySelected = {
+                onIntent(OneDayLikeTodayIntent.SelectDate(it))
+                onCalendarDismiss()
+            },
+            onDismiss = onCalendarDismiss
+        )
+    }
 }
 
 @Composable
@@ -126,7 +136,6 @@ private fun DayHeader(
     day: MonthDay,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
-    onDateClick: () -> Unit,
     dayFormatter: DateTimeFormatter,
     modifier: Modifier = Modifier
 ) {
@@ -134,8 +143,7 @@ private fun DayHeader(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = Spacing.small, vertical = Spacing.extraSmall),
-        // The day selector (previous/next, jump-to-date calendar) is still being tested — only
-        // expose it in dev builds. Center the date on its own once there's nothing to space it
+        // Previous/next are still being tested — only expose them in dev builds. Center the date on its own once there's nothing to space it
         // between.
         horizontalArrangement = if (BuildConfig.DEBUG) Arrangement.SpaceBetween else Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
@@ -145,8 +153,7 @@ private fun DayHeader(
         }
         Text(
             text = day.format(dayFormatter),
-            style = MaterialTheme.typography.titleLarge,
-            modifier = if (BuildConfig.DEBUG) Modifier.clickable(onClick = onDateClick) else Modifier
+            style = MaterialTheme.typography.titleLarge
         )
         if (BuildConfig.DEBUG) {
             TextButton(onClick = onNext) { Text(stringResource(R.string.next_day)) }
@@ -155,19 +162,22 @@ private fun DayHeader(
 }
 
 /**
- * A Material3 [DatePicker] used to jump straight to a day — year-agnostic domain, so only the
- * tapped month/day matter; whatever year the picker happens to show is otherwise irrelevant.
+ * A Material3 [DatePicker] dialog used to jump straight to a day — year-agnostic domain, so only
+ * the tapped month/day matter; whatever year the picker happens to show is otherwise irrelevant.
+ * Tapping a day picks it right away, so there's no confirm button.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DayCalendar(day: MonthDay, onDaySelected: (MonthDay) -> Unit, modifier: Modifier = Modifier) {
+private fun DayCalendarDialog(day: MonthDay, onDaySelected: (MonthDay) -> Unit, onDismiss: () -> Unit) {
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = day.toUtcMillis())
     LaunchedEffect(datePickerState.selectedDateMillis) {
         val millis = datePickerState.selectedDateMillis ?: return@LaunchedEffect
         val selected = MonthDay.from(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
         if (selected != day) onDaySelected(selected)
     }
-    DatePicker(state = datePickerState, modifier = modifier, showModeToggle = false)
+    DatePickerDialog(onDismissRequest = onDismiss, confirmButton = {}) {
+        DatePicker(state = datePickerState, showModeToggle = false, headline = null)
+    }
 }
 
 @Composable
@@ -271,6 +281,23 @@ private fun OneDayLikeTodayScreenPreview(
             state = state,
             onIntent = {},
             onAlbumClick = { _, _ -> },
+            isCalendarOpen = false,
+            onCalendarDismiss = {},
+            dayFormatter = previewDayFormatter
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OneDayLikeTodayScreenCalendarPreview() {
+    CassetteTheme {
+        OneDayLikeTodayScreenContent(
+            state = OneDayLikeTodayUiState(day = MonthDay.of(6, 17), isLoading = false),
+            onIntent = {},
+            onAlbumClick = { _, _ -> },
+            isCalendarOpen = true,
+            onCalendarDismiss = {},
             dayFormatter = previewDayFormatter
         )
     }

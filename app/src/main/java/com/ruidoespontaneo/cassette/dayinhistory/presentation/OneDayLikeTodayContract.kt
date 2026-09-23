@@ -10,15 +10,13 @@ data class OneDayLikeTodayUiState(
     val day: MonthDay = MonthDay.now(),
     val isLoading: Boolean = true,
     val albumsByYear: List<AlbumsByYear> = emptyList(),
-    val errorMessage: String? = null,
-    val isCalendarExpanded: Boolean = false
+    val errorMessage: String? = null
 ) : UiState
 
 sealed interface OneDayLikeTodayIntent : UiIntent {
     data object Retry : OneDayLikeTodayIntent
     data object NextDay : OneDayLikeTodayIntent
     data object PreviousDay : OneDayLikeTodayIntent
-    data object ToggleCalendar : OneDayLikeTodayIntent
     data class SelectDate(val day: MonthDay) : OneDayLikeTodayIntent
 }
 

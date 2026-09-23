@@ -6,6 +6,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
@@ -36,6 +40,9 @@ fun albumDetailRoute(month: Int, day: Int, albumId: String) = "albumDetail/$mont
 @Composable
 fun CassetteApp(dayFormatter: DateTimeFormatter) {
     val navController = rememberNavController()
+    // Hoisted here because the button that opens it lives in the floating toolbar, outside the
+    // Daily screen that shows it.
+    var isCalendarOpen by rememberSaveable { mutableStateOf(false) }
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         // Consumed so the screens' own Scaffolds (album detail, notifications, ...) don't apply the
         // status/navigation bar insets a second time on top of innerPadding.
@@ -49,7 +56,9 @@ fun CassetteApp(dayFormatter: DateTimeFormatter) {
                         dayFormatter = dayFormatter,
                         onAlbumClick = { day, albumId ->
                             navController.navigate(albumDetailRoute(day.monthValue, day.dayOfMonth, albumId))
-                        }
+                        },
+                        isCalendarOpen = isCalendarOpen,
+                        onCalendarDismiss = { isCalendarOpen = false }
                     )
                 }
                 composable(
@@ -76,6 +85,7 @@ fun CassetteApp(dayFormatter: DateTimeFormatter) {
             }
             CassetteFloatingToolbar(
                 navController = navController,
+                onCalendarClick = { isCalendarOpen = true },
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = Spacing.large)
             )
         }
