@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 /**
  * One instance per album, constructed with an explicit [albumId] rather than pulling it from a
  * [androidx.lifecycle.SavedStateHandle] nav argument — AlbumPagerScreen hosts many albums' worth
- * of this ViewModel inside a single nav destination (one per HorizontalPager page), so there's no
+ * of this ViewModel inside a single nav destination (one per VerticalPager page), so there's no
  * one-to-one nav-arg-to-ViewModel relationship to rely on. Built via [Factory] and
  * `androidx.hilt.navigation.compose.hiltViewModel`'s assisted-injection overload, keyed by
  * [albumId] so each page keeps its own instance (and its already-loaded state) for as long as the

@@ -17,7 +17,7 @@ const val ALBUM_PAGER_ARG_ALBUM_ID = "albumId"
 /**
  * The full list of albums released on one day (across every year), in the same order the Daily
  * screen renders them, plus which one to open on — everything AlbumPagerScreen needs to drive its
- * HorizontalPager. Fetching each page's own [com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail]
+ * VerticalPager. Fetching each page's own [com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail]
  * (title, tracklist, ...) stays with [com.ruidoespontaneo.cassette.albumdetail.presentation.AlbumDetailViewModel],
  * one instance per page.
  *
