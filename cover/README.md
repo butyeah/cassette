@@ -37,7 +37,7 @@ All under `com.ruidoespontaneo.cassette.cover.theme`.
 |---|---|
 | `Spacing` | Padding and gaps between elements — `Spacing.small`, `.medium`, `.large`, etc. Use instead of hardcoding `.dp` literals, so spacing stays consistent across screens. |
 | `TextSize` | Raw font sizes for one-off `Text` composables that don't go through a `MaterialTheme.typography` slot. Prefer `MaterialTheme.typography` for anything styled as a proper heading/body/label — `TextSize` is the escape hatch, not the default. |
-| `Typography` | The `androidx.compose.material3.Typography` Cover's `MaterialTheme` is built with. |
+| `Typography` | The `androidx.compose.material3.Typography` Cover's `MaterialTheme` is built with. Display, headline, title and label styles are set in `PixelifySans` (bundled variable font, license in `licenses/PixelifySans-OFL.txt`); body styles stay on the system font so running text stays readable. Variable-font weights need API 26+, so on API 24-25 every weight renders as Regular. |
 | `CoverTheme`'s color scheme | Light/dark Material3 `ColorScheme`, with dynamic color on Android 12+. Pull colors from `MaterialTheme.colorScheme` (e.g. `.primary`, `.surface`) rather than reaching for a token here directly — that's how both components below get their colors, and it's what keeps them dark-mode-correct for free. |
 
 `IconSize` (album-art sizing) intentionally stays in `:app` — it's a domain-specific token
