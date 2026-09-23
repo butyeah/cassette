@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -57,8 +58,10 @@ import coil3.compose.AsyncImage
 import coil3.toBitmap
 import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.cover.components.AnimatedGradientBackground
-import com.ruidoespontaneo.cassette.cover.components.CoverCard
+import com.ruidoespontaneo.cassette.cover.components.PREVIEW_WAVEFORM_LINES
+import com.ruidoespontaneo.cassette.cover.components.PreviewWaveform
 import com.ruidoespontaneo.cassette.cover.components.dominantColors
+import com.ruidoespontaneo.cassette.cover.components.waveformColors
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.StreamingLinks
@@ -70,7 +73,6 @@ import com.ruidoespontaneo.cassette.musicbrainz.presentation.hasAny
 import com.ruidoespontaneo.cassette.ui.icons.Pause
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
-import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 
@@ -108,7 +110,10 @@ private fun AlbumDetailScreenContent(
     // collapse into, so a title fade-in stands in for the usual Material collapsing app bar.
     val revealThresholdPx = with(LocalDensity.current) { IconSize.albumArtLarge.toPx() }
     val showTitle by remember { derivedStateOf { scrollState.value > revealThresholdPx } }
-    val titleAlpha by animateFloatAsState(targetValue = if (showTitle) 1f else 0f, label = "titleAlpha")
+    val titleAlpha by animateFloatAsState(
+        targetValue = if (showTitle) 1f else 0f,
+        label = "titleAlpha"
+    )
 
     // The background takes on the cover art's own dominant colors once it's decoded — falls back
     // to AnimatedGradientBackground's theme-colored default (null) until then, or if extraction
@@ -118,7 +123,12 @@ private fun AlbumDetailScreenContent(
     LaunchedEffect(coverBitmap) { dominantColors = coverBitmap?.dominantColors() }
 
     Box(modifier = modifier.fillMaxSize()) {
-        AnimatedGradientBackground(Modifier.matchParentSize().hazeSource(hazeState), colors = dominantColors)
+        AnimatedGradientBackground(
+            Modifier
+                .matchParentSize()
+                .hazeSource(hazeState),
+            colors = dominantColors
+        )
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
@@ -134,7 +144,10 @@ private fun AlbumDetailScreenContent(
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.back)
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -142,11 +155,15 @@ private fun AlbumDetailScreenContent(
             }
         ) { innerPadding ->
             when {
-                state.isLoading -> LoadingIndicator(Modifier.fillMaxSize().padding(innerPadding))
+                state.isLoading -> LoadingIndicator(Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding))
                 state.errorMessage != null -> ErrorMessage(
                     message = state.errorMessage,
                     onRetry = { onIntent(AlbumDetailIntent.Retry) },
-                    modifier = Modifier.fillMaxSize().padding(innerPadding)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
                 )
 
                 state.album != null -> AlbumDetailContent(
@@ -154,10 +171,12 @@ private fun AlbumDetailScreenContent(
                     previews = state.previews,
                     previewPlayback = state.previewPlayback,
                     onTogglePreview = { onIntent(AlbumDetailIntent.TogglePreview(it)) },
-                    hazeState = hazeState,
                     scrollState = scrollState,
+                    waveColors = dominantColors,
                     onCoverLoaded = { coverBitmap = it },
-                    modifier = Modifier.fillMaxSize().padding(innerPadding)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
                 )
             }
         }
@@ -188,14 +207,34 @@ private fun AlbumDetailContent(
     previews: Map<Int, String>,
     previewPlayback: TrackPlayback?,
     onTogglePreview: (trackPosition: Int) -> Unit,
-    hazeState: HazeState,
     scrollState: ScrollState,
+    /** The album's dominant colors once its cover has decoded; the waveform falls back to theme colors until then. */
+    waveColors: List<Color>?,
     onCoverLoaded: (Bitmap) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    CoverCard(hazeState = hazeState, modifier = modifier) {
-        Column(modifier = Modifier.verticalScroll(scrollState).padding(Spacing.large)) {
-            val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
+    Column(modifier = modifier
+        .verticalScroll(scrollState)
+        .padding(Spacing.large)) {
+        val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
+        Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            Box(
+                modifier = Modifier
+                    .height(IconSize.albumArtLarge)
+                    .padding(end = Spacing.medium),
+                contentAlignment = Alignment.Center
+            ) {
+                PreviewWaveform(
+                    playing = previewPlayback != null && !previewPlayback.isLoading,
+                    colors = waveformColors(
+                        dominant = waveColors,
+                        fallback = with(MaterialTheme.colorScheme) { listOf(primary, secondary, tertiary) },
+                        background = MaterialTheme.colorScheme.background,
+                        count = PREVIEW_WAVEFORM_LINES
+                    ),
+                    length = IconSize.albumArtLarge
+                )
+            }
             AsyncImage(
                 model = album.coverArtUrl(),
                 contentDescription = null, // decorative — title/artist are already read by the screen
@@ -204,42 +243,44 @@ private fun AlbumDetailContent(
                 contentScale = ContentScale.Crop,
                 onSuccess = { onCoverLoaded(it.result.image.toBitmap()) },
                 modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
                     .size(IconSize.albumArtLarge)
                     .clip(RoundedCornerShape(Spacing.small))
             )
-            Text(
-                text = album.title,
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(top = Spacing.medium)
+        }
+        Text(
+            text = album.title,
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(top = Spacing.medium)
+        )
+        Text(text = album.artistName, style = MaterialTheme.typography.titleMedium)
+        if (album.streamingLinks.hasAny()) {
+            StreamingLinksRow(
+                album.streamingLinks,
+                modifier = Modifier.padding(top = Spacing.small)
             )
-            Text(text = album.artistName, style = MaterialTheme.typography.titleMedium)
-            if (album.streamingLinks.hasAny()) {
-                StreamingLinksRow(album.streamingLinks, modifier = Modifier.padding(top = Spacing.small))
-            }
-            AlbumTypeAndYear(album, modifier = Modifier.padding(top = Spacing.medium))
-            if (album.genres.isNotEmpty()) {
-                Text(
-                    text = stringResource(R.string.genres_format, album.genres.joinToString()),
-                    modifier = Modifier.padding(top = Spacing.small)
-                )
-            }
-            val ratingValue = album.ratingValue
-            if (ratingValue != null) {
-                Text(
-                    text = stringResource(R.string.rating_format, ratingValue, album.ratingVotesCount),
-                    modifier = Modifier.padding(top = Spacing.small)
-                )
-            }
-            if (album.tracks.isNotEmpty()) {
-                Tracklist(
-                    tracks = album.tracks,
-                    previews = previews,
-                    previewPlayback = previewPlayback,
-                    onTogglePreview = onTogglePreview,
-                    modifier = Modifier.padding(top = Spacing.large)
-                )
-            }
+        }
+        AlbumTypeAndYear(album, modifier = Modifier.padding(top = Spacing.medium))
+        if (album.genres.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.genres_format, album.genres.joinToString()),
+                modifier = Modifier.padding(top = Spacing.small)
+            )
+        }
+        val ratingValue = album.ratingValue
+        if (ratingValue != null) {
+            Text(
+                text = stringResource(R.string.rating_format, ratingValue, album.ratingVotesCount),
+                modifier = Modifier.padding(top = Spacing.small)
+            )
+        }
+        if (album.tracks.isNotEmpty()) {
+            Tracklist(
+                tracks = album.tracks,
+                previews = previews,
+                previewPlayback = previewPlayback,
+                onTogglePreview = onTogglePreview,
+                modifier = Modifier.padding(top = Spacing.large)
+            )
         }
     }
 }
@@ -253,7 +294,10 @@ private fun Tracklist(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
-        Text(text = stringResource(R.string.tracklist_title), style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = stringResource(R.string.tracklist_title),
+            style = MaterialTheme.typography.titleMedium
+        )
         tracks.forEach { track ->
             TrackRow(
                 track = track,
@@ -307,13 +351,16 @@ private fun PreviewButton(trackTitle: String, playback: TrackPlayback?, onClick:
     )
     // The description sits on the button rather than its icon, since a buffering clip shows a
     // spinner in the icon's place — and tapping it then stops the clip, same as while playing.
-    IconButton(onClick = onClick, modifier = Modifier.semantics { contentDescription = description }) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.semantics { contentDescription = description }) {
         when {
             playback == null -> Icon(Icons.Filled.PlayArrow, contentDescription = null)
             playback.isLoading -> CircularProgressIndicator(
                 strokeWidth = IconSize.previewSpinnerStroke,
                 modifier = Modifier.size(IconSize.previewSpinner)
             )
+
             else -> Icon(Icons.Filled.Pause, contentDescription = null)
         }
     }
