@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!--
+        Cover art comes from coverartarchive.org, which redirects to archive.org and its storage
+        nodes (e.g. dn721908.ca.archive.org). Several of those serve a Let's Encrypt chain ending at
+        ISRG Root X1 / X2. Devices on Android 7.0 (minSdk is 24) predate those roots (added in
+        7.1.1), so without them those cover images fail TLS validation. Only these hosts get the
+        extra anchors; system roots still apply.
+    -->
+    <domain-config>
+        <domain includeSubdomains="true">coverartarchive.org</domain>
+        <domain includeSubdomains="true">archive.org</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/isrg_root_x1" />
+            <certificates src="@raw/isrg_root_x2" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>
