@@ -27,6 +27,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
+import com.ruidoespontaneo.cassette.ui.theme.ToolbarSize
 
 @Composable
 fun LoginScreen(
@@ -60,7 +61,7 @@ private fun LoginScreenContent(
     onGoogleSignInClick: (Context) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxSize().padding(Spacing.large)) {
+    Column(modifier = modifier.fillMaxSize().padding(start = Spacing.large, top = Spacing.large, end = Spacing.large, bottom = Spacing.large + ToolbarSize.clearance)) {
         if (state.signedInAs != null) {
             SignedInContent(
                 email = state.signedInAs,

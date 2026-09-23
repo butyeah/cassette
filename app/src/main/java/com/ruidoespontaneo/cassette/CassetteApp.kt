@@ -1,9 +1,11 @@
 package com.ruidoespontaneo.cassette
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -15,6 +17,7 @@ import com.ruidoespontaneo.cassette.albumpager.presentation.ALBUM_PAGER_ARG_DAY
 import com.ruidoespontaneo.cassette.albumpager.presentation.ALBUM_PAGER_ARG_MONTH
 import com.ruidoespontaneo.cassette.albumpager.presentation.AlbumPagerScreen
 import com.ruidoespontaneo.cassette.auth.presentation.LoginScreen
+import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import com.ruidoespontaneo.cassette.dayinhistory.presentation.OneDayLikeTodayScreen
 import com.ruidoespontaneo.cassette.notifications.presentation.NotificationsScreen
 import java.time.format.DateTimeFormatter
@@ -32,44 +35,46 @@ fun albumDetailRoute(month: Int, day: Int, albumId: String) = "albumDetail/$mont
 @Composable
 fun CassetteApp(dayFormatter: DateTimeFormatter) {
     val navController = rememberNavController()
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = { CassetteNavigationBar(navController) }
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = ROUTE_ONE_DAY_LIKE_TODAY,
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable(ROUTE_ONE_DAY_LIKE_TODAY) {
-                OneDayLikeTodayScreen(
-                    dayFormatter = dayFormatter,
-                    onAlbumClick = { day, albumId ->
-                        navController.navigate(albumDetailRoute(day.monthValue, day.dayOfMonth, albumId))
-                    }
-                )
-            }
-            composable(
-                ROUTE_ALBUM_DETAIL,
-                arguments = listOf(
-                    navArgument(ALBUM_PAGER_ARG_MONTH) { type = NavType.IntType },
-                    navArgument(ALBUM_PAGER_ARG_DAY) { type = NavType.IntType },
-                    navArgument(ALBUM_PAGER_ARG_ALBUM_ID) { type = NavType.StringType }
-                )
+    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            NavHost(
+                navController = navController,
+                startDestination = ROUTE_ONE_DAY_LIKE_TODAY
             ) {
-                AlbumPagerScreen(onBack = { navController.popBackStack() })
+                composable(ROUTE_ONE_DAY_LIKE_TODAY) {
+                    OneDayLikeTodayScreen(
+                        dayFormatter = dayFormatter,
+                        onAlbumClick = { day, albumId ->
+                            navController.navigate(albumDetailRoute(day.monthValue, day.dayOfMonth, albumId))
+                        }
+                    )
+                }
+                composable(
+                    ROUTE_ALBUM_DETAIL,
+                    arguments = listOf(
+                        navArgument(ALBUM_PAGER_ARG_MONTH) { type = NavType.IntType },
+                        navArgument(ALBUM_PAGER_ARG_DAY) { type = NavType.IntType },
+                        navArgument(ALBUM_PAGER_ARG_ALBUM_ID) { type = NavType.StringType }
+                    )
+                ) {
+                    AlbumPagerScreen(onBack = { navController.popBackStack() })
+                }
+                composable(ROUTE_LOGIN) {
+                    // Profile is a permanent tab, not a pushed destination, so there's nothing to
+                    // pop back to once signed in — the screen already re-renders itself.
+                    LoginScreen(
+                        onSignedIn = {},
+                        onNotificationsClick = { navController.navigate(ROUTE_NOTIFICATIONS) }
+                    )
+                }
+                composable(ROUTE_NOTIFICATIONS) {
+                    NotificationsScreen(onBack = { navController.popBackStack() })
+                }
             }
-            composable(ROUTE_LOGIN) {
-                // Profile is a permanent tab, not a pushed destination, so there's nothing to
-                // pop back to once signed in — the screen already re-renders itself.
-                LoginScreen(
-                    onSignedIn = {},
-                    onNotificationsClick = { navController.navigate(ROUTE_NOTIFICATIONS) }
-                )
-            }
-            composable(ROUTE_NOTIFICATIONS) {
-                NotificationsScreen(onBack = { navController.popBackStack() })
-            }
+            CassetteFloatingToolbar(
+                navController = navController,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = Spacing.large)
+            )
         }
     }
 }
