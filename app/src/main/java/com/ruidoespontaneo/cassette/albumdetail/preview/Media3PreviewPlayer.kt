@@ -12,8 +12,11 @@ import androidx.media3.exoplayer.ExoPlayer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
 
@@ -34,6 +37,9 @@ class Media3PreviewPlayer @Inject constructor(
 
     private val _playback = MutableStateFlow<PreviewPlayback?>(null)
     override val playback: StateFlow<PreviewPlayback?> = _playback.asStateFlow()
+
+    private val _completions = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    override val completions: SharedFlow<String> = _completions.asSharedFlow()
 
     private var player: ExoPlayer? = null
 
@@ -78,6 +84,14 @@ class Media3PreviewPlayer @Inject constructor(
         _playback.value = null
     }
 
+    // Stop first, then announce: a collector that plays the next clip in response must not have
+    // it torn down by this clip's own stop().
+    private fun complete() {
+        val url = _playback.value?.url
+        stop()
+        if (url != null) _completions.tryEmit(url)
+    }
+
     /** Ignores events from any player other than the current one — see [stop]. */
     private fun listenerFor(exoPlayer: ExoPlayer) = object : Player.Listener {
 
@@ -85,7 +99,7 @@ class Media3PreviewPlayer @Inject constructor(
             if (player !== exoPlayer) return
             when (playbackState) {
                 Player.STATE_READY -> if (exoPlayer.playWhenReady) setStatus(PreviewPlayback.Status.Playing)
-                Player.STATE_ENDED -> stop()
+                Player.STATE_ENDED -> complete()
             }
         }
 

@@ -15,8 +15,11 @@ import java.time.LocalDate
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -237,6 +240,124 @@ class AlbumDetailViewModelTest {
         assertNull(viewModel.state.value.previewPlayback)
     }
 
+    @Test
+    fun `a clip that plays to its end starts the next track's preview`() {
+        val player = FakePreviewPlayer()
+        val viewModel = viewModel("album-1", player = player)
+        dispatcher.scheduler.advanceUntilIdle()
+        viewModel.onIntent(AlbumDetailIntent.TogglePreview(1))
+        dispatcher.scheduler.advanceUntilIdle()
+
+        player.complete()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(ONE_URL, TWO_URL), player.played)
+        assertEquals(2, viewModel.state.value.previewPlayback?.position)
+    }
+
+    @Test
+    fun `auto-play skips tracks that have no preview`() {
+        val player = FakePreviewPlayer()
+        val viewModel = viewModel("album-1", player = player, album = threeTrackAlbum, getPreviews = {
+            Result.success(listOf(TrackPreview("Track One", ONE_URL), TrackPreview("Track Three", THREE_URL)))
+        })
+        dispatcher.scheduler.advanceUntilIdle()
+        viewModel.onIntent(AlbumDetailIntent.TogglePreview(1))
+        dispatcher.scheduler.advanceUntilIdle()
+
+        player.complete()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(ONE_URL, THREE_URL), player.played)
+    }
+
+    @Test
+    fun `the last track playing to its end finishes the tracklist`() = runTest(dispatcher) {
+        val player = FakePreviewPlayer()
+        val viewModel = viewModel("album-1", player = player)
+        advanceUntilIdle()
+        viewModel.onIntent(AlbumDetailIntent.TogglePreview(2))
+        advanceUntilIdle()
+
+        player.complete()
+        advanceUntilIdle()
+
+        assertEquals(listOf(TWO_URL), player.played)
+        assertEquals(AlbumDetailEffect.TracklistFinished, viewModel.effect.first())
+    }
+
+    @Test
+    fun `a stopped clip does not advance`() {
+        val player = FakePreviewPlayer()
+        val viewModel = viewModel("album-1", player = player)
+        dispatcher.scheduler.advanceUntilIdle()
+        viewModel.onIntent(AlbumDetailIntent.TogglePreview(1))
+        dispatcher.scheduler.advanceUntilIdle()
+
+        player.stop()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(ONE_URL), player.played)
+    }
+
+    @Test
+    fun `another album's clip ending does not advance this one`() {
+        val player = FakePreviewPlayer()
+        viewModel("album-1", player = player)
+        dispatcher.scheduler.advanceUntilIdle()
+        player.play("https://p/other-album")
+
+        player.complete()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf("https://p/other-album"), player.played)
+    }
+
+    @Test
+    fun `AutoPlay plays the first preview`() {
+        val player = FakePreviewPlayer()
+        val viewModel = viewModel("album-1", player = player)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onIntent(AlbumDetailIntent.AutoPlay)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(listOf(ONE_URL), player.played)
+    }
+
+    @Test
+    fun `AutoPlay before previews arrive plays the first one once they do`() {
+        val gate = CompletableDeferred<Unit>()
+        val player = FakePreviewPlayer()
+        val viewModel = viewModel("album-1", player = player, getPreviews = { gate.await(); Result.success(previewsFor(it)) })
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onIntent(AlbumDetailIntent.AutoPlay)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertTrue(player.played.isEmpty())
+
+        gate.complete(Unit)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(listOf(ONE_URL), player.played)
+    }
+
+    @Test
+    fun `AutoPlay on an album with no previews finishes its tracklist`() = runTest(dispatcher) {
+        val player = FakePreviewPlayer()
+        val viewModel = viewModel("album-1", player = player, getPreviews = { Result.failure(IllegalStateException("offline")) })
+        advanceUntilIdle()
+
+        viewModel.onIntent(AlbumDetailIntent.AutoPlay)
+        advanceUntilIdle()
+
+        assertTrue(player.played.isEmpty())
+        assertEquals(AlbumDetailEffect.TracklistFinished, viewModel.effect.first())
+    }
+
+    private val threeTrackAlbum = album.copy(
+        tracks = album.tracks + Track(position = 3, title = "Track Three", lengthMs = 190_000)
+    )
+
     private fun previewsFor(album: AlbumDetail) = listOf(
         TrackPreview(title = "Track One", url = ONE_URL),
         TrackPreview(title = "Track Two", url = TWO_URL)
@@ -246,6 +367,7 @@ class AlbumDetailViewModelTest {
         albumId: String,
         player: FakePreviewPlayer = FakePreviewPlayer(),
         getPreviews: suspend (AlbumDetail) -> Result<List<TrackPreview>> = { Result.success(previewsFor(it)) },
+        album: AlbumDetail = this.album,
         getAlbumDetail: suspend (id: String) -> Result<AlbumDetail> = { Result.success(album) }
     ): AlbumDetailViewModel {
         val repository = object : MusicBrainzRepository {
@@ -282,5 +404,6 @@ class AlbumDetailViewModelTest {
     private companion object {
         const val ONE_URL = "https://p/one"
         const val TWO_URL = "https://p/two"
+        const val THREE_URL = "https://p/three"
     }
 }

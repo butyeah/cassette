@@ -5,6 +5,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -45,6 +47,17 @@ class Media3PreviewPlayerTest {
 
         awaitPlayback { it?.url == url && it.status == PreviewPlayback.Status.Playing }
         awaitPlayback { it == null }
+    }
+
+    @Test
+    fun reportsAClipThatPlaysToItsEndAsCompleted() = runBlocking {
+        val url = silentWav("completes", seconds = 1)
+        val completion = async(start = CoroutineStart.UNDISPATCHED) { player.completions.first() }
+
+        onMain { player.play(url) }
+
+        assertEquals(url, withTimeout(TIMEOUT_MS) { completion.await() })
+        assertNull(player.playback.value)
     }
 
     @Test

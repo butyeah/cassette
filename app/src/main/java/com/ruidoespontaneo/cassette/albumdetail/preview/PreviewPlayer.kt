@@ -1,5 +1,6 @@
 package com.ruidoespontaneo.cassette.albumdetail.preview
 
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -13,6 +14,13 @@ interface PreviewPlayer {
 
     /** What's playing right now, or `null` when idle. */
     val playback: StateFlow<PreviewPlayback?>
+
+    /**
+     * The URL of each clip that played through to its end — never one that was [stop]ped,
+     * interrupted or failed. Emitted after [playback] has gone back to `null`, so a collector can
+     * [play] the next clip straight away.
+     */
+    val completions: SharedFlow<String>
 
     /** Starts [url], stopping whatever was playing before it. */
     fun play(url: String)
