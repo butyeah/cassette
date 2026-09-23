@@ -34,4 +34,6 @@
     <string name="tracklist_title">Tracklist</string>
     <string name="play_preview">Play preview of %1$s</string>
     <string name="stop_preview">Stop preview of %1$s</string>
+    <string name="preview_track_number">Track %1$d</string>
+    <string name="preview_track_idle">Track --</string>
 </resources>

@@ -166,6 +166,23 @@ class AlbumDetailViewModelTest {
     }
 
     @Test
+    fun `playback carries the clip's remaining time from the player`() {
+        val player = FakePreviewPlayer()
+        val viewModel = viewModel("album-1", player = player)
+        dispatcher.scheduler.advanceUntilIdle()
+        viewModel.onIntent(AlbumDetailIntent.TogglePreview(1))
+        player.setStatus(PreviewPlayback.Status.Playing)
+
+        player.setRemaining(24_000)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(
+            TrackPlayback(position = 1, isLoading = false, remainingMs = 24_000),
+            viewModel.state.value.previewPlayback
+        )
+    }
+
+    @Test
     fun `TogglePreview on the track that is playing stops it`() {
         val player = FakePreviewPlayer()
         val viewModel = viewModel("album-1", player = player)

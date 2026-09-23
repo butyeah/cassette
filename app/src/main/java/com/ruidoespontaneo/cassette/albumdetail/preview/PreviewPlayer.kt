@@ -24,8 +24,9 @@ interface PreviewPlayer {
 /**
  * The clip at [url] and how far along it is. Keyed by URL rather than by album and track, since a
  * clip's URL already identifies it uniquely and the player knows nothing about albums.
+ * [remainingMs] is `null` until the clip's duration is known.
  */
-data class PreviewPlayback(val url: String, val status: Status) {
+data class PreviewPlayback(val url: String, val status: Status, val remainingMs: Long? = null) {
     enum class Status {
         /** Buffering, not audible yet. */
         Loading,

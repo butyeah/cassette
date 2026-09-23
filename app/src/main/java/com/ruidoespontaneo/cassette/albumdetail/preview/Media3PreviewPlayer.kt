@@ -1,6 +1,8 @@
 package com.ruidoespontaneo.cassette.albumdetail.preview
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -35,6 +37,20 @@ class Media3PreviewPlayer @Inject constructor(
 
     private var player: ExoPlayer? = null
 
+    // ExoPlayer has no position callback, so remaining time is polled while a clip is audible.
+    // Everything here already runs on the main thread, which is where ExoPlayer must be read from.
+    private val progressHandler = Handler(Looper.getMainLooper())
+    private val progressTick = object : Runnable {
+        override fun run() {
+            val exoPlayer = player ?: return
+            if (exoPlayer.duration != C.TIME_UNSET) {
+                val remaining = (exoPlayer.duration - exoPlayer.currentPosition).coerceAtLeast(0)
+                _playback.value = _playback.value?.copy(remainingMs = remaining)
+            }
+            progressHandler.postDelayed(this, PROGRESS_INTERVAL_MS)
+        }
+    }
+
     override fun play(url: String) {
         stop()
         val exoPlayer = ExoPlayer.Builder(context)
@@ -56,6 +72,7 @@ class Media3PreviewPlayer @Inject constructor(
     }
 
     override fun stop() {
+        progressHandler.removeCallbacks(progressTick)
         player?.release()
         player = null
         _playback.value = null
@@ -90,5 +107,13 @@ class Media3PreviewPlayer @Inject constructor(
 
     private fun setStatus(status: PreviewPlayback.Status) {
         _playback.value = _playback.value?.copy(status = status)
+        if (status == PreviewPlayback.Status.Playing) {
+            progressHandler.removeCallbacks(progressTick)
+            progressHandler.post(progressTick)
+        }
+    }
+
+    private companion object {
+        const val PROGRESS_INTERVAL_MS = 250L
     }
 }
