@@ -1,6 +1,7 @@
 package com.ruidoespontaneo.cassette
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -36,7 +37,9 @@ fun albumDetailRoute(month: Int, day: Int, albumId: String) = "albumDetail/$mont
 fun CassetteApp(dayFormatter: DateTimeFormatter) {
     val navController = rememberNavController()
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+        // Consumed so the screens' own Scaffolds (album detail, notifications, ...) don't apply the
+        // status/navigation bar insets a second time on top of innerPadding.
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding).consumeWindowInsets(innerPadding)) {
             NavHost(
                 navController = navController,
                 startDestination = ROUTE_ONE_DAY_LIKE_TODAY
