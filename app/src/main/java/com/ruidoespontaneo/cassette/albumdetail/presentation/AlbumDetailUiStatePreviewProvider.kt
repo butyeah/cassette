@@ -38,7 +38,7 @@ class AlbumDetailUiStatePreviewProvider : PreviewParameterProvider<AlbumDetailUi
             isLoading = false,
             album = previewAlbum,
             previews = mapOf(1 to "https://p/1", 2 to "https://p/2", 3 to "https://p/3"),
-            previewPlayback = TrackPlayback(position = 2, isLoading = false)
+            previewPlayback = TrackPlayback(position = 2, isLoading = false, remainingMs = 24_000)
         ),
         AlbumDetailUiState(
             isLoading = false,

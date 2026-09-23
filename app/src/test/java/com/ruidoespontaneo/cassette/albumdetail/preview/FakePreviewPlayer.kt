@@ -27,4 +27,8 @@ class FakePreviewPlayer : PreviewPlayer {
     fun setStatus(status: PreviewPlayback.Status) {
         _playback.value = _playback.value?.copy(status = status)
     }
+
+    fun setRemaining(ms: Long) {
+        _playback.value = _playback.value?.copy(remainingMs = ms)
+    }
 }

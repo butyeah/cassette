@@ -61,6 +61,7 @@ import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.cover.components.AnimatedGradientBackground
 import com.ruidoespontaneo.cassette.cover.components.PREVIEW_WAVEFORM_LINES
 import com.ruidoespontaneo.cassette.cover.components.PreviewWaveform
+import com.ruidoespontaneo.cassette.cover.components.displayTextColor
 import com.ruidoespontaneo.cassette.cover.components.dominantColors
 import com.ruidoespontaneo.cassette.cover.components.waveformColors
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
@@ -230,8 +231,8 @@ private fun AlbumDetailContent(
                 .background(color = Color.Black),
             horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
         ) {
-            // A player-style display panel beside the cover; the waveform sits at its bottom, leaving
-            // the top free for the track number and elapsed time that are meant to join it.
+            // A player-style display panel beside the cover: track number and remaining time across
+            // the top, the waveform along the bottom.
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -240,6 +241,14 @@ private fun AlbumDetailContent(
                     .background(Color.Black),
                 contentAlignment = Alignment.BottomCenter
             ) {
+                PreviewDisplayReadout(
+                    playback = previewPlayback,
+                    color = displayTextColor(dominant = waveColors, background = Color.Black),
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .fillMaxWidth()
+                        .padding(Spacing.medium)
+                )
                 PreviewWaveform(
                     playing = previewPlayback != null && !previewPlayback.isLoading,
                     colors = waveformColors(
@@ -310,6 +319,24 @@ private fun AlbumDetailContent(
                 modifier = Modifier.padding(top = Spacing.large)
             )
         }
+    }
+}
+
+/** "Track n" and the clip's remaining time, or dashes for both while no preview is playing. */
+@Composable
+private fun PreviewDisplayReadout(playback: TrackPlayback?, color: Color, modifier: Modifier = Modifier) {
+    // Tabular figures keep the countdown's digits from shifting as they change.
+    val style = MaterialTheme.typography.labelLarge.copy(color = color, fontFeatureSettings = "tnum")
+    Row(modifier = modifier, horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(
+            text = if (playback == null) {
+                stringResource(R.string.preview_track_idle)
+            } else {
+                stringResource(R.string.preview_track_number, playback.position)
+            },
+            style = style
+        )
+        Text(text = remainingTimeText(playback?.remainingMs), style = style)
     }
 }
 

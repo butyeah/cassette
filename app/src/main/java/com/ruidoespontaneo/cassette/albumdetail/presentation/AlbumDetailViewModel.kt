@@ -100,6 +100,10 @@ class AlbumDetailViewModel @AssistedInject constructor(
     private fun AlbumDetailUiState.trackPlaybackFor(playback: PreviewPlayback?): TrackPlayback? {
         if (playback == null) return null
         val position = previews.entries.firstOrNull { it.value == playback.url }?.key ?: return null
-        return TrackPlayback(position, isLoading = playback.status == PreviewPlayback.Status.Loading)
+        return TrackPlayback(
+            position,
+            isLoading = playback.status == PreviewPlayback.Status.Loading,
+            remainingMs = playback.remainingMs
+        )
     }
 }

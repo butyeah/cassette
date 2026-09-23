@@ -11,6 +11,22 @@ class WaveformColorsTest {
     private val darkBackground = Color(0xFF1C1B1F)
 
     @Test
+    fun `displayTextColor is white until the cover has decoded`() {
+        assertEquals(Color.White, displayTextColor(dominant = null, background = Color.Black))
+        assertEquals(Color.White, displayTextColor(dominant = emptyList(), background = Color.Black))
+    }
+
+    @Test
+    fun `displayTextColor uses the most dominant color, made readable as text`() {
+        val murky = Color(0xFF2A2830)
+
+        val result = displayTextColor(dominant = listOf(murky, Color.White), background = Color.Black)
+
+        assertTrue(contrastRatio(result, Color.Black) >= 4.5f)
+        assertTrue(result != Color.White)
+    }
+
+    @Test
     fun `a color that already contrasts enough is left alone`() {
         assertEquals(Color.Black, readableOn(lightBackground, Color.Black))
     }

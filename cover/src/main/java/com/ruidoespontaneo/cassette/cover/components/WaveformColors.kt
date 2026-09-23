@@ -6,6 +6,9 @@ import androidx.compose.ui.graphics.luminance
 
 private const val MIN_WAVE_CONTRAST = 3f
 
+// WCAG AA for body text — stricter than the waveform's, since this has to be read, not just seen.
+private const val MIN_TEXT_CONTRAST = 4.5f
+
 /** WCAG contrast ratio between two opaque colors, from 1 (identical) to 21 (black on white). */
 internal fun contrastRatio(a: Color, b: Color): Float {
     val la = a.luminance()
@@ -30,6 +33,14 @@ internal fun readableOn(background: Color, color: Color, minContrast: Float = MI
     }
     return target
 }
+
+/**
+ * A text color for a display drawn on [background]: the album's most dominant color, made readable
+ * on it — or white while there are no [dominant] colors (the cover hasn't decoded, or Palette found
+ * nothing).
+ */
+fun displayTextColor(dominant: List<Color>?, background: Color): Color =
+    dominant?.firstOrNull()?.let { readableOn(background, it, MIN_TEXT_CONTRAST) } ?: Color.White
 
 /**
  * Exactly [count] colors for [PreviewWaveform], each made readable on [background]: the album's

@@ -19,7 +19,8 @@ data class AlbumDetailUiState(
     val previewPlayback: TrackPlayback? = null
 ) : UiState
 
-data class TrackPlayback(val position: Int, val isLoading: Boolean)
+/** [remainingMs] is `null` until the clip's duration is known (always while it's still buffering). */
+data class TrackPlayback(val position: Int, val isLoading: Boolean, val remainingMs: Long? = null)
 
 sealed interface AlbumDetailIntent : UiIntent {
     data object Retry : AlbumDetailIntent
