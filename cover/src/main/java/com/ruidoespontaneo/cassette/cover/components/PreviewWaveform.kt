@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.runtime.Composable
@@ -13,6 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -30,11 +34,16 @@ const val PREVIEW_WAVEFORM_LINES = 3
 
 private const val IDLE_ALPHA = 0.35f
 
+/** How much taller than its stroke a line's container is, leaving room for the wave's swing. */
+private const val WAVE_CONTAINER_TO_STROKE = 2.75f
+
 /**
  * A stack of horizontal Material 3 Expressive wavy lines, one per entry in [colors] (up to
  * [PREVIEW_WAVEFORM_LINES]; extra colors are ignored), each as wide as this composable is. While
  * [playing] the waves ripple; otherwise they ease down to flat, dimmed lines and the composable
- * keeps its size, so nothing around it shifts. [lineSpacing] is the gap between lines.
+ * keeps its size, so nothing around it shifts. [strokeWidth] is how thick each line is (Material's
+ * default is 4.dp) and each line's container is sized from it so the waves have room; [lineSpacing]
+ * is the gap between lines.
  *
  * Draws no background of its own — the colors are meant for whatever it sits on (see
  * [waveformColors], which takes that background).
@@ -47,8 +56,10 @@ fun PreviewWaveform(
     playing: Boolean,
     colors: List<Color>,
     modifier: Modifier = Modifier,
+    strokeWidth: Dp = 8.dp,
     lineSpacing: Dp = 4.dp
 ) {
+    val stroke = with(LocalDensity.current) { Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round) }
     val alpha by animateFloatAsState(targetValue = if (playing) 1f else IDLE_ALPHA, label = "waveformAlpha")
     Column(
         modifier = modifier.alpha(alpha),
@@ -64,9 +75,12 @@ fun PreviewWaveform(
             key(playing) {
                 LinearWavyProgressIndicator(
                     progress = { 1f },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(strokeWidth * WAVE_CONTAINER_TO_STROKE),
                     color = color,
                     trackColor = Color.Transparent,
+                    stroke = stroke,
                     gapSize = 0.dp,
                     stopSize = 0.dp,
                     amplitude = { if (playing) line.amplitude else 0f },

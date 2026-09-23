@@ -216,21 +216,22 @@ private fun AlbumDetailContent(
 ) {
     Column(modifier = modifier
         .verticalScroll(scrollState)
-        .padding(Spacing.large)) {
+        .padding(Spacing.large)
+        .background(color = MaterialTheme.colorScheme.background)) {
         val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
         ) {
-            // A player-style display panel beside the cover; the waveform sits in it for now, and
-            // the track number and elapsed time are meant to join it.
+            // A player-style display panel beside the cover; the waveform sits at its bottom, leaving
+            // the top free for the track number and elapsed time that are meant to join it.
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .height(IconSize.albumArtLarge)
                     .clip(RoundedCornerShape(Spacing.small))
                     .background(Color.Black),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.BottomCenter
             ) {
                 PreviewWaveform(
                     playing = previewPlayback != null && !previewPlayback.isLoading,
@@ -242,7 +243,7 @@ private fun AlbumDetailContent(
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = Spacing.medium)
+                        .padding(start = Spacing.medium, end = Spacing.medium, bottom = Spacing.medium)
                 )
             }
             AsyncImage(
