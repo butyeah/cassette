@@ -8,8 +8,12 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,11 +37,16 @@ private val bottomNavTabs = listOf(
 
 /**
  * Floating pill holding the app's top-level sections. It only shows on those sections' own routes,
- * so pushed screens (album detail, notifications) aren't covered by it.
+ * so pushed screens (album detail, notifications) aren't covered by it. On Daily it also carries a
+ * FAB that opens the jump-to-date calendar via [onCalendarClick].
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun CassetteFloatingToolbar(navController: NavHostController, modifier: Modifier = Modifier) {
+fun CassetteFloatingToolbar(
+    navController: NavHostController,
+    onCalendarClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     AnimatedVisibility(
         visible = bottomNavTabs.any { it.route == currentRoute },
@@ -45,7 +54,7 @@ fun CassetteFloatingToolbar(navController: NavHostController, modifier: Modifier
         enter = slideInVertically { it } + fadeIn(),
         exit = slideOutVertically { it } + fadeOut()
     ) {
-        HorizontalFloatingToolbar(expanded = true) {
+        val tabs: @Composable () -> Unit = {
             bottomNavTabs.forEach { tab ->
                 ToolbarTab(
                     tab = tab,
@@ -53,6 +62,18 @@ fun CassetteFloatingToolbar(navController: NavHostController, modifier: Modifier
                     onClick = { navigateToTab(navController, tab.route) }
                 )
             }
+        }
+        if (currentRoute == ROUTE_ONE_DAY_LIKE_TODAY) {
+            HorizontalFloatingToolbar(
+                expanded = true,
+                floatingActionButton = {
+                    FloatingToolbarDefaults.VibrantFloatingActionButton(onClick = onCalendarClick) {
+                        Icon(Icons.Default.DateRange, contentDescription = stringResource(R.string.open_calendar))
+                    }
+                }
+            ) { tabs() }
+        } else {
+            HorizontalFloatingToolbar(expanded = true) { tabs() }
         }
     }
 }

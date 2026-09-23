@@ -45,12 +45,6 @@ class OneDayLikeTodayUiStatePreviewProvider : PreviewParameterProvider<OneDayLik
 
     override val values = sequenceOf(
         OneDayLikeTodayUiState(day = day, isLoading = false, albumsByYear = previewGroups),
-        OneDayLikeTodayUiState(
-            day = day,
-            isLoading = false,
-            albumsByYear = previewGroups,
-            isCalendarExpanded = true
-        ),
         OneDayLikeTodayUiState(day = day, isLoading = false),
         OneDayLikeTodayUiState(day = day, isLoading = true),
         OneDayLikeTodayUiState(day = day, isLoading = false, errorMessage = "Couldn't load albums")
