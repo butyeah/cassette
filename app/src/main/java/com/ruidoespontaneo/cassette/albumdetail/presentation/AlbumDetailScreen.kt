@@ -156,9 +156,12 @@ private fun AlbumDetailScreenContent(
             }
         ) { innerPadding ->
             when {
-                state.isLoading -> LoadingIndicator(Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding))
+                state.isLoading -> LoadingIndicator(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                )
+
                 state.errorMessage != null -> ErrorMessage(
                     message = state.errorMessage,
                     onRetry = { onIntent(AlbumDetailIntent.Retry) },
@@ -214,13 +217,16 @@ private fun AlbumDetailContent(
     onCoverLoaded: (Bitmap) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier
-        .verticalScroll(scrollState)
-        .padding(Spacing.large)
-        .background(color = MaterialTheme.colorScheme.background)) {
+    Column(
+        modifier = modifier
+            .verticalScroll(scrollState)
+            .padding(Spacing.large)
+    ) {
         val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(color = Color.Black),
             horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
         ) {
             // A player-style display panel beside the cover; the waveform sits at its bottom, leaving
@@ -237,13 +243,23 @@ private fun AlbumDetailContent(
                     playing = previewPlayback != null && !previewPlayback.isLoading,
                     colors = waveformColors(
                         dominant = waveColors,
-                        fallback = with(MaterialTheme.colorScheme) { listOf(primary, secondary, tertiary) },
+                        fallback = with(MaterialTheme.colorScheme) {
+                            listOf(
+                                primary,
+                                secondary,
+                                tertiary
+                            )
+                        },
                         background = Color.Black,
                         count = PREVIEW_WAVEFORM_LINES
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = Spacing.medium, end = Spacing.medium, bottom = Spacing.medium)
+                        .padding(
+                            start = Spacing.medium,
+                            end = Spacing.medium,
+                            bottom = Spacing.medium
+                        )
                 )
             }
             AsyncImage(
