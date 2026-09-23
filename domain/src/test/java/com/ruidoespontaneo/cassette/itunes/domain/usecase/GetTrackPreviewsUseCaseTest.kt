@@ -73,8 +73,15 @@ class GetTrackPreviewsUseCaseTest {
     }
 
     @Test
-    fun `is empty when the album has no tracks`() = runBlocking {
-        val result = useCase(Result.success(listOf(preview("One")))).invoke(album())
+    fun `is empty without calling iTunes when the album has no tracks`() = runBlocking {
+        val useCase = GetTrackPreviewsUseCase(
+            object : ItunesRepository {
+                override suspend fun getPreviews(album: AlbumDetail): Result<List<TrackPreview>> =
+                    error("must not call iTunes for an album with no tracks")
+            }
+        )
+
+        val result = useCase(album())
 
         assertTrue(result.getOrNull()!!.isEmpty())
     }

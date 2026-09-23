@@ -17,6 +17,9 @@ data class AlbumPagerUiState(
 
 sealed interface AlbumPagerIntent : UiIntent {
     data object Retry : AlbumPagerIntent
+
+    /** Sent when the user pages away or the screen leaves the foreground — see [AlbumPagerViewModel]. */
+    data object StopPreview : AlbumPagerIntent
 }
 
 // No one-off events yet (nothing to navigate to or pop a snackbar for) — this is here so

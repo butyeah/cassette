@@ -19,11 +19,14 @@ import javax.inject.Inject
 class GetTrackPreviewsUseCase @Inject constructor(
     private val itunesRepository: ItunesRepository
 ) {
-    suspend operator fun invoke(album: AlbumDetail): Result<Map<Int, String>> =
-        itunesRepository.getPreviews(album).map { previews -> matchPreviews(album.tracks, previews) }
+    suspend operator fun invoke(album: AlbumDetail): Result<Map<Int, String>> {
+        // Nothing to attach a preview to — don't spend an iTunes call finding out.
+        if (album.tracks.isEmpty()) return Result.success(emptyMap())
+        return itunesRepository.getPreviews(album).map { previews -> matchPreviews(album.tracks, previews) }
+    }
 
     private fun matchPreviews(tracks: List<Track>, previews: List<TrackPreview>): Map<Int, String> {
-        if (tracks.isEmpty() || previews.isEmpty()) return emptyMap()
+        if (previews.isEmpty()) return emptyMap()
 
         val previewUrlByTitle = HashMap<String, String>()
         previews.forEach { previewUrlByTitle.putIfAbsent(it.title.normalizedForMatching(), it.url) }
