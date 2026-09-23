@@ -247,6 +247,12 @@ private fun AlbumDetailContent(
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .fillMaxWidth()
+        Text(
+            text = album.title,
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(top = Spacing.medium)
+        )
+        Text(text = album.artistName, style = MaterialTheme.typography.titleMedium)
                         .padding(Spacing.medium)
                 )
                 PreviewWaveform(
@@ -284,12 +290,6 @@ private fun AlbumDetailContent(
                     .clip(RoundedCornerShape(Spacing.small))
             )
         }
-        Text(
-            text = album.title,
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(top = Spacing.medium)
-        )
-        Text(text = album.artistName, style = MaterialTheme.typography.titleMedium)
         if (album.streamingLinks.hasAny()) {
             StreamingLinksRow(
                 album.streamingLinks,
