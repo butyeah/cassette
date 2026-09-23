@@ -3,6 +3,7 @@ package com.ruidoespontaneo.cassette.albumdetail.presentation
 import android.graphics.Bitmap
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -217,11 +218,18 @@ private fun AlbumDetailContent(
         .verticalScroll(scrollState)
         .padding(Spacing.large)) {
         val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
-        Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+        ) {
+            // A player-style display panel beside the cover; the waveform sits in it for now, and
+            // the track number and elapsed time are meant to join it.
             Box(
                 modifier = Modifier
+                    .weight(1f)
                     .height(IconSize.albumArtLarge)
-                    .padding(end = Spacing.medium),
+                    .clip(RoundedCornerShape(Spacing.small))
+                    .background(Color.Black),
                 contentAlignment = Alignment.Center
             ) {
                 PreviewWaveform(
@@ -229,10 +237,12 @@ private fun AlbumDetailContent(
                     colors = waveformColors(
                         dominant = waveColors,
                         fallback = with(MaterialTheme.colorScheme) { listOf(primary, secondary, tertiary) },
-                        background = MaterialTheme.colorScheme.background,
+                        background = Color.Black,
                         count = PREVIEW_WAVEFORM_LINES
                     ),
-                    length = IconSize.albumArtLarge
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.medium)
                 )
             }
             AsyncImage(

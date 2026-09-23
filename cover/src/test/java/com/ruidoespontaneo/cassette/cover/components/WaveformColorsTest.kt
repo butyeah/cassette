@@ -40,32 +40,38 @@ class WaveformColorsTest {
 
     @Test
     fun `waveformColors uses the album colors first and tops up from the fallback`() {
-        val album = listOf(Color(0xFF7A0019))
-        val fallback = listOf(Color.Red, Color.Green, Color.Blue)
+        val album = listOf(Color(0xFFFFC107))
+        val fallback = listOf(Color.Red, Color.Green, Color.Yellow)
 
-        val result = waveformColors(album, fallback, lightBackground, count = 3)
+        val result = waveformColors(album, fallback, Color.Black, count = 3)
 
-        assertEquals(3, result.size)
-        assertEquals(album.single(), result[0])
-        assertEquals(Color.Green, result[1])
-        assertEquals(Color.Blue, result[2])
+        assertEquals(listOf(album.single(), Color.Green, Color.Yellow), result)
     }
 
     @Test
     fun `waveformColors is all fallback until the cover has decoded`() {
-        val fallback = listOf(Color.Red, Color.Green, Color.Blue)
+        val fallback = listOf(Color.Red, Color.Green, Color.Yellow)
 
-        assertEquals(fallback, waveformColors(null, fallback, lightBackground, count = 3))
+        assertEquals(fallback, waveformColors(null, fallback, Color.Black, count = 3))
     }
 
     @Test
     fun `waveformColors caps at count and cycles a short fallback`() {
-        val tooMany = List(5) { Color(0xFF000000) }
+        val tooMany = List(5) { Color(0xFFFFC107) }
 
-        assertEquals(3, waveformColors(tooMany, listOf(Color.Red), lightBackground, count = 3).size)
+        assertEquals(3, waveformColors(tooMany, listOf(Color.Red), Color.Black, count = 3).size)
         assertEquals(
             listOf(Color.Red, Color.Red, Color.Red),
-            waveformColors(null, listOf(Color.Red), lightBackground, count = 3)
+            waveformColors(null, listOf(Color.Red), Color.Black, count = 3)
         )
+    }
+
+    @Test
+    fun `fallback colors are made readable on the background too`() {
+        val darkPurple = Color(0xFF3B2A6B)
+
+        val result = waveformColors(null, listOf(darkPurple), Color.Black, count = 1)
+
+        assertTrue(contrastRatio(result.single(), Color.Black) >= 3f)
     }
 }

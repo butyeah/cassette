@@ -2,18 +2,17 @@ package com.ruidoespontaneo.cassette.cover.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -32,9 +31,13 @@ const val PREVIEW_WAVEFORM_LINES = 3
 private const val IDLE_ALPHA = 0.35f
 
 /**
- * A row of vertical Material 3 Expressive wavy lines, one per entry in [colors] (up to [PREVIEW_WAVEFORM_LINES]; extra
- * colors are ignored), each [length] tall. While [playing] the waves ripple; otherwise they ease
- * down to flat, dimmed lines and the composable keeps its size, so nothing around it shifts.
+ * A stack of horizontal Material 3 Expressive wavy lines, one per entry in [colors] (up to
+ * [PREVIEW_WAVEFORM_LINES]; extra colors are ignored), each as wide as this composable is. While
+ * [playing] the waves ripple; otherwise they ease down to flat, dimmed lines and the composable
+ * keeps its size, so nothing around it shifts. [lineSpacing] is the gap between lines.
+ *
+ * Draws no background of its own — the colors are meant for whatever it sits on (see
+ * [waveformColors], which takes that background).
  *
  * Decorative: it isn't driven by the audio itself — callers just say whether something is playing.
  */
@@ -43,41 +46,34 @@ private const val IDLE_ALPHA = 0.35f
 fun PreviewWaveform(
     playing: Boolean,
     colors: List<Color>,
-    length: Dp,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    lineSpacing: Dp = 4.dp
 ) {
     val alpha by animateFloatAsState(targetValue = if (playing) 1f else IDLE_ALPHA, label = "waveformAlpha")
-    Row(
+    Column(
         modifier = modifier.alpha(alpha),
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.spacedBy(lineSpacing),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         colors.zip(waveLines).forEach { (color, line) ->
-            LinearWavyProgressIndicator(
-                progress = { 1f },
-                // Set up as a horizontal line of the given length, then turned upright.
-                modifier = Modifier.vertical().width(length),
-                color = color,
-                trackColor = Color.Transparent,
-                gapSize = 0.dp,
-                stopSize = 0.dp,
-                // A plain on/off step: the indicator eases amplitude changes itself, and feeding it a
-                // value that's already animating leaves it stuck part-way when playback stops.
-                amplitude = { if (playing) line.amplitude else 0f },
-                wavelength = line.wavelength,
-                waveSpeed = line.waveSpeed
-            )
+            // Keyed on [playing] so each state gets a fresh indicator that starts at the right
+            // amplitude. The indicator eases amplitude changes itself but only starts a new easing
+            // when none is running, so a quick on/off/on (switching tracks buffers in between) would
+            // otherwise drop the last change and leave it flat while playing. The alpha fade above
+            // covers for the amplitude snapping.
+            key(playing) {
+                LinearWavyProgressIndicator(
+                    progress = { 1f },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = color,
+                    trackColor = Color.Transparent,
+                    gapSize = 0.dp,
+                    stopSize = 0.dp,
+                    amplitude = { if (playing) line.amplitude else 0f },
+                    wavelength = line.wavelength,
+                    waveSpeed = line.waveSpeed
+                )
+            }
         }
-    }
-}
-
-/** Lays this out as if it were horizontal, then rotates it a quarter turn so it stands upright. */
-private fun Modifier.vertical(): Modifier = layout { measurable, _ ->
-    val placeable = measurable.measure(Constraints())
-    layout(placeable.height, placeable.width) {
-        placeable.placeWithLayer(
-            x = (placeable.height - placeable.width) / 2,
-            y = (placeable.width - placeable.height) / 2
-        ) { rotationZ = 90f }
     }
 }

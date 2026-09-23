@@ -32,14 +32,16 @@ internal fun readableOn(background: Color, color: Color, minContrast: Float = MI
 }
 
 /**
- * Exactly [count] colors for [PreviewWaveform]: the album's [dominant] colors, each made readable on
- * [background], topped up from [fallback] (cycling if it's shorter than needed) when there are fewer
- * of them — [dominant] is `null` until the cover has decoded, and Palette can come up short.
+ * Exactly [count] colors for [PreviewWaveform], each made readable on [background]: the album's
+ * [dominant] colors, topped up from [fallback] (cycling if it's shorter than needed) when there are
+ * fewer of them — [dominant] is `null` until the cover has decoded, and Palette can come up short.
  */
 fun waveformColors(dominant: List<Color>?, fallback: List<Color>, background: Color, count: Int): List<Color> {
     require(count > 0) { "count must be positive" }
     require(fallback.isNotEmpty()) { "fallback must not be empty" }
     val fromAlbum = dominant.orEmpty().take(count).map { readableOn(background, it) }
-    val topUp = List(count - fromAlbum.size) { fallback[(fromAlbum.size + it) % fallback.size] }
+    val topUp = List(count - fromAlbum.size) {
+        readableOn(background, fallback[(fromAlbum.size + it) % fallback.size])
+    }
     return fromAlbum + topUp
 }
