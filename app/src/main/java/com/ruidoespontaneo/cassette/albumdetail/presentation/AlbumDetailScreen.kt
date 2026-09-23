@@ -226,6 +226,7 @@ private fun AlbumDetailContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .clip(RoundedCornerShape(Spacing.small))
                 .background(color = Color.Black),
             horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
         ) {
