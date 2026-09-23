@@ -8,11 +8,24 @@ import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 data class AlbumDetailUiState(
     val isLoading: Boolean = true,
     val album: AlbumDetail? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    /**
+     * 30-second preview URL per [com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track.position].
+     * Loaded after [album] and never blocks it — stays empty when iTunes has nothing or the lookup
+     * failed, and tracks absent from it simply get no play button.
+     */
+    val previews: Map<Int, String> = emptyMap(),
+    /** The track of this album whose preview is buffering or playing, if any. */
+    val previewPlayback: TrackPlayback? = null
 ) : UiState
+
+data class TrackPlayback(val position: Int, val isLoading: Boolean)
 
 sealed interface AlbumDetailIntent : UiIntent {
     data object Retry : AlbumDetailIntent
+
+    /** Plays the track's preview, or stops it if that track is already the one playing. */
+    data class TogglePreview(val trackPosition: Int) : AlbumDetailIntent
 }
 
 // No one-off events yet (nothing to navigate to or pop a snackbar for) —

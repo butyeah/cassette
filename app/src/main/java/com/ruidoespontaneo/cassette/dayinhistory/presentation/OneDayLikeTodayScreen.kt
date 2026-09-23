@@ -45,6 +45,7 @@ import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.cover.components.AnimatedGradientBackground
 import com.ruidoespontaneo.cassette.cover.components.CoverCard
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
+import com.ruidoespontaneo.cassette.ui.theme.ToolbarSize
 import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
@@ -204,7 +205,7 @@ private fun AlbumsByYearList(
     }
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(Spacing.large),
+        contentPadding = PaddingValues(start = Spacing.large, top = Spacing.large, end = Spacing.large, bottom = Spacing.large + ToolbarSize.clearance),
         verticalArrangement = Arrangement.spacedBy(Spacing.medium)
     ) {
         items(groups, key = { it.year }) { group ->
