@@ -27,8 +27,16 @@ sealed interface AlbumDetailIntent : UiIntent {
 
     /** Plays the track's preview, or stops it if that track is already the one playing. */
     data class TogglePreview(val trackPosition: Int) : AlbumDetailIntent
+
+    /**
+     * Plays this album's first preview as soon as its previews are known — sent when auto-play
+     * arrives here from the previous album. An album with nothing to play sends
+     * [AlbumDetailEffect.TracklistFinished] straight away, so auto-play moves on past it.
+     */
+    data object AutoPlay : AlbumDetailIntent
 }
 
-// No one-off events yet (nothing to navigate to or pop a snackbar for) —
-// this is here so AlbumDetailViewModel has a concrete UiEffect to declare.
-sealed interface AlbumDetailEffect : UiEffect
+sealed interface AlbumDetailEffect : UiEffect {
+    /** Auto-play ran out of this album's previews; the next album should take over. */
+    data object TracklistFinished : AlbumDetailEffect
+}

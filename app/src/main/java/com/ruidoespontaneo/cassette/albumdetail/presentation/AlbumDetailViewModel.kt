@@ -26,6 +26,10 @@ import kotlinx.coroutines.launch
  * this ViewModel only starts and stops clips for its own album and mirrors the player's state back
  * into [AlbumDetailUiState.previewPlayback] when the playing clip is one of its own. Stopping when
  * the pager is left or paged away from is AlbumPagerViewModel's job.
+ *
+ * Auto-play: when one of its clips plays to the end, it starts the next track that has a preview;
+ * after the last one it sends [AlbumDetailEffect.TracklistFinished] so the pager can move on to the
+ * next album, which it starts with [AlbumDetailIntent.AutoPlay].
  */
 @HiltViewModel(assistedFactory = AlbumDetailViewModel.Factory::class)
 class AlbumDetailViewModel @AssistedInject constructor(
@@ -42,19 +46,28 @@ class AlbumDetailViewModel @AssistedInject constructor(
         fun create(albumId: String): AlbumDetailViewModel
     }
 
+    /** Set by [AlbumDetailIntent.AutoPlay] while previews are still loading. */
+    private var autoPlayPending = false
+
+    /** Whether the preview lookup has finished, successfully or not. */
+    private var previewsKnown = false
+
     init {
         loadAlbum()
         observePlayback()
+        observeCompletions()
     }
 
     override fun onIntent(intent: AlbumDetailIntent) {
         when (intent) {
             AlbumDetailIntent.Retry -> loadAlbum()
             is AlbumDetailIntent.TogglePreview -> togglePreview(intent.trackPosition)
+            AlbumDetailIntent.AutoPlay -> autoPlay()
         }
     }
 
     private fun loadAlbum() {
+        previewsKnown = false
         setState { copy(isLoading = true, errorMessage = null) }
         viewModelScope.launch {
             getAlbumDetailUseCase(albumId)
@@ -66,6 +79,8 @@ class AlbumDetailViewModel @AssistedInject constructor(
                     setState {
                         copy(isLoading = false, errorMessage = error.message ?: "Couldn't load album")
                     }
+                    // Nothing to play here, so auto-play shouldn't stall on the error screen.
+                    onPreviewsKnown()
                 }
         }
     }
@@ -76,6 +91,46 @@ class AlbumDetailViewModel @AssistedInject constructor(
     private fun loadPreviews(album: AlbumDetail) {
         viewModelScope.launch {
             getTrackPreviewsUseCase(album).onSuccess { previews -> setState { copy(previews = previews) } }
+            onPreviewsKnown()
+        }
+    }
+
+    private fun onPreviewsKnown() {
+        previewsKnown = true
+        if (autoPlayPending) {
+            autoPlayPending = false
+            autoPlay()
+        }
+    }
+
+    private fun autoPlay() {
+        if (!previewsKnown) {
+            autoPlayPending = true
+            return
+        }
+        val first = currentState.previews.minByOrNull { it.key }
+        if (first != null) {
+            previewPlayer.play(first.value)
+        } else {
+            sendEffect { AlbumDetailEffect.TracklistFinished }
+        }
+    }
+
+    private fun observeCompletions() {
+        viewModelScope.launch {
+            previewPlayer.completions.collect { url -> playNextAfter(url) }
+        }
+    }
+
+    /** Only reacts to [url] if it's one of this album's clips — the player is shared. */
+    private fun playNextAfter(url: String) {
+        val previews = currentState.previews
+        val position = previews.entries.firstOrNull { it.value == url }?.key ?: return
+        val next = previews.filterKeys { it > position }.minByOrNull { it.key }
+        if (next != null) {
+            previewPlayer.play(next.value)
+        } else {
+            sendEffect { AlbumDetailEffect.TracklistFinished }
         }
     }
 

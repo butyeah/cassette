@@ -19,7 +19,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,6 +36,7 @@ import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.albumdetail.presentation.AlbumDetailScreen
 import com.ruidoespontaneo.cassette.albumdetail.presentation.AlbumDetailViewModel
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
+import kotlinx.coroutines.launch
 
 /**
  * Pages vertically, reels-style, between every album released on one day (across years) — see
@@ -96,12 +101,29 @@ private fun AlbumPager(
         snapshotFlow { pagerState.currentPage }.collect { currentOnStopPreview() }
     }
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { currentOnStopPreview() }
+    // Auto-play hand-off: once an album's last preview ends, scroll to the next album and ask it
+    // to start. The request is only raised after the scroll settles — the page-change stop above
+    // fires mid-scroll and would otherwise cut the new album's first clip. A drag during the scroll
+    // cancels it, and with it the hand-off.
+    val scope = rememberCoroutineScope()
+    var autoPlayAlbumId by remember { mutableStateOf<String?>(null) }
     VerticalPager(state = pagerState, modifier = modifier, key = { albumIds[it] }) { page ->
         val albumId = albumIds[page]
         AlbumDetailScreen(
             onBack = onBack,
             viewModel = hiltViewModel<AlbumDetailViewModel, AlbumDetailViewModel.Factory>(key = albumId) { factory ->
                 factory.create(albumId)
+            },
+            autoPlay = albumId == autoPlayAlbumId,
+            onAutoPlayStarted = { autoPlayAlbumId = null },
+            onTracklistFinished = {
+                val next = page + 1
+                if (next < albumIds.size) {
+                    scope.launch {
+                        pagerState.animateScrollToPage(next)
+                        autoPlayAlbumId = albumIds[next]
+                    }
+                }
             }
         )
     }

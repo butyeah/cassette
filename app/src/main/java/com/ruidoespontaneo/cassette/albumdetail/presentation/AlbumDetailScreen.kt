@@ -38,6 +38,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,14 +82,36 @@ import dev.chrisbanes.haze.rememberHazeState
 /**
  * [viewModel] has no default — it's assisted-injected per album (see [AlbumDetailViewModel]), so
  * the caller must build it via `hiltViewModel`'s assisted-injection overload, keyed by albumId.
+ *
+ * [autoPlay] asks this album to start playing its previews (auto-play arriving from the previous
+ * album); [onAutoPlayStarted] acknowledges it so it fires once. [onTracklistFinished] is called when
+ * auto-play has run out of this album's previews.
  */
 @Composable
 fun AlbumDetailScreen(
     onBack: () -> Unit,
     viewModel: AlbumDetailViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    autoPlay: Boolean = false,
+    onAutoPlayStarted: () -> Unit = {},
+    onTracklistFinished: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val currentOnAutoPlayStarted by rememberUpdatedState(onAutoPlayStarted)
+    val currentOnTracklistFinished by rememberUpdatedState(onTracklistFinished)
+    LaunchedEffect(autoPlay) {
+        if (autoPlay) {
+            viewModel.onIntent(AlbumDetailIntent.AutoPlay)
+            currentOnAutoPlayStarted()
+        }
+    }
+    LaunchedEffect(viewModel) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                AlbumDetailEffect.TracklistFinished -> currentOnTracklistFinished()
+            }
+        }
+    }
     AlbumDetailScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
@@ -224,6 +247,12 @@ private fun AlbumDetailContent(
             .padding(Spacing.large)
     ) {
         val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
+        Text(
+            text = album.title,
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(top = Spacing.medium)
+        )
+        Text(text = album.artistName, style = MaterialTheme.typography.titleMedium)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -284,12 +313,6 @@ private fun AlbumDetailContent(
                     .clip(RoundedCornerShape(Spacing.small))
             )
         }
-        Text(
-            text = album.title,
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(top = Spacing.medium)
-        )
-        Text(text = album.artistName, style = MaterialTheme.typography.titleMedium)
         if (album.streamingLinks.hasAny()) {
             StreamingLinksRow(
                 album.streamingLinks,
