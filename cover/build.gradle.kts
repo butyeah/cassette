@@ -33,4 +33,6 @@ dependencies {
     // DominantColors' Palette-based color extraction.
     implementation(libs.androidx.palette)
     implementation(libs.kotlinx.coroutines.core)
+
+    testImplementation(libs.junit)
 }

@@ -98,3 +98,28 @@ ListItem(
     colors = ListItemDefaults.colors(containerColor = Color.Transparent)
 )
 ```
+
+### `PreviewWaveform`
+
+A stack of horizontal Material 3 Expressive wavy lines (`LinearWavyProgressIndicator`, so it needs
+the `@ExperimentalMaterial3ExpressiveApi` opt-in and material3 1.5.0 alpha or later) that ripple
+while something is playing and ease down to flat, dimmed lines when it isn't. It draws no
+background of its own, so put it on whatever surface `waveformColors` was given. It doesn't analyze
+audio — callers just pass `playing`.
+
+```kotlin
+PreviewWaveform(
+    playing = isPlaying,
+    colors = waveformColors(dominantColors, fallback = listOf(primary, secondary, tertiary), background, PREVIEW_WAVEFORM_LINES),
+    modifier = Modifier.fillMaxWidth()
+)
+```
+
+`waveformColors` takes an album's `dominantColors()` and nudges each one until it has at least 3:1
+contrast against `background` — a screen background built from those same colors would otherwise
+swallow them — topping up from `fallback` while the cover is still decoding.
+
+**Gotcha:** the wavy indicator eases amplitude changes itself, but only starts a new easing when
+none is running, so a quick on/off/on can leave it stuck flat (or part-way) while `playing`. The
+composable therefore re-creates its lines whenever `playing` flips (`key(playing)`) instead of
+feeding the indicator an animated amplitude.
