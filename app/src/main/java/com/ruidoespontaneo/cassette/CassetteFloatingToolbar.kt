@@ -109,15 +109,15 @@ fun CassetteFloatingToolbar(
 }
 
 /**
- * The playing album's cover, cut into Material 3 Expressive's flower shape — the button itself, no
- * label. Every [NOW_PLAYING_SPIN_INTERVAL_MS] it spins one full turn on the expressive spatial
+ * The playing album's cover, cut into Material 3 Expressive's wavy circle (the 12-sided cookie) —
+ * the button itself, no label. Every [NOW_PLAYING_SPIN_INTERVAL_MS] it spins one full turn on the expressive spatial
  * spring, a small sign that something is playing.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun NowPlayingButton(nowPlaying: NowPlaying, onClick: () -> Unit) {
     val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
-    val flower = MaterialShapes.Flower.toShape()
+    val wavyCircle = MaterialShapes.Cookie12Sided.toShape()
     val spinSpec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
     val rotation = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
@@ -138,7 +138,7 @@ private fun NowPlayingButton(nowPlaying: NowPlaying, onClick: () -> Unit) {
             .size(IconSize.nowPlayingThumbnail)
             .graphicsLayer {
                 rotationZ = rotation.value
-                shape = flower
+                shape = wavyCircle
                 clip = true
             }
             .clickable(role = Role.Button, onClick = onClick)

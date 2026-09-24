@@ -21,7 +21,7 @@ object IconSize {
     val trackRow = minTouchTarget
     /** The now-playing dialog's play/stop button. */
     val nowPlayingButton = 64.dp
-    /** The floating toolbar's now-playing button: the album cover, cut into a flower. */
+    /** The floating toolbar's now-playing button: the album cover, cut into a wavy circle. */
     val nowPlayingThumbnail = 40.dp
     /** The signed-in user's initial on the Profile tab. */
     val avatar = 64.dp
