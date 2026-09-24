@@ -157,21 +157,21 @@ class OneDayLikeTodayViewModelTest {
     }
 
     @Test
-    fun `starts as a list`() {
+    fun `starts as a grid`() {
         val viewModel = viewModel { _, _ -> Result.success(emptyList()) }
 
-        assertEquals(AlbumsLayout.List, viewModel.state.value.layout)
+        assertEquals(AlbumsLayout.Grid, viewModel.state.value.layout)
     }
 
     @Test
-    fun `ToggleLayout switches between list and grid`() {
+    fun `ToggleLayout switches between grid and list`() {
         val viewModel = viewModel { _, _ -> Result.success(emptyList()) }
 
         viewModel.onIntent(OneDayLikeTodayIntent.ToggleLayout)
-        assertEquals(AlbumsLayout.Grid, viewModel.state.value.layout)
+        assertEquals(AlbumsLayout.List, viewModel.state.value.layout)
 
         viewModel.onIntent(OneDayLikeTodayIntent.ToggleLayout)
-        assertEquals(AlbumsLayout.List, viewModel.state.value.layout)
+        assertEquals(AlbumsLayout.Grid, viewModel.state.value.layout)
     }
 
     @Test
@@ -185,21 +185,7 @@ class OneDayLikeTodayViewModelTest {
         viewModel.onIntent(OneDayLikeTodayIntent.SelectDate(MonthDay.of(6, 17)))
         dispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(AlbumsLayout.Grid, viewModel.state.value.layout)
-    }
-
-    @Test
-    fun `albums flattens the year groups in list order`() {
-        fun album(id: String, year: Int) =
-            Album(id = id, title = id, releaseDate = LocalDate.of(year, 6, 17), artistId = null, artistName = "Artist")
-        val state = OneDayLikeTodayUiState(
-            albumsByYear = listOf(
-                AlbumsByYear(1971, listOf(album("a", 1971), album("b", 1971))),
-                AlbumsByYear(1985, listOf(album("c", 1985)))
-            )
-        )
-
-        assertEquals(listOf("a", "b", "c"), state.albums.map { it.id })
+        assertEquals(AlbumsLayout.List, viewModel.state.value.layout)
     }
 
     private fun viewModel(
