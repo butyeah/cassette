@@ -4,9 +4,7 @@ import android.text.format.DateFormat
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.core.os.ConfigurationCompat
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /**
  * Formats a month and day the way the current language writes them — "June 17", "17 de junio" —
@@ -15,7 +13,8 @@ import java.util.Locale
  */
 @Composable
 fun rememberDayFormatter(): DateTimeFormatter {
-    val locale = ConfigurationCompat.getLocales(LocalConfiguration.current)[0] ?: Locale.getDefault()
+    // Read from the configuration (not Locale.getDefault()) so a language change recomposes this.
+    val locale = LocalConfiguration.current.locales[0]
     return remember(locale) {
         DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, "MMMMd"), locale)
     }
