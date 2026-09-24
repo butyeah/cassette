@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -578,14 +579,18 @@ private fun TrackRow(
         Row(
             modifier = modifier
                 .fillMaxWidth()
+                .height(IconSize.trackRow)
                 .bringIntoViewRequester(bringIntoViewRequester)
                 .padding(start = Spacing.large, end = Spacing.extraSmall),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // One line, so a long title can't make its row taller than the rest.
             Text(
                 text = "${track.position}. ${track.title}",
                 style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
             )
             val durationText = track.durationText()
@@ -598,6 +603,9 @@ private fun TrackRow(
             }
             if (hasPreview) {
                 PreviewButton(track.title, playback, onTogglePreview)
+            } else {
+                // Keeps the durations lined up with the rows that have a play button.
+                Spacer(Modifier.size(IconSize.minTouchTarget))
             }
         }
     }
