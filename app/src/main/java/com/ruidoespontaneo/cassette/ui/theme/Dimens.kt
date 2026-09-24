@@ -14,6 +14,10 @@ object IconSize {
     val previewStatus = 16.dp
     /** Material's minimum touch target — the size of an IconButton, e.g. to balance one with a spacer. */
     val minTouchTarget = 48.dp
+    /** The now-playing dialog's play/stop button. */
+    val nowPlayingButton = 64.dp
+    /** The cover thumbnail on the floating toolbar's now-playing button. */
+    val nowPlayingThumbnail = 24.dp
 }
 
 /** Space the floating bottom toolbar occupies; scrolling top-level screens pad their end by this so nothing hides under it. */

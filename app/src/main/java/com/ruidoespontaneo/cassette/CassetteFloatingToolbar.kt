@@ -6,6 +6,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
@@ -16,10 +18,14 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -30,6 +36,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import coil3.compose.AsyncImage
+import com.ruidoespontaneo.cassette.albumdetail.preview.NowPlaying
+import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
+import com.ruidoespontaneo.cassette.ui.theme.IconSize
 
 private data class BottomNavTab(val route: String, val icon: ImageVector, val labelRes: Int)
 
@@ -42,12 +52,18 @@ private val bottomNavTabs = listOf(
  * Floating pill holding the app's top-level sections. It only shows on those sections' own routes,
  * so pushed screens (album detail, notifications) aren't covered by it. On Daily it also carries a
  * FAB that opens the jump-to-date calendar via [onCalendarClick].
+ *
+ * While [showNowPlaying] (a preview is loaded), a third button after the tabs shows [nowPlaying]'s
+ * album cover and opens the now-playing dialog via [onNowPlayingClick].
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CassetteFloatingToolbar(
     navController: NavHostController,
     onCalendarClick: () -> Unit,
+    nowPlaying: NowPlaying?,
+    showNowPlaying: Boolean,
+    onNowPlayingClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
@@ -65,6 +81,10 @@ fun CassetteFloatingToolbar(
                     onClick = { navigateToTab(navController, tab.route) }
                 )
             }
+            // nowPlaying outlives the playback itself, so the thumbnail stays put while fading out.
+            AnimatedVisibility(visible = showNowPlaying && nowPlaying != null, enter = fadeIn(), exit = fadeOut()) {
+                nowPlaying?.let { NowPlayingButton(it, onClick = onNowPlayingClick) }
+            }
         }
         if (currentRoute == ROUTE_ONE_DAY_LIKE_TODAY) {
             HorizontalFloatingToolbar(
@@ -78,6 +98,26 @@ fun CassetteFloatingToolbar(
         } else {
             HorizontalFloatingToolbar(expanded = true) { tabs() }
         }
+    }
+}
+
+/** Shaped like [ToolbarTab]: the playing album's cover where the icon goes, then "Now playing". */
+@Composable
+private fun NowPlayingButton(nowPlaying: NowPlaying, onClick: () -> Unit) {
+    val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
+    TextButton(onClick = onClick) {
+        AsyncImage(
+            model = nowPlaying.album.coverArtUrl(),
+            contentDescription = null, // decorative — the label names the button
+            placeholder = placeholder,
+            error = placeholder,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(IconSize.nowPlayingThumbnail)
+                .clip(CircleShape)
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(stringResource(R.string.now_playing_title))
     }
 }
 
