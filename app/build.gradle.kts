@@ -26,6 +26,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Lets "English (XA)" / "Arabic (XB)" be picked in developer options, which stretch and
+            // mirror every string resource — anything left hardcoded stands out.
+            isPseudoLocalesEnabled = true
+        }
         release {
             optimization {
                 enable = false

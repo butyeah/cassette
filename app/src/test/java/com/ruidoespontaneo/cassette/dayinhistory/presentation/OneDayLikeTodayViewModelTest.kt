@@ -1,5 +1,6 @@
 package com.ruidoespontaneo.cassette.dayinhistory.presentation
 
+import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.dayinhistory.domain.DayInHistoryRepository
 import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.dayinhistory.domain.usecase.GetAlbumsByDayUseCase
@@ -51,7 +52,7 @@ class OneDayLikeTodayViewModelTest {
         val state = viewModel.state.value
         assertFalse(state.isLoading)
         assertEquals(listOf(AlbumsByYear(1994, listOf(album))), state.albumsByYear)
-        assertNull(state.errorMessage)
+        assertNull(state.errorRes)
         assertEquals(today, state.day)
     }
 
@@ -81,7 +82,7 @@ class OneDayLikeTodayViewModelTest {
         val state = viewModel.state.value
         assertFalse(state.isLoading)
         assertTrue(state.albumsByYear.isEmpty())
-        assertEquals("boom", state.errorMessage)
+        assertEquals(R.string.error_load_albums, state.errorRes)
     }
 
     @Test

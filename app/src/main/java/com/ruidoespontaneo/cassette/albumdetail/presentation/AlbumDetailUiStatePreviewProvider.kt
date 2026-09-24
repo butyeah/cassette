@@ -1,6 +1,7 @@
 package com.ruidoespontaneo.cassette.albumdetail.presentation
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.StreamingLinks
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
@@ -51,6 +52,6 @@ class AlbumDetailUiStatePreviewProvider : PreviewParameterProvider<AlbumDetailUi
             album = previewAlbum.copy(genres = emptyList(), ratingValue = null, tracks = emptyList())
         ),
         AlbumDetailUiState(isLoading = true),
-        AlbumDetailUiState(isLoading = false, errorMessage = "Couldn't load album")
+        AlbumDetailUiState(isLoading = false, errorRes = R.string.error_load_album)
     )
 }

@@ -1,5 +1,6 @@
 package com.ruidoespontaneo.cassette.dayinhistory.presentation
 
+import androidx.annotation.StringRes
 import com.ruidoespontaneo.cassette.core.mvi.UiEffect
 import com.ruidoespontaneo.cassette.core.mvi.UiIntent
 import com.ruidoespontaneo.cassette.core.mvi.UiState
@@ -10,7 +11,7 @@ data class OneDayLikeTodayUiState(
     val day: MonthDay = MonthDay.now(),
     val isLoading: Boolean = true,
     val albumsByYear: List<AlbumsByYear> = emptyList(),
-    val errorMessage: String? = null,
+    @StringRes val errorRes: Int? = null,
     /** How the albums are shown. Kept for the session only; changing day doesn't reset it. */
     val layout: AlbumsLayout = AlbumsLayout.Grid
 ) : UiState

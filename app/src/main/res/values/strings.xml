@@ -1,6 +1,8 @@
 <resources>
-    <string name="app_name">Cassette</string>
+    <string name="app_name" translatable="false">Cassette</string>
     <string name="retry">Retry</string>
+    <string name="error_load_album">Couldn\'t load this album.</string>
+    <string name="error_load_albums">Couldn\'t load the albums.</string>
     <string name="no_albums_message">No albums released on this day</string>
     <string name="tab_daily">Daily</string>
     <string name="tab_profile">Profile</string>
@@ -23,13 +25,16 @@
     <string name="daily_reminder_channel_name">Daily reminder</string>
     <string name="album_detail_default_title">Album</string>
     <string name="genres_format">Genres: %1$s</string>
-    <string name="rating_format">%1$.1f / 5 (%2$d ratings)</string>
+    <plurals name="rating_format">
+        <item quantity="one">%1$.1f / 5 (%2$d rating)</item>
+        <item quantity="other">%1$.1f / 5 (%2$d ratings)</item>
+    </plurals>
     <string name="tracklist_title">Tracklist</string>
     <string name="play_preview">Play preview of %1$s</string>
     <string name="stop_preview">Stop preview of %1$s</string>
     <string name="preview_track_number">Track %1$d</string>
     <string name="preview_track_idle">Track --</string>
-    <string name="preview_title_idle">--</string>
+    <string name="preview_title_idle" translatable="false">--</string>
     <string name="preview_status_stopped">Stopped</string>
     <string name="preview_status_playing">Playing</string>
     <string name="show_as_grid">Show as grid</string>
@@ -37,7 +42,7 @@
     <string name="album_cover_description">%1$s by %2$s</string>
     <string name="show_album_details">Show details</string>
     <string name="open_album">Open album</string>
-    <string name="now_playing_album_artist">%1$s · %2$s</string>
+    <string name="now_playing_album_artist" translatable="false">%1$s · %2$s</string>
     <string name="now_playing_stop">Stop preview</string>
     <string name="now_playing_replay">Play preview again</string>
     <string name="now_playing_title">Now playing</string>

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.albumdetail.preview.FakePreviewPlayer
 import com.ruidoespontaneo.cassette.albumdetail.preview.testPreviewQueue
 import com.ruidoespontaneo.cassette.dayinhistory.domain.DayInHistoryRepository
@@ -57,7 +58,7 @@ class AlbumPagerViewModelTest {
         val state = viewModel.state.value
         assertFalse(state.isLoading)
         assertEquals(listOf("late", "same-year-as-late", "early"), state.albumIds)
-        assertNull(state.errorMessage)
+        assertNull(state.errorRes)
     }
 
     @Test
@@ -91,7 +92,7 @@ class AlbumPagerViewModelTest {
         val state = viewModel.state.value
         assertFalse(state.isLoading)
         assertTrue(state.albumIds.isEmpty())
-        assertEquals("boom", state.errorMessage)
+        assertEquals(R.string.error_load_albums, state.errorRes)
     }
 
     @Test
@@ -108,7 +109,7 @@ class AlbumPagerViewModelTest {
         dispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(callsAfterInit + 1, calls)
-        assertNull(viewModel.state.value.errorMessage)
+        assertNull(viewModel.state.value.errorRes)
     }
 
     @Test
@@ -137,7 +138,7 @@ class AlbumPagerViewModelTest {
         store.clear()
 
         assertEquals(0, player.stopCount)
-        assertNull(viewModel.state.value.errorMessage)
+        assertNull(viewModel.state.value.errorRes)
     }
 
     @Test

@@ -29,7 +29,6 @@ import com.ruidoespontaneo.cassette.dayinhistory.presentation.OneDayLikeTodayScr
 import com.ruidoespontaneo.cassette.notifications.presentation.NotificationsScreen
 import com.ruidoespontaneo.cassette.nowplaying.presentation.NowPlayingDialog
 import com.ruidoespontaneo.cassette.nowplaying.presentation.NowPlayingViewModel
-import java.time.format.DateTimeFormatter
 
 const val ROUTE_ONE_DAY_LIKE_TODAY = "oneDayLikeToday"
 const val ROUTE_LOGIN = "login"
@@ -42,7 +41,7 @@ const val ROUTE_ALBUM_DETAIL =
 fun albumDetailRoute(month: Int, day: Int, albumId: String) = "albumDetail/$month/$day/$albumId"
 
 @Composable
-fun CassetteApp(dayFormatter: DateTimeFormatter) {
+fun CassetteApp() {
     val navController = rememberNavController()
     // Hoisted here because the button that opens it lives in the floating toolbar, outside the
     // Daily screen that shows it.
@@ -61,7 +60,6 @@ fun CassetteApp(dayFormatter: DateTimeFormatter) {
             ) {
                 composable(ROUTE_ONE_DAY_LIKE_TODAY) {
                     OneDayLikeTodayScreen(
-                        dayFormatter = dayFormatter,
                         onAlbumClick = { day, albumId ->
                             navController.navigate(albumDetailRoute(day.monthValue, day.dayOfMonth, albumId))
                         },

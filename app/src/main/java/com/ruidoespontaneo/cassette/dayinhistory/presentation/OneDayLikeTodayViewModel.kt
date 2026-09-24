@@ -1,6 +1,7 @@
 package com.ruidoespontaneo.cassette.dayinhistory.presentation
 
 import androidx.lifecycle.viewModelScope
+import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.core.mvi.MviViewModel
 import com.ruidoespontaneo.cassette.dayinhistory.domain.usecase.GetAlbumsByDayUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,13 +31,13 @@ class OneDayLikeTodayViewModel @Inject constructor(
     }
 
     private fun loadAlbums(day: MonthDay) {
-        setState { copy(day = day, isLoading = true, errorMessage = null) }
+        setState { copy(day = day, isLoading = true, errorRes = null) }
         viewModelScope.launch {
             getAlbumsByDayUseCase(day.monthValue, day.dayOfMonth)
                 .onSuccess { groups -> setState { copy(isLoading = false, albumsByYear = groups) } }
                 .onFailure { error ->
                     setState {
-                        copy(isLoading = false, errorMessage = error.message ?: "Couldn't load albums")
+                        copy(isLoading = false, errorRes = R.string.error_load_albums)
                     }
                 }
         }
