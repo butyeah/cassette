@@ -7,7 +7,10 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.viewModelScope
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.ruidoespontaneo.cassette.auth.domain.model.AuthException
+import com.ruidoespontaneo.cassette.auth.domain.model.AuthFailure
 import com.ruidoespontaneo.cassette.auth.domain.usecase.ObserveAuthStateUseCase
+import com.ruidoespontaneo.cassette.auth.domain.usecase.SendPasswordResetEmailUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SignInWithEmailUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SignInWithGoogleUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SignOutUseCase
@@ -26,6 +29,7 @@ class LoginViewModel @Inject constructor(
     private val signInWithEmailUseCase: SignInWithEmailUseCase,
     private val signUpWithEmailUseCase: SignUpWithEmailUseCase,
     private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
+    private val sendPasswordResetEmailUseCase: SendPasswordResetEmailUseCase,
     private val signOutUseCase: SignOutUseCase,
     private val credentialManager: CredentialManager,
     private val getCredentialRequest: GetCredentialRequest
@@ -39,14 +43,31 @@ class LoginViewModel @Inject constructor(
 
     override fun onIntent(intent: LoginIntent) {
         when (intent) {
-            is LoginIntent.EmailChanged -> setState { copy(email = intent.email, errorMessage = null) }
-            is LoginIntent.PasswordChanged ->
-                setState { copy(password = intent.password, errorMessage = null) }
+            is LoginIntent.ModeChanged -> setState {
+                // A fresh form per mode: a sign-in password shouldn't carry into a new account.
+                copy(
+                    mode = intent.mode,
+                    password = "",
+                    confirmPassword = "",
+                    failure = null,
+                    resetEmailSentTo = null,
+                    needsEmailForReset = false
+                )
+            }
 
-            LoginIntent.SignIn -> signIn()
-            LoginIntent.SignUp -> signUp()
+            is LoginIntent.EmailChanged -> setState {
+                copy(email = intent.email, failure = null, resetEmailSentTo = null, needsEmailForReset = false)
+            }
+
+            is LoginIntent.PasswordChanged -> setState { copy(password = intent.password, failure = null) }
+            is LoginIntent.ConfirmPasswordChanged ->
+                setState { copy(confirmPassword = intent.confirmPassword, failure = null) }
+
+            LoginIntent.TogglePasswordVisibility -> setState { copy(isPasswordVisible = !isPasswordVisible) }
+            LoginIntent.Submit -> submit()
+            LoginIntent.ForgotPassword -> sendPasswordReset()
             LoginIntent.SignOut -> signOutUseCase()
-            LoginIntent.DismissError -> setState { copy(errorMessage = null) }
+            LoginIntent.DismissError -> setState { copy(failure = null) }
         }
     }
 
@@ -72,14 +93,28 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    private fun signIn() {
-        val (email, password) = currentState.email to currentState.password
-        runAuthAction { signInWithEmailUseCase(email, password) }
+    private fun submit() {
+        if (!currentState.canSubmit) return
+        val email = currentState.email.trim()
+        val password = currentState.password
+        when (currentState.mode) {
+            LoginMode.SignIn -> runAuthAction { signInWithEmailUseCase(email, password) }
+            LoginMode.CreateAccount -> runAuthAction { signUpWithEmailUseCase(email, password) }
+        }
     }
 
-    private fun signUp() {
-        val (email, password) = currentState.email to currentState.password
-        runAuthAction { signUpWithEmailUseCase(email, password) }
+    private fun sendPasswordReset() {
+        val email = currentState.email.trim()
+        if (!isPlausibleEmail(email)) {
+            setState { copy(needsEmailForReset = true) }
+            return
+        }
+        setState { copy(isLoading = true, failure = null, resetEmailSentTo = null) }
+        viewModelScope.launch {
+            sendPasswordResetEmailUseCase(email)
+                .onSuccess { setState { copy(isLoading = false, resetEmailSentTo = email) } }
+                .onFailure { error -> setState { copy(isLoading = false, failure = error.toAuthFailure()) } }
+        }
     }
 
     private fun signInWithGoogle(idToken: String) {
@@ -87,18 +122,17 @@ class LoginViewModel @Inject constructor(
     }
 
     private fun runAuthAction(action: suspend () -> Result<Unit>) {
-        setState { copy(isLoading = true, errorMessage = null) }
+        setState { copy(isLoading = true, failure = null, resetEmailSentTo = null) }
         viewModelScope.launch {
             action()
                 .onSuccess {
-                    setState { copy(isLoading = false, password = "") }
+                    setState { copy(isLoading = false, password = "", confirmPassword = "") }
                     sendEffect { LoginEffect.SignedIn }
                 }
-                .onFailure { error ->
-                    setState {
-                        copy(isLoading = false, errorMessage = error.message ?: "Couldn't sign in")
-                    }
-                }
+                .onFailure { error -> setState { copy(isLoading = false, failure = error.toAuthFailure()) } }
         }
     }
+
+    // The repository always fails with an AuthException; anything else is a bug worth a generic message.
+    private fun Throwable.toAuthFailure(): AuthFailure = (this as? AuthException)?.failure ?: AuthFailure.Unknown
 }
