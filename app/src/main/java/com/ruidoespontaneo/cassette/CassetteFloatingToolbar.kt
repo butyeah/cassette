@@ -1,11 +1,7 @@
 package com.ruidoespontaneo.cassette
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -16,12 +12,11 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
@@ -31,13 +26,12 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -57,6 +51,7 @@ import coil3.compose.AsyncImage
 import com.ruidoespontaneo.cassette.albumdetail.preview.NowPlaying
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
+import kotlinx.coroutines.delay
 
 private data class BottomNavTab(val route: String, val icon: ImageVector, val labelRes: Int)
 
@@ -129,51 +124,48 @@ fun CassetteFloatingToolbar(
 }
 
 /**
- * The playing album's cover, cut into Material 3 Expressive's wavy circle (the 12-sided cookie) —
- * the button itself, no label. The waves travel round the edge while the cover stays still: the
- * clipping outline turns steadily and the artwork inside turns back by the same angle.
+ * The playing album's cover in a circle — the button itself, no label. Every
+ * [NOW_PLAYING_PULSE_INTERVAL_MS] it grows a little and settles back on the expressive springs, a
+ * quiet sign that something is playing.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun NowPlayingButton(nowPlaying: NowPlaying, onClick: () -> Unit) {
     val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
-    val wavyCircle = MaterialShapes.Cookie12Sided.toShape()
-    val rotation by rememberInfiniteTransition(label = "nowPlayingWaves").animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(NOW_PLAYING_WAVE_TURN_MS, easing = LinearEasing)),
-        label = "nowPlayingWavesRotation"
-    )
-    Box(
+    val growSpec = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
+    val settleSpec = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
+    val scale = remember { Animatable(1f) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(NOW_PLAYING_PULSE_INTERVAL_MS)
+            scale.animateTo(NOW_PLAYING_PULSE_SCALE, growSpec)
+            scale.animateTo(1f, settleSpec)
+        }
+    }
+    AsyncImage(
+        model = nowPlaying.album.coverArtUrl(),
+        contentDescription = stringResource(R.string.now_playing_title),
+        placeholder = placeholder,
+        error = placeholder,
+        contentScale = ContentScale.Crop,
         modifier = Modifier
             .size(IconSize.nowPlayingThumbnail)
             .graphicsLayer {
-                rotationZ = rotation
-                shape = wavyCircle
+                scaleX = scale.value
+                scaleY = scale.value
+                shape = CircleShape
                 clip = true
-                // It floats on its own now, so it gets the toolbar's lift.
+                // It floats on its own, beside the toolbar, so it gets the same lift.
                 shadowElevation = NOW_PLAYING_ELEVATION.toPx()
             }
             .clickable(role = Role.Button, onClick = onClick)
-    ) {
-        // A square turned any amount still covers the circle it's clipped to, so no corners show.
-        AsyncImage(
-            model = nowPlaying.album.coverArtUrl(),
-            contentDescription = stringResource(R.string.now_playing_title),
-            placeholder = placeholder,
-            error = placeholder,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer { rotationZ = -rotation }
-        )
-    }
+    )
 }
 
 private val NOW_PLAYING_ELEVATION = 6.dp
+private const val NOW_PLAYING_PULSE_INTERVAL_MS = 10_000L
 
-/** How long the wavy outline takes to go once round — a new wave passes every 1/12th of it. */
-private const val NOW_PLAYING_WAVE_TURN_MS = 16_000
+/** How much bigger the cover gets at the top of each pulse. */
+private const val NOW_PLAYING_PULSE_SCALE = 1.12f
 
 @Composable
 private fun ToolbarTab(tab: BottomNavTab, selected: Boolean, onClick: () -> Unit) {
