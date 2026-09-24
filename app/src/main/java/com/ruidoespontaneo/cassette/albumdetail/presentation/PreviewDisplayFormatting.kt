@@ -1,5 +1,7 @@
 package com.ruidoespontaneo.cassette.albumdetail.presentation
 
+import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
+
 private const val UNKNOWN_TIME = "--:--"
 
 /**
@@ -11,4 +13,10 @@ fun remainingTimeText(remainingMs: Long?): String {
     if (remainingMs == null) return UNKNOWN_TIME
     val totalSeconds = (remainingMs.coerceAtLeast(0) + 999) / 1000
     return "%02d:%02d".format(totalSeconds / 60, totalSeconds % 60)
+}
+
+/** The title of the track [playback] is playing, or `null` while nothing is. */
+fun previewTrackTitle(tracks: List<Track>, playback: TrackPlayback?): String? {
+    if (playback == null) return null
+    return tracks.firstOrNull { it.position == playback.position }?.title
 }

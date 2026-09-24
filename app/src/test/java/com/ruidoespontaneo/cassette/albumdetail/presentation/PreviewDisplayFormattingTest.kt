@@ -1,6 +1,8 @@
 package com.ruidoespontaneo.cassette.albumdetail.presentation
 
+import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class PreviewDisplayFormattingTest {
@@ -28,5 +30,25 @@ class PreviewDisplayFormattingTest {
     @Test
     fun `minutes roll over`() {
         assertEquals("01:05", remainingTimeText(65_000))
+    }
+
+    private val tracks = listOf(
+        Track(position = 1, title = "Track One", lengthMs = 200_000),
+        Track(position = 2, title = "Track Two", lengthMs = 180_000)
+    )
+
+    @Test
+    fun `the preview title is the playing track's`() {
+        assertEquals("Track Two", previewTrackTitle(tracks, TrackPlayback(position = 2, isLoading = false)))
+    }
+
+    @Test
+    fun `there is no preview title while nothing is playing`() {
+        assertNull(previewTrackTitle(tracks, null))
+    }
+
+    @Test
+    fun `there is no preview title for a position the tracklist doesn't have`() {
+        assertNull(previewTrackTitle(tracks, TrackPlayback(position = 9, isLoading = true)))
     }
 }
