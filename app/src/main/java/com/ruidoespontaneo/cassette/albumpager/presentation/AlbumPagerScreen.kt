@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -39,10 +39,11 @@ import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import kotlinx.coroutines.launch
 
 /**
- * Pages vertically, reels-style, between every album released on one day (across years) — see
+ * Pages horizontally between every album released on one day (across years) — see
  * [AlbumPagerViewModel]. Each page is a full [AlbumDetailScreen] (its own top bar, back button,
  * tracklist, ...), so the whole screen pages together rather than just the body under a fixed chrome.
- * A page's own tracklist scrolls first; once it's at its top or bottom edge the drag pages instead.
+ * Vertical drags scroll the page's own content; horizontal ones page. A page's streaming-links row
+ * scrolls first, and the drag only pages once that row is at its edge.
  */
 @Composable
 fun AlbumPagerScreen(
@@ -107,7 +108,7 @@ private fun AlbumPager(
     // cancels it, and with it the hand-off.
     val scope = rememberCoroutineScope()
     var autoPlayAlbumId by remember { mutableStateOf<String?>(null) }
-    VerticalPager(state = pagerState, modifier = modifier, key = { albumIds[it] }) { page ->
+    HorizontalPager(state = pagerState, modifier = modifier, key = { albumIds[it] }) { page ->
         val albumId = albumIds[page]
         AlbumDetailScreen(
             onBack = onBack,
