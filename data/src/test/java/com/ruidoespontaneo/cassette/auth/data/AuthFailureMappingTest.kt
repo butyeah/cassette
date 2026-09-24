@@ -4,6 +4,7 @@ import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.ruidoespontaneo.cassette.auth.domain.model.AuthFailure
@@ -42,6 +43,14 @@ class AuthFailureMappingTest {
         assertEquals(AuthFailure.EmailInUse, FirebaseAuthUserCollisionException("ERROR_EMAIL_ALREADY_IN_USE", "x").toAuthFailure())
         assertEquals(AuthFailure.TooManyRequests, FirebaseTooManyRequestsException("x").toAuthFailure())
         assertEquals(AuthFailure.Network, FirebaseNetworkException("x").toAuthFailure())
+    }
+
+    @Test
+    fun `a stale sign-in asks for a fresh one`() {
+        assertEquals(
+            AuthFailure.RequiresRecentLogin,
+            FirebaseAuthRecentLoginRequiredException("ERROR_REQUIRES_RECENT_LOGIN", "x").toAuthFailure()
+        )
     }
 
     @Test

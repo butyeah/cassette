@@ -52,6 +52,7 @@ val AuthFailure.messageRes: Int
         AuthFailure.InvalidEmail -> R.string.login_error_invalid_email
         AuthFailure.UserDisabled -> R.string.login_error_user_disabled
         AuthFailure.TooManyRequests -> R.string.login_error_too_many_requests
+        AuthFailure.RequiresRecentLogin -> R.string.login_error_requires_recent_login
         AuthFailure.Network -> R.string.login_error_network
         AuthFailure.Unknown -> R.string.login_error_unknown
     }

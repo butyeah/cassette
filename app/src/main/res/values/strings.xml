@@ -80,4 +80,11 @@
     <string name="sign_out_confirm_title">Sign out?</string>
     <string name="sign_out_confirm_body">You can sign back in any time.</string>
     <string name="cancel">Cancel</string>
+    <string name="delete_account">Delete account</string>
+    <string name="delete_account_confirm_title">Delete your account?</string>
+    <string name="delete_account_confirm_body">This permanently deletes your account and signs you out. It can\'t be undone.</string>
+    <string name="delete">Delete</string>
+    <string name="close">Close</string>
+    <string name="delete_account_failed_title">Couldn\'t delete your account</string>
+    <string name="login_error_requires_recent_login">For your security, sign out, sign back in, and then delete your account.</string>
 </resources>

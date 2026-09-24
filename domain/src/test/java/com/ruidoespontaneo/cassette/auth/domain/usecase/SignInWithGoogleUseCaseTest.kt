@@ -49,6 +49,8 @@ class SignInWithGoogleUseCaseTest {
 
         override suspend fun sendPasswordResetEmail(email: String) = Result.success(Unit)
 
+        override suspend fun deleteAccount() = Result.success(Unit)
+
         override fun signOut() = Unit
     }
 }

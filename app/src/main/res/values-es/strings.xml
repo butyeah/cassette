@@ -77,4 +77,11 @@
     <string name="sign_out_confirm_title">¿Cerrar sesión?</string>
     <string name="sign_out_confirm_body">Puedes volver a iniciar sesión cuando quieras.</string>
     <string name="cancel">Cancelar</string>
+    <string name="delete_account">Eliminar cuenta</string>
+    <string name="delete_account_confirm_title">¿Eliminar tu cuenta?</string>
+    <string name="delete_account_confirm_body">Tu cuenta se eliminará de forma permanente y se cerrará la sesión. No se puede deshacer.</string>
+    <string name="delete">Eliminar</string>
+    <string name="close">Cerrar</string>
+    <string name="delete_account_failed_title">No se pudo eliminar tu cuenta</string>
+    <string name="login_error_requires_recent_login">Por seguridad, cierra sesión, vuelve a iniciarla y luego elimina tu cuenta.</string>
 </resources>

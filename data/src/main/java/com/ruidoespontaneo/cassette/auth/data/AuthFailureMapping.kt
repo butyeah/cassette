@@ -4,6 +4,7 @@ import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.ruidoespontaneo.cassette.auth.domain.model.AuthFailure
@@ -14,8 +15,9 @@ import com.ruidoespontaneo.cassette.auth.domain.model.AuthFailure
  * isn't given away.
  */
 internal fun Exception.toAuthFailure(): AuthFailure = when (this) {
-    // Before the more general invalid-credentials check: it's a subclass of it.
+    // Before the more general checks below: these are subclasses of theirs.
     is FirebaseAuthWeakPasswordException -> AuthFailure.WeakPassword
+    is FirebaseAuthRecentLoginRequiredException -> AuthFailure.RequiresRecentLogin
     is FirebaseAuthInvalidCredentialsException ->
         if (errorCode == ERROR_INVALID_EMAIL) AuthFailure.InvalidEmail else AuthFailure.InvalidCredentials
 

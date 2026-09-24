@@ -25,5 +25,12 @@ interface AuthRepository {
     /** Emails [email] a link to reset its password. */
     suspend fun sendPasswordResetEmail(email: String): Result<Unit>
 
+    /**
+     * Permanently deletes the signed-in account, which also signs it out. Fails with
+     * [com.ruidoespontaneo.cassette.auth.domain.model.AuthFailure.RequiresRecentLogin] when the
+     * sign-in is too old for the backend to allow it. Succeeds when nobody is signed in.
+     */
+    suspend fun deleteAccount(): Result<Unit>
+
     fun signOut()
 }

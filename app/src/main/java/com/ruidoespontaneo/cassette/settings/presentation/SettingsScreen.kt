@@ -5,14 +5,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -41,9 +45,12 @@ import androidx.compose.ui.semantics.Role
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruidoespontaneo.cassette.R
+import com.ruidoespontaneo.cassette.auth.domain.model.AuthFailure
+import com.ruidoespontaneo.cassette.auth.presentation.messageRes
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import com.ruidoespontaneo.cassette.settings.data.AppLanguage
 import com.ruidoespontaneo.cassette.ui.icons.Language
+import com.ruidoespontaneo.cassette.ui.theme.IconSize
 
 @Composable
 fun SettingsScreen(
@@ -56,7 +63,7 @@ fun SettingsScreen(
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                SettingsEffect.SignedOut -> onBack()
+                SettingsEffect.SignedOut, SettingsEffect.AccountDeleted -> onBack()
             }
         }
     }
@@ -80,6 +87,7 @@ private fun SettingsScreenContent(
 ) {
     var isLanguageDialogOpen by rememberSaveable { mutableStateOf(false) }
     var isSignOutDialogOpen by rememberSaveable { mutableStateOf(false) }
+    var isDeleteDialogOpen by rememberSaveable { mutableStateOf(false) }
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -128,6 +136,13 @@ private fun SettingsScreenContent(
                     icon = Icons.AutoMirrored.Filled.ExitToApp,
                     onClick = { isSignOutDialogOpen = true }
                 )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.large))
+                SettingsRow(
+                    label = stringResource(R.string.delete_account),
+                    icon = Icons.Filled.Delete,
+                    contentColor = MaterialTheme.colorScheme.error,
+                    onClick = { isDeleteDialogOpen = true }
+                )
             }
         }
     }
@@ -139,6 +154,29 @@ private fun SettingsScreenContent(
                 onIntent(SettingsIntent.SelectLanguage(language))
             },
             onDismiss = { isLanguageDialogOpen = false }
+        )
+    }
+    // Stays open while deleting, so the spinner shows; closes once it fails (the failure dialog
+    // takes over) or succeeds (the screen goes back).
+    if (isDeleteDialogOpen && state.deleteFailure == null) {
+        DeleteAccountDialog(
+            isDeleting = state.isDeletingAccount,
+            onConfirm = { onIntent(SettingsIntent.DeleteAccount) },
+            onDismiss = { if (!state.isDeletingAccount) isDeleteDialogOpen = false }
+        )
+    }
+    state.deleteFailure?.let { failure ->
+        DeleteFailedDialog(
+            failure = failure,
+            onSignOut = {
+                onIntent(SettingsIntent.DismissDeleteFailure)
+                isDeleteDialogOpen = false
+                onIntent(SettingsIntent.SignOut)
+            },
+            onDismiss = {
+                onIntent(SettingsIntent.DismissDeleteFailure)
+                isDeleteDialogOpen = false
+            }
         )
     }
     if (isSignOutDialogOpen) {
@@ -159,6 +197,61 @@ private fun SettingsScreenContent(
     }
 }
 
+@Composable
+private fun DeleteAccountDialog(isDeleting: Boolean, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Filled.Delete, contentDescription = null) },
+        title = { Text(stringResource(R.string.delete_account_confirm_title)) },
+        text = { Text(stringResource(R.string.delete_account_confirm_body)) },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                enabled = !isDeleting,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            ) {
+                if (isDeleting) {
+                    CircularProgressIndicator(
+                        strokeWidth = IconSize.previewSpinnerStroke,
+                        modifier = Modifier.size(IconSize.previewSpinner)
+                    )
+                } else {
+                    Text(stringResource(R.string.delete))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isDeleting) { Text(stringResource(R.string.cancel)) }
+        }
+    )
+}
+
+/**
+ * Why deleting failed. When the sign-in is too old, the way forward is signing in again, so this
+ * offers signing out; otherwise it just explains.
+ */
+@Composable
+private fun DeleteFailedDialog(failure: AuthFailure, onSignOut: () -> Unit, onDismiss: () -> Unit) {
+    val needsFreshSignIn = failure == AuthFailure.RequiresRecentLogin
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.delete_account_failed_title)) },
+        text = { Text(stringResource(failure.messageRes)) },
+        confirmButton = {
+            if (needsFreshSignIn) {
+                TextButton(onClick = onSignOut) { Text(stringResource(R.string.sign_out)) }
+            } else {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
+            }
+        },
+        dismissButton = if (needsFreshSignIn) {
+            { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
+        } else {
+            null
+        }
+    )
+}
+
 /** A row of the settings card; with no [onClick] it's informational and not clickable. */
 @Composable
 private fun SettingsRow(
@@ -167,7 +260,9 @@ private fun SettingsRow(
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     supportingText: String? = null,
-    showChevron: Boolean = false
+    showChevron: Boolean = false,
+    /** For a destructive row, e.g. the error color; `null` keeps the list item defaults. */
+    contentColor: Color? = null
 ) {
     ListItem(
         modifier = if (onClick != null) modifier.clickable(onClick = onClick) else modifier,
@@ -178,7 +273,15 @@ private fun SettingsRow(
         } else {
             null
         },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+        colors = if (contentColor != null) {
+            ListItemDefaults.colors(
+                containerColor = Color.Transparent,
+                headlineColor = contentColor,
+                leadingIconColor = contentColor
+            )
+        } else {
+            ListItemDefaults.colors(containerColor = Color.Transparent)
+        }
     ) {
         Text(label)
     }

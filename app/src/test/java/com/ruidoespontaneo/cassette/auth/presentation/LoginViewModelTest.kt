@@ -359,6 +359,8 @@ class LoginViewModelTest {
 
         override suspend fun sendPasswordResetEmail(email: String) = sendPasswordResetResult(email)
 
+        override suspend fun deleteAccount() = Result.success(Unit)
+
         override fun signOut() {
             signOutCalls++
         }

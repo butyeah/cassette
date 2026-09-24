@@ -12,6 +12,9 @@ enum class AuthFailure {
     InvalidEmail,
     UserDisabled,
     TooManyRequests,
+
+    /** A sensitive action (deleting the account) needs a fresh sign-in first. */
+    RequiresRecentLogin,
     Network,
     Unknown
 }
