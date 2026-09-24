@@ -1,6 +1,8 @@
 package com.ruidoespontaneo.cassette.nowplaying.presentation
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,6 +13,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,12 +35,15 @@ import com.ruidoespontaneo.cassette.albumdetail.preview.NowPlaying
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
 import com.ruidoespontaneo.cassette.ui.icons.Pause
+import com.ruidoespontaneo.cassette.ui.icons.SkipNext
+import com.ruidoespontaneo.cassette.ui.icons.SkipPrevious
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
 
 /**
- * The album cover, the track and album, and one big button: ❚❚ stops the preview, ▶ plays the
- * track again from the start (autoplay carries on from there), and a spinner stands in while it
- * buffers or autoplay looks up the next album. Follows autoplay live while it's open.
+ * The album cover, the track and album, and the controls: one big button — ❚❚ stops the preview,
+ * ▶ plays the track again from the start (autoplay carries on from there), a spinner while it
+ * buffers or an album is being looked up — between ⏮ and ⏭, which move through the day's previews
+ * in autoplay order, across albums. Follows autoplay live while it's open.
  */
 @Composable
 fun NowPlayingDialog(
@@ -84,11 +90,19 @@ fun NowPlayingDialog(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(top = Spacing.extraSmall)
                 )
-                PlayStopButton(
-                    status = status,
-                    onIntent = onIntent,
-                    modifier = Modifier.padding(top = Spacing.large)
-                )
+                Row(
+                    modifier = Modifier.padding(top = Spacing.large),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.large),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { onIntent(NowPlayingIntent.Previous) }, enabled = nowPlaying.hasPrevious) {
+                        Icon(Icons.Filled.SkipPrevious, contentDescription = stringResource(R.string.now_playing_previous))
+                    }
+                    PlayStopButton(status = status, onIntent = onIntent)
+                    IconButton(onClick = { onIntent(NowPlayingIntent.Next) }, enabled = nowPlaying.hasNext) {
+                        Icon(Icons.Filled.SkipNext, contentDescription = stringResource(R.string.now_playing_next))
+                    }
+                }
             }
         }
     }

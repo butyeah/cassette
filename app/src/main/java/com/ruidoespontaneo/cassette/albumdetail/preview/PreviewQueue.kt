@@ -24,6 +24,16 @@ data class NowPlaying(
     val dayAlbumIds: List<String>
 ) {
     val trackTitle: String? get() = album.tracks.firstOrNull { it.position == position }?.title
+
+    private val albumIndex: Int get() = dayAlbumIds.indexOf(album.id)
+
+    /** Whether ⏭ can go anywhere: a later preview here, or a later album of the day. */
+    val hasNext: Boolean
+        get() = previews.keys.any { it > position } || (albumIndex >= 0 && albumIndex < dayAlbumIds.lastIndex)
+
+    /** Whether ⏮ can go anywhere: an earlier preview here, or an earlier album of the day. */
+    val hasPrevious: Boolean
+        get() = previews.keys.any { it < position } || albumIndex > 0
 }
 
 /**
@@ -48,7 +58,7 @@ class PreviewQueue @Inject constructor(
 
     private val _isAdvancing = MutableStateFlow(false)
 
-    /** Whether the queue is between albums, looking up the next one to play. */
+    /** Whether the queue is between albums, looking up the next (or previous) one to play. */
     val isAdvancing: StateFlow<Boolean> = _isAdvancing.asStateFlow()
 
     private var advanceJob: Job? = null
@@ -81,6 +91,36 @@ class PreviewQueue @Inject constructor(
         start(current)
     }
 
+    /**
+     * Plays the next previewable track: the rest of this album, then the first preview of the
+     * day's next album that has any. With nothing left, playback stops.
+     */
+    fun skipToNext() {
+        val current = _nowPlaying.value ?: return
+        cancelAdvance()
+        val nextPosition = current.previews.keys.filter { it > current.position }.minOrNull()
+        if (nextPosition != null) {
+            start(current.copy(position = nextPosition))
+        } else {
+            advanceJob = scope.launch { playAdjacentAlbum(current, forward = true) }
+        }
+    }
+
+    /**
+     * Plays the previous previewable track: earlier in this album, then the **last** preview of the
+     * day's previous album that has any. With nothing earlier, the current track carries on.
+     */
+    fun skipToPrevious() {
+        val current = _nowPlaying.value ?: return
+        cancelAdvance()
+        val previousPosition = current.previews.keys.filter { it < current.position }.maxOrNull()
+        if (previousPosition != null) {
+            start(current.copy(position = previousPosition))
+        } else {
+            advanceJob = scope.launch { playAdjacentAlbum(current, forward = false) }
+        }
+    }
+
     private fun start(next: NowPlaying) {
         val url = next.previews[next.position] ?: return
         isStopped = false
@@ -97,26 +137,36 @@ class PreviewQueue @Inject constructor(
     private fun onCompleted(url: String) {
         val current = _nowPlaying.value ?: return
         if (isStopped || current.previews[current.position] != url) return
-        val nextPosition = current.previews.keys.filter { it > current.position }.minOrNull()
-        if (nextPosition != null) {
-            start(current.copy(position = nextPosition))
-        } else {
-            advanceJob = scope.launch { playNextAlbumAfter(current) }
-        }
+        skipToNext()
     }
 
-    private suspend fun playNextAlbumAfter(current: NowPlaying) {
+    /**
+     * Plays the nearest album after (or, if not [forward], before) [current]'s that loads and has
+     * previews — from its first preview going forward, its last going back. Albums that fail to
+     * load or have nothing to preview are skipped. The current clip keeps playing meanwhile.
+     */
+    private suspend fun playAdjacentAlbum(current: NowPlaying, forward: Boolean) {
         val index = current.dayAlbumIds.indexOf(current.album.id)
         if (index < 0) return
+        val candidates = if (forward) {
+            current.dayAlbumIds.drop(index + 1)
+        } else {
+            current.dayAlbumIds.take(index).asReversed()
+        }
         _isAdvancing.value = true
         try {
-            for (albumId in current.dayAlbumIds.drop(index + 1)) {
-                // Albums that fail to load, or have nothing to preview, are skipped.
+            for (albumId in candidates) {
                 val album = getAlbumDetailUseCase(albumId).getOrNull() ?: continue
                 val previews = getTrackPreviewsUseCase(album).getOrNull().orEmpty()
-                val first = previews.keys.minOrNull() ?: continue
-                start(NowPlaying(album, previews, first, current.dayAlbumIds))
+                val position = (if (forward) previews.keys.minOrNull() else previews.keys.maxOrNull()) ?: continue
+                start(NowPlaying(album, previews, position, current.dayAlbumIds))
                 return
+            }
+            // Past the day's last album there's nothing more to play; before its first, the
+            // current track just carries on.
+            if (forward) {
+                isStopped = true
+                player.stop()
             }
         } finally {
             _isAdvancing.value = false

@@ -18,7 +18,6 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -102,13 +101,14 @@ fun CassetteFloatingToolbar(
     }
 }
 
+/** Shaped like [ToolbarTab]: the playing album's cover where the icon goes, then "Now playing". */
 @Composable
 private fun NowPlayingButton(nowPlaying: NowPlaying, onClick: () -> Unit) {
     val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
-    IconButton(onClick = onClick) {
+    TextButton(onClick = onClick) {
         AsyncImage(
             model = nowPlaying.album.coverArtUrl(),
-            contentDescription = stringResource(R.string.now_playing_button, nowPlaying.trackTitle ?: nowPlaying.album.title),
+            contentDescription = null, // decorative — the label names the button
             placeholder = placeholder,
             error = placeholder,
             contentScale = ContentScale.Crop,
@@ -116,6 +116,8 @@ private fun NowPlayingButton(nowPlaying: NowPlaying, onClick: () -> Unit) {
                 .size(IconSize.nowPlayingThumbnail)
                 .clip(CircleShape)
         )
+        Spacer(Modifier.width(8.dp))
+        Text(stringResource(R.string.now_playing_title))
     }
 }
 

@@ -167,6 +167,106 @@ class PreviewQueueTest {
         assertFalse(gatedQueue.isAdvancing.value)
     }
 
+    private val secondPreviews get() = mapOf(1 to urlOf(second, 1), 2 to urlOf(second, 2))
+
+    @Test
+    fun `next skips to the album's next previewable track`() {
+        idle()
+        queue.play(first, firstPreviews, 1, dayAlbumIds)
+
+        queue.skipToNext()
+
+        assertEquals(urlOf(first, 3), player.played.last())
+    }
+
+    @Test
+    fun `next at the album's end moves to the next album's first preview`() {
+        idle()
+        queue.play(first, firstPreviews, 3, dayAlbumIds)
+
+        queue.skipToNext()
+        idle()
+
+        assertEquals(urlOf(second, 1), player.played.last())
+        assertEquals("second", queue.nowPlaying.value?.album?.id)
+    }
+
+    @Test
+    fun `next with no later album that has previews stops`() {
+        idle()
+        queue.play(first, firstPreviews, 3, listOf("first", "empty"))
+
+        queue.skipToNext()
+        idle()
+
+        assertEquals(listOf(urlOf(first, 3)), player.played)
+        assertNull(player.playback.value)
+    }
+
+    @Test
+    fun `previous goes back within the album`() {
+        idle()
+        queue.play(first, firstPreviews, 3, dayAlbumIds)
+
+        queue.skipToPrevious()
+
+        // Track 2 has no preview, so it's skipped.
+        assertEquals(urlOf(first, 1), player.played.last())
+    }
+
+    @Test
+    fun `previous at the album's start plays the previous album's last preview`() {
+        idle()
+        queue.play(second, secondPreviews, 1, dayAlbumIds)
+
+        queue.skipToPrevious()
+        idle()
+
+        // "missing" fails to load and "empty" has no previews, so it lands on "first", at its last.
+        assertEquals(urlOf(first, 3), player.played.last())
+        assertEquals("first", queue.nowPlaying.value?.album?.id)
+        assertEquals(3, queue.nowPlaying.value?.position)
+    }
+
+    @Test
+    fun `previous at the day's first track changes nothing`() {
+        idle()
+        queue.play(first, firstPreviews, 1, dayAlbumIds)
+
+        queue.skipToPrevious()
+        idle()
+
+        assertEquals(listOf(urlOf(first, 1)), player.played)
+        assertEquals(1, queue.nowPlaying.value?.position)
+    }
+
+    @Test
+    fun `skipping while stopped plays`() {
+        idle()
+        queue.play(first, firstPreviews, 1, dayAlbumIds)
+        queue.stop()
+
+        queue.skipToNext()
+
+        assertEquals(urlOf(first, 3), player.played.last())
+        assertTrue(player.playback.value != null)
+    }
+
+    @Test
+    fun `hasNext and hasPrevious reflect the day's edges`() {
+        val atStart = NowPlaying(first, firstPreviews, 1, dayAlbumIds)
+        assertFalse(atStart.hasPrevious)
+        assertTrue(atStart.hasNext)
+
+        val atEnd = NowPlaying(second, secondPreviews, 2, dayAlbumIds)
+        assertTrue(atEnd.hasPrevious)
+        assertFalse(atEnd.hasNext)
+
+        val alone = NowPlaying(first, mapOf(1 to urlOf(first, 1)), 1, listOf("first"))
+        assertFalse(alone.hasPrevious)
+        assertFalse(alone.hasNext)
+    }
+
     private fun album(id: String, vararg titles: String) = AlbumDetail(
         id = id,
         title = "Album $id",

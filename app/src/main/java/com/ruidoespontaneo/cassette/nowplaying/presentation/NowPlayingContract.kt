@@ -27,6 +27,12 @@ sealed interface NowPlayingIntent : UiIntent {
 
     /** Plays the current track again from the start, autoplay included. */
     data object Replay : NowPlayingIntent
+
+    /** The next previewable track, crossing into the day's next album. */
+    data object Next : NowPlayingIntent
+
+    /** The previous previewable track, crossing back to the previous album's last one. */
+    data object Previous : NowPlayingIntent
 }
 
 // No one-off events — this is here so NowPlayingViewModel has a concrete UiEffect to declare.

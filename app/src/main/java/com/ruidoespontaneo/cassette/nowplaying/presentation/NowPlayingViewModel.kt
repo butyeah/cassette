@@ -37,6 +37,8 @@ class NowPlayingViewModel @Inject constructor(
         when (intent) {
             NowPlayingIntent.Stop -> previewQueue.stop()
             NowPlayingIntent.Replay -> previewQueue.replay()
+            NowPlayingIntent.Next -> previewQueue.skipToNext()
+            NowPlayingIntent.Previous -> previewQueue.skipToPrevious()
         }
     }
 }

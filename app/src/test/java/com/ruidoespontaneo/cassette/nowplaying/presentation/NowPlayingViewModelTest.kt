@@ -95,4 +95,20 @@ class NowPlayingViewModelTest {
         assertEquals(listOf("https://p/one", "https://p/one"), player.played)
         assertTrue(viewModel.state.value.isActive)
     }
+
+    @Test
+    fun `Next and Previous move through the album`() {
+        val twoTracks = album.copy(tracks = album.tracks + Track(position = 2, title = "Two", lengthMs = 200_000))
+        val viewModel = NowPlayingViewModel(queue, player)
+        queue.play(twoTracks, mapOf(1 to "https://p/one", 2 to "https://p/two"), 1, listOf("album-1"))
+        idle()
+
+        viewModel.onIntent(NowPlayingIntent.Next)
+        idle()
+        assertEquals("Two", viewModel.state.value.nowPlaying?.trackTitle)
+
+        viewModel.onIntent(NowPlayingIntent.Previous)
+        idle()
+        assertEquals("One", viewModel.state.value.nowPlaying?.trackTitle)
+    }
 }
