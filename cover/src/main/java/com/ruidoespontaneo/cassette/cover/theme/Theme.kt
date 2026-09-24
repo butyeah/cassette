@@ -2,7 +2,9 @@ package com.ruidoespontaneo.cassette.cover.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -32,7 +34,11 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
-/** Cover's Material3 theme — the design system's color scheme + typography, wrapped around [content]. */
+/**
+ * Cover's Material3 theme — the design system's color scheme + typography, wrapped around [content].
+ * Motion is M3 Expressive's: spatial springs overshoot and settle, effects springs don't.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CoverTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -52,6 +58,7 @@ fun CoverTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
+        motionScheme = MotionScheme.expressive(),
         typography = Typography,
         content = content
     )
