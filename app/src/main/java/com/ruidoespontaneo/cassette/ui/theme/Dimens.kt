@@ -14,6 +14,11 @@ object IconSize {
     val previewStatus = 16.dp
     /** Material's minimum touch target — the size of an IconButton, e.g. to balance one with a spacer. */
     val minTouchTarget = 48.dp
+    /**
+     * Every tracklist row's height, whether or not it has a play button — the button's touch
+     * target — so rows are evenly spaced and the active-track highlight never changes size.
+     */
+    val trackRow = minTouchTarget
     /** The now-playing dialog's play/stop button. */
     val nowPlayingButton = 64.dp
     /** The cover thumbnail on the floating toolbar's now-playing button. */
