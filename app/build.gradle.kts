@@ -37,6 +37,11 @@ android {
             }
         }
     }
+    androidResources {
+        // Lists the app's languages (from its values-xx folders) under Android 13+'s per-app
+        // language setting. The default locale comes from res/resources.properties.
+        generateLocaleConfig = true
+    }
     lint {
         // A single `:app:lint` run should cover the whole app, including :data/:domain — not
         // just :app's own sources.
