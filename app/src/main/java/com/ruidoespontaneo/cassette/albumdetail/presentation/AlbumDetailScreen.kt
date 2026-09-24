@@ -11,7 +11,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateMapOf
@@ -86,7 +85,9 @@ import com.ruidoespontaneo.cassette.cover.components.PREVIEW_WAVEFORM_LINES
 import com.ruidoespontaneo.cassette.cover.components.PreviewWaveform
 import com.ruidoespontaneo.cassette.cover.components.displayTextColor
 import com.ruidoespontaneo.cassette.cover.components.dominantColors
+import com.ruidoespontaneo.cassette.cover.components.rememberWavePhase
 import com.ruidoespontaneo.cassette.cover.components.waveformColors
+import com.ruidoespontaneo.cassette.cover.components.wavyPillBackground
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.StreamingLinks
@@ -470,7 +471,10 @@ private fun Tracklist(
                 .padding(top = Spacing.small)
                 .clip(RoundedCornerShape(Spacing.small))
         ) {
-            ActiveTrackIndicator(target = activePosition?.let { rowBounds[it] })
+            ActiveTrackIndicator(
+                target = activePosition?.let { rowBounds[it] },
+                playing = previewPlayback?.isLoading == false
+            )
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 tracks.forEach { track ->
                     TrackRow(
@@ -499,10 +503,18 @@ private data class RowBounds(val top: Float, val height: Float)
  * for the whole tracklist rather than one per row, so moving between tracks (a tap, or autoplay
  * advancing) slides it across on a spatial spring that overshoots and settles. Appearing and
  * disappearing fade in place instead: sliding in from wherever it last was would read as noise.
+ *
+ * Its top and bottom edges ripple like the preview display's waveform while the clip is audible
+ * ([playing]), and ease flat while it buffers or once it stops.
  */
 @Composable
-private fun ActiveTrackIndicator(target: RowBounds?, modifier: Modifier = Modifier) {
+private fun ActiveTrackIndicator(target: RowBounds?, playing: Boolean, modifier: Modifier = Modifier) {
     val motion = MaterialTheme.motionScheme
+    val waveAmplitude = remember { Animatable(0f) }
+    LaunchedEffect(playing) {
+        waveAmplitude.animateTo(if (playing) 1f else 0f, motion.defaultSpatialSpec())
+    }
+    val wavePhase = rememberWavePhase(running = playing, isSettling = { waveAmplitude.value > 0f })
     val top = remember { Animatable(0f) }
     val height = remember { Animatable(0f) }
     var isShown by remember { mutableStateOf(false) }
@@ -535,7 +547,11 @@ private fun ActiveTrackIndicator(target: RowBounds?, modifier: Modifier = Modifi
                 val placeable = measurable.measure(constraints.copy(minHeight = px, maxHeight = px))
                 layout(placeable.width, px) { placeable.place(0, 0) }
             }
-            .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)
+            .wavyPillBackground(
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                amplitude = { waveAmplitude.value },
+                phase = { wavePhase.floatValue }
+            )
     )
 }
 
