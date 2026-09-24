@@ -3,6 +3,10 @@ package com.ruidoespontaneo.cassette.dayinhistory.presentation
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.material.icons.Icons
@@ -123,7 +127,7 @@ private fun OneDayLikeTodayScreenContent(
 
                 state.albumsByYear.isEmpty() -> NoAlbums(Modifier.fillMaxSize())
                 state.layout == AlbumsLayout.Grid -> AlbumsGrid(
-                    albums = state.albums,
+                    groups = state.albumsByYear,
                     onAlbumClick = { albumId -> onAlbumClick(state.day, albumId) },
                     modifier = Modifier.fillMaxSize()
                 )
@@ -316,9 +320,12 @@ private fun AlbumRow(album: Album, onClick: () -> Unit) {
     )
 }
 
-/** Covers only, [GRID_COLUMNS] to a row, in the same order as the list. */
+/**
+ * Covers only, [GRID_COLUMNS] to a row, split by release year: each year's label spans the full
+ * width, then its covers follow. Same order as the list, which is also the pager's order.
+ */
 @Composable
-private fun AlbumsGrid(albums: List<Album>, onAlbumClick: (String) -> Unit, modifier: Modifier = Modifier) {
+private fun AlbumsGrid(groups: List<AlbumsByYear>, onAlbumClick: (String) -> Unit, modifier: Modifier = Modifier) {
     val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
     LazyVerticalGrid(
         columns = GridCells.Fixed(GRID_COLUMNS),
@@ -327,19 +334,31 @@ private fun AlbumsGrid(albums: List<Album>, onAlbumClick: (String) -> Unit, modi
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
         verticalArrangement = Arrangement.spacedBy(Spacing.small)
     ) {
-        gridItems(albums, key = { it.id }) { album ->
-            AsyncImage(
-                model = album.coverArtUrl(),
-                // The cover is all there is to go on here, so it names the album.
-                contentDescription = stringResource(R.string.album_cover_description, album.title, album.artistName),
-                placeholder = placeholder,
-                error = placeholder,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(Spacing.small))
-                    .clickable { onAlbumClick(album.id) }
-            )
+        groups.forEachIndexed { index, group ->
+            item(key = "year-${group.year}", span = { GridItemSpan(maxLineSpan) }) {
+                Text(
+                    text = group.year.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier
+                        // Extra room above every year but the first, so each reads as its own group.
+                        .padding(top = if (index == 0) 0.dp else Spacing.medium)
+                        .semantics { heading() }
+                )
+            }
+            gridItems(group.albums, key = { it.id }) { album ->
+                AsyncImage(
+                    model = album.coverArtUrl(),
+                    // The cover is all there is to go on here, so it names the album.
+                    contentDescription = stringResource(R.string.album_cover_description, album.title, album.artistName),
+                    placeholder = placeholder,
+                    error = placeholder,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(Spacing.small))
+                        .clickable { onAlbumClick(album.id) }
+                )
+            }
         }
     }
 }
