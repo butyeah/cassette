@@ -22,12 +22,23 @@ interface PreviewPlayer {
      */
     val completions: SharedFlow<String>
 
-    /** Starts [url], stopping whatever was playing before it. */
-    fun play(url: String)
+    /**
+     * Starts [url], stopping whatever was playing before it. [metadata] describes it to the system
+     * (the media notification, lock screen, Bluetooth displays).
+     */
+    fun play(url: String, metadata: PreviewMetadata? = null)
 
     /** Stops playback, if any. */
     fun stop()
 }
+
+/** What a clip is, for the system's media surfaces — the player itself doesn't need it. */
+data class PreviewMetadata(
+    val trackTitle: String?,
+    val artistName: String,
+    val albumTitle: String,
+    val artworkUrl: String
+)
 
 /**
  * The clip at [url] and how far along it is. Keyed by URL rather than by album and track, since a
