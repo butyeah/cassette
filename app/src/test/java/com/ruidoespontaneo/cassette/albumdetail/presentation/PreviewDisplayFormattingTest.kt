@@ -51,4 +51,19 @@ class PreviewDisplayFormattingTest {
     fun `there is no preview title for a position the tracklist doesn't have`() {
         assertNull(previewTrackTitle(tracks, TrackPlayback(position = 9, isLoading = true)))
     }
+
+    @Test
+    fun `the status is stopped while nothing is playing`() {
+        assertEquals(PreviewStatus.Stopped, previewStatus(null))
+    }
+
+    @Test
+    fun `a buffering clip already counts as playing`() {
+        assertEquals(PreviewStatus.Playing, previewStatus(TrackPlayback(position = 1, isLoading = true)))
+    }
+
+    @Test
+    fun `the status is playing once the clip is audible`() {
+        assertEquals(PreviewStatus.Playing, previewStatus(TrackPlayback(position = 1, isLoading = false)))
+    }
 }

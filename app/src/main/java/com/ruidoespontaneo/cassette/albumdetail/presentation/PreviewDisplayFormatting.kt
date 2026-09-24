@@ -20,3 +20,12 @@ fun previewTrackTitle(tracks: List<Track>, playback: TrackPlayback?): String? {
     if (playback == null) return null
     return tracks.firstOrNull { it.position == playback.position }?.title
 }
+
+/**
+ * What the preview display's status glyph shows. A clip that's still buffering already counts as
+ * [Playing] — buffering is usually a blink, and flashing a separate state for it reads as a glitch.
+ */
+enum class PreviewStatus { Stopped, Playing }
+
+fun previewStatus(playback: TrackPlayback?): PreviewStatus =
+    if (playback == null) PreviewStatus.Stopped else PreviewStatus.Playing

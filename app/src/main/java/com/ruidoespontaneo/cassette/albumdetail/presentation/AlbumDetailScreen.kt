@@ -2,6 +2,7 @@ package com.ruidoespontaneo.cassette.albumdetail.presentation
 
 import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.fadeIn
@@ -273,7 +274,7 @@ private fun AlbumDetailContent(
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(top = Spacing.medium)
         )
-        Text(text = album.artistName, style = MaterialTheme.typography.titleMedium)
+        Text(text = album.artistName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = Spacing.medium))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -384,14 +385,18 @@ private fun PreviewDisplayReadout(
         MaterialTheme.typography.labelLarge.copy(color = color, fontFeatureSettings = "tnum")
     Column(modifier = modifier) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(
-                text = if (playback == null) {
-                    stringResource(R.string.preview_track_idle)
-                } else {
-                    stringResource(R.string.preview_track_number, playback.position)
-                },
-                style = style
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                PreviewStatusIcon(status = previewStatus(playback), tint = color)
+                Text(
+                    text = if (playback == null) {
+                        stringResource(R.string.preview_track_idle)
+                    } else {
+                        stringResource(R.string.preview_track_number, playback.position)
+                    },
+                    style = style,
+                    modifier = Modifier.padding(start = Spacing.extraSmall)
+                )
+            }
             Text(text = remainingTimeText(playback?.remainingMs), style = style)
         }
         Box(
@@ -421,6 +426,28 @@ private fun PreviewDisplayReadout(
 }
 
 private const val TITLE_SCROLL_INTERVAL_MS = 10_000
+
+/** Media-control style: ▶ while stopped, ❚❚ while a clip is buffering or playing. */
+@Composable
+private fun PreviewStatusIcon(status: PreviewStatus, tint: Color, modifier: Modifier = Modifier) {
+    Crossfade(
+        targetState = status,
+        animationSpec = MaterialTheme.motionScheme.fastEffectsSpec(),
+        label = "previewStatusIcon",
+        modifier = modifier
+    ) { shown ->
+        val (icon, description) = when (shown) {
+            PreviewStatus.Stopped -> Icons.Filled.PlayArrow to R.string.preview_status_stopped
+            PreviewStatus.Playing -> Icons.Filled.Pause to R.string.preview_status_playing
+        }
+        Icon(
+            imageVector = icon,
+            contentDescription = stringResource(description),
+            tint = tint,
+            modifier = Modifier.size(IconSize.previewStatus)
+        )
+    }
+}
 
 @Composable
 private fun Tracklist(

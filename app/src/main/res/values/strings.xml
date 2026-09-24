@@ -37,4 +37,6 @@
     <string name="preview_track_number">Track %1$d</string>
     <string name="preview_track_idle">Track --</string>
     <string name="preview_title_idle">--</string>
+    <string name="preview_status_stopped">Stopped</string>
+    <string name="preview_status_playing">Playing</string>
 </resources>
