@@ -1,6 +1,15 @@
 package com.ruidoespontaneo.cassette.dayinhistory.presentation
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items as gridItems
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import com.ruidoespontaneo.cassette.ui.icons.GridView
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -98,8 +107,10 @@ private fun OneDayLikeTodayScreenContent(
         Column(modifier = Modifier.fillMaxSize()) {
             DayHeader(
                 day = state.day,
+                layout = state.layout,
                 onPrevious = { onIntent(OneDayLikeTodayIntent.PreviousDay) },
                 onNext = { onIntent(OneDayLikeTodayIntent.NextDay) },
+                onToggleLayout = { onIntent(OneDayLikeTodayIntent.ToggleLayout) },
                 dayFormatter = dayFormatter
             )
             when {
@@ -107,6 +118,13 @@ private fun OneDayLikeTodayScreenContent(
                 state.errorMessage != null -> ErrorMessage(
                     message = state.errorMessage,
                     onRetry = { onIntent(OneDayLikeTodayIntent.Retry) },
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                state.albumsByYear.isEmpty() -> NoAlbums(Modifier.fillMaxSize())
+                state.layout == AlbumsLayout.Grid -> AlbumsGrid(
+                    albums = state.albums,
+                    onAlbumClick = { albumId -> onAlbumClick(state.day, albumId) },
                     modifier = Modifier.fillMaxSize()
                 )
 
@@ -134,8 +152,10 @@ private fun OneDayLikeTodayScreenContent(
 @Composable
 private fun DayHeader(
     day: MonthDay,
+    layout: AlbumsLayout,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
+    onToggleLayout: () -> Unit,
     dayFormatter: DateTimeFormatter,
     modifier: Modifier = Modifier
 ) {
@@ -143,20 +163,39 @@ private fun DayHeader(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = Spacing.small, vertical = Spacing.extraSmall),
-        // Previous/next are still being tested — only expose them in dev builds. Center the date on its own once there's nothing to space it
-        // between.
-        horizontalArrangement = if (BuildConfig.DEBUG) Arrangement.SpaceBetween else Arrangement.Center,
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Previous/next are still being tested — only expose them in dev builds. Without them, a
+        // spacer as wide as the layout toggle balances it so the date stays centered.
         if (BuildConfig.DEBUG) {
             TextButton(onClick = onPrevious) { Text(stringResource(R.string.previous_day)) }
+        } else {
+            Spacer(Modifier.size(IconSize.minTouchTarget))
         }
         Text(
             text = day.format(dayFormatter),
             style = MaterialTheme.typography.titleLarge
         )
-        if (BuildConfig.DEBUG) {
-            TextButton(onClick = onNext) { Text(stringResource(R.string.next_day)) }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (BuildConfig.DEBUG) {
+                TextButton(onClick = onNext) { Text(stringResource(R.string.next_day)) }
+            }
+            LayoutToggle(layout = layout, onClick = onToggleLayout)
+        }
+    }
+}
+
+/** Shows the layout it switches *to*: the grid icon while listing, the list icon while in the grid. */
+@Composable
+private fun LayoutToggle(layout: AlbumsLayout, onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        when (layout) {
+            AlbumsLayout.List -> Icon(Icons.Filled.GridView, contentDescription = stringResource(R.string.show_as_grid))
+            AlbumsLayout.Grid -> Icon(
+                Icons.AutoMirrored.Filled.List,
+                contentDescription = stringResource(R.string.show_as_list)
+            )
         }
     }
 }
@@ -201,21 +240,30 @@ private fun ErrorMessage(message: String, onRetry: () -> Unit, modifier: Modifie
 }
 
 @Composable
+private fun NoAlbums(modifier: Modifier = Modifier) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Text(stringResource(R.string.no_albums_message))
+    }
+}
+
+// Shared by the list and the grid; the bottom clears the floating toolbar.
+private val albumsContentPadding = PaddingValues(
+    start = Spacing.large,
+    top = Spacing.large,
+    end = Spacing.large,
+    bottom = Spacing.large + ToolbarSize.clearance
+)
+
+@Composable
 private fun AlbumsByYearList(
     groups: List<AlbumsByYear>,
     onAlbumClick: (String) -> Unit,
     hazeState: HazeState,
     modifier: Modifier = Modifier
 ) {
-    if (groups.isEmpty()) {
-        Box(modifier = modifier, contentAlignment = Alignment.Center) {
-            Text(stringResource(R.string.no_albums_message))
-        }
-        return
-    }
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(start = Spacing.large, top = Spacing.large, end = Spacing.large, bottom = Spacing.large + ToolbarSize.clearance),
+        contentPadding = albumsContentPadding,
         verticalArrangement = Arrangement.spacedBy(Spacing.medium)
     ) {
         items(groups, key = { it.year }) { group ->
@@ -267,6 +315,36 @@ private fun AlbumRow(album: Album, onClick: () -> Unit) {
         modifier = Modifier.clickable(onClick = onClick)
     )
 }
+
+/** Covers only, [GRID_COLUMNS] to a row, in the same order as the list. */
+@Composable
+private fun AlbumsGrid(albums: List<Album>, onAlbumClick: (String) -> Unit, modifier: Modifier = Modifier) {
+    val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(GRID_COLUMNS),
+        modifier = modifier,
+        contentPadding = albumsContentPadding,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+        verticalArrangement = Arrangement.spacedBy(Spacing.small)
+    ) {
+        gridItems(albums, key = { it.id }) { album ->
+            AsyncImage(
+                model = album.coverArtUrl(),
+                // The cover is all there is to go on here, so it names the album.
+                contentDescription = stringResource(R.string.album_cover_description, album.title, album.artistName),
+                placeholder = placeholder,
+                error = placeholder,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(Spacing.small))
+                    .clickable { onAlbumClick(album.id) }
+            )
+        }
+    }
+}
+
+private const val GRID_COLUMNS = 4
 
 private val previewDayFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("MMMM d", Locale.getDefault())
