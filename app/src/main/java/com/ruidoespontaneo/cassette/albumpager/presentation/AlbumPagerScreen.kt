@@ -101,7 +101,7 @@ private fun AlbumPager(
         snapshotFlow { pagerState.currentPage }.collect { currentOnStopPreview() }
     }
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { currentOnStopPreview() }
-    // Auto-play hand-off: once an album's last preview ends, scroll to the next album and ask it
+    // Autoplay hand-off: once an album's last preview ends, scroll to the next album and ask it
     // to start. The request is only raised after the scroll settles — the page-change stop above
     // fires mid-scroll and would otherwise cut the new album's first clip. A drag during the scroll
     // cancels it, and with it the hand-off.

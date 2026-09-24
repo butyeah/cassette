@@ -256,7 +256,7 @@ class AlbumDetailViewModelTest {
     }
 
     @Test
-    fun `auto-play skips tracks that have no preview`() {
+    fun `autoplay skips tracks that have no preview`() {
         val player = FakePreviewPlayer()
         val viewModel = viewModel("album-1", player = player, album = threeTrackAlbum, getPreviews = {
             Result.success(listOf(TrackPreview("Track One", ONE_URL), TrackPreview("Track Three", THREE_URL)))

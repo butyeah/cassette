@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
  * into [AlbumDetailUiState.previewPlayback] when the playing clip is one of its own. Stopping when
  * the pager is left or paged away from is AlbumPagerViewModel's job.
  *
- * Auto-play: when one of its clips plays to the end, it starts the next track that has a preview;
+ * Autoplay: when one of its clips plays to the end, it starts the next track that has a preview;
  * after the last one it sends [AlbumDetailEffect.TracklistFinished] so the pager can move on to the
  * next album, which it starts with [AlbumDetailIntent.AutoPlay].
  */
@@ -79,7 +79,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
                     setState {
                         copy(isLoading = false, errorMessage = error.message ?: "Couldn't load album")
                     }
-                    // Nothing to play here, so auto-play shouldn't stall on the error screen.
+                    // Nothing to play here, so autoplay shouldn't stall on the error screen.
                     onPreviewsKnown()
                 }
         }
