@@ -1,14 +1,22 @@
 package com.ruidoespontaneo.cassette
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
@@ -22,11 +30,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.ColorPainter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -40,6 +51,7 @@ import coil3.compose.AsyncImage
 import com.ruidoespontaneo.cassette.albumdetail.preview.NowPlaying
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
+import kotlinx.coroutines.delay
 
 private data class BottomNavTab(val route: String, val icon: ImageVector, val labelRes: Int)
 
@@ -53,8 +65,8 @@ private val bottomNavTabs = listOf(
  * so pushed screens (album detail, notifications) aren't covered by it. On Daily, it also carries a
  * FAB that opens the jump-to-date calendar via [onCalendarClick].
  *
- * While [showNowPlaying] (a preview is loaded), a third button after the tabs shows [nowPlaying]'s
- * album cover and opens the now-playing dialog via [onNowPlayingClick].
+ * While [showNowPlaying] (a preview is loaded), a separate floating button to the toolbar's left
+ * shows [nowPlaying]'s album cover and opens the now-playing dialog via [onNowPlayingClick].
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -81,45 +93,79 @@ fun CassetteFloatingToolbar(
                     onClick = { navigateToTab(navController, tab.route) }
                 )
             }
-            // nowPlaying outlives the playback itself, so the thumbnail stays put while fading out.
-            AnimatedVisibility(visible = showNowPlaying && nowPlaying != null, enter = fadeIn(), exit = fadeOut()) {
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Beside the toolbar, not in it. nowPlaying outlives the playback itself, so the cover
+            // stays put while it shrinks away.
+            AnimatedVisibility(
+                visible = showNowPlaying && nowPlaying != null,
+                enter = fadeIn() + scaleIn() + expandHorizontally(),
+                exit = fadeOut() + scaleOut() + shrinkHorizontally()
+            ) {
                 nowPlaying?.let { NowPlayingButton(it, onClick = onNowPlayingClick) }
             }
-        }
-        if (currentRoute == ROUTE_ONE_DAY_LIKE_TODAY) {
-            HorizontalFloatingToolbar(
-                expanded = true,
-                floatingActionButton = {
-                    FloatingToolbarDefaults.VibrantFloatingActionButton(onClick = onCalendarClick) {
-                        Icon(Icons.Default.DateRange, contentDescription = stringResource(R.string.open_calendar))
+            if (currentRoute == ROUTE_ONE_DAY_LIKE_TODAY) {
+                HorizontalFloatingToolbar(
+                    expanded = true,
+                    floatingActionButton = {
+                        FloatingToolbarDefaults.VibrantFloatingActionButton(onClick = onCalendarClick) {
+                            Icon(Icons.Default.DateRange, contentDescription = stringResource(R.string.open_calendar))
+                        }
                     }
-                }
-            ) { tabs() }
-        } else {
-            HorizontalFloatingToolbar(expanded = true) { tabs() }
+                ) { tabs() }
+            } else {
+                HorizontalFloatingToolbar(expanded = true) { tabs() }
+            }
         }
     }
 }
 
-/** Shaped like [ToolbarTab]: the playing album's cover where the icon goes, then "Now playing". */
+/**
+ * The playing album's cover in a circle — the button itself, no label. Every
+ * [NOW_PLAYING_PULSE_INTERVAL_MS] it grows a little and settles back on the expressive springs, a
+ * quiet sign that something is playing.
+ */
 @Composable
 private fun NowPlayingButton(nowPlaying: NowPlaying, onClick: () -> Unit) {
     val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
-    TextButton(onClick = onClick) {
-        AsyncImage(
-            model = nowPlaying.album.coverArtUrl(),
-            contentDescription = null, // decorative — the label names the button
-            placeholder = placeholder,
-            error = placeholder,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(IconSize.nowPlayingThumbnail)
-                .clip(CircleShape)
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(stringResource(R.string.now_playing_title))
+    val growSpec = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
+    val settleSpec = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
+    val scale = remember { Animatable(1f) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(NOW_PLAYING_PULSE_INTERVAL_MS)
+            scale.animateTo(NOW_PLAYING_PULSE_SCALE, growSpec)
+            scale.animateTo(1f, settleSpec)
+        }
     }
+    AsyncImage(
+        model = nowPlaying.album.coverArtUrl(),
+        contentDescription = stringResource(R.string.now_playing_title),
+        placeholder = placeholder,
+        error = placeholder,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .size(IconSize.nowPlayingThumbnail)
+            .graphicsLayer {
+                scaleX = scale.value
+                scaleY = scale.value
+                shape = CircleShape
+                clip = true
+                // It floats on its own, beside the toolbar, so it gets the same lift.
+                shadowElevation = NOW_PLAYING_ELEVATION.toPx()
+            }
+            .clickable(role = Role.Button, onClick = onClick)
+    )
 }
+
+private val NOW_PLAYING_ELEVATION = 6.dp
+private const val NOW_PLAYING_PULSE_INTERVAL_MS = 10_000L
+
+/** How much bigger the cover gets at the top of each pulse. */
+private const val NOW_PLAYING_PULSE_SCALE = 1.12f
 
 @Composable
 private fun ToolbarTab(tab: BottomNavTab, selected: Boolean, onClick: () -> Unit) {
