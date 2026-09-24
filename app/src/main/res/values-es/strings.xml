@@ -42,8 +42,8 @@
     <string name="album_cover_description">%1$s de %2$s</string>
     <string name="show_album_details">Ver detalles</string>
     <string name="open_album">Abrir álbum</string>
-    <string name="now_playing_stop">Detener la vista previa</string>
-    <string name="now_playing_replay">Volver a reproducir la vista previa</string>
+    <string name="now_playing_stop">Detener</string>
+    <string name="now_playing_replay">Volver a reproducir</string>
     <string name="now_playing_title">Reproduciendo</string>
     <string name="now_playing_previous">Pista anterior</string>
     <string name="now_playing_next">Pista siguiente</string>
@@ -70,4 +70,11 @@
     <string name="login_error_network">Sin conexión. Revisa tu conexión a internet y vuelve a intentarlo.</string>
     <string name="login_error_unknown">Algo salió mal. Vuelve a intentarlo.</string>
     <string name="signed_in">Sesión iniciada</string>
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_language">Idioma</string>
+    <string name="language_system_default">Predeterminado del sistema</string>
+    <string name="language_follows_phone">Usa el idioma de tu teléfono</string>
+    <string name="sign_out_confirm_title">¿Cerrar sesión?</string>
+    <string name="sign_out_confirm_body">Puedes volver a iniciar sesión cuando quieras.</string>
+    <string name="cancel">Cancelar</string>
 </resources>

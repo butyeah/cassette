@@ -26,7 +26,6 @@ import com.ruidoespontaneo.cassette.auth.domain.usecase.ObserveAuthStateUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SendPasswordResetEmailUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SignInWithEmailUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SignInWithGoogleUseCase
-import com.ruidoespontaneo.cassette.auth.domain.usecase.SignOutUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SignUpWithEmailUseCase
 import java.util.concurrent.Executor
 import kotlinx.coroutines.Dispatchers
@@ -240,16 +239,6 @@ class LoginViewModelTest {
         assertNull(viewModel.state.value.failure)
     }
 
-    @Test
-    fun `SignOut delegates to the repository`() {
-        val repository = FakeAuthRepository()
-        val viewModel = viewModel(repository)
-
-        viewModel.onIntent(LoginIntent.SignOut)
-
-        assertEquals(1, repository.signOutCalls)
-    }
-
     private fun LoginViewModel.fill(email: String? = null, password: String? = null, confirmPassword: String? = null) {
         email?.let { onIntent(LoginIntent.EmailChanged(it)) }
         password?.let { onIntent(LoginIntent.PasswordChanged(it)) }
@@ -265,7 +254,6 @@ class LoginViewModelTest {
         signUpWithEmailUseCase = SignUpWithEmailUseCase(repository),
         signInWithGoogleUseCase = SignInWithGoogleUseCase(repository),
         sendPasswordResetEmailUseCase = SendPasswordResetEmailUseCase(repository),
-        signOutUseCase = SignOutUseCase(repository),
         credentialManager = credentialManager,
         getCredentialRequest = GetCredentialRequest(credentialOptions = listOf(fakeCredentialOption))
     )

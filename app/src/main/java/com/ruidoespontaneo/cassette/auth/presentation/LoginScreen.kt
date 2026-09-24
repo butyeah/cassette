@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
@@ -58,7 +59,7 @@ import com.ruidoespontaneo.cassette.ui.theme.ToolbarSize
 fun LoginScreen(
     modifier: Modifier = Modifier,
     onSignedIn: () -> Unit,
-    onNotificationsClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     viewModel: LoginViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -72,7 +73,7 @@ fun LoginScreen(
     LoginScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
-        onNotificationsClick = onNotificationsClick,
+        onSettingsClick = onSettingsClick,
         onGoogleSignInClick = viewModel::signInWithGoogle,
         modifier = modifier
     )
@@ -82,7 +83,7 @@ fun LoginScreen(
 private fun LoginScreenContent(
     state: LoginUiState,
     onIntent: (LoginIntent) -> Unit,
-    onNotificationsClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     onGoogleSignInClick: (Context) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -93,17 +94,17 @@ private fun LoginScreenContent(
             .imePadding()
             .padding(
                 start = Spacing.large,
-                top = Spacing.extraLarge,
+                top = Spacing.small,
                 end = Spacing.large,
                 bottom = Spacing.large + ToolbarSize.clearance
             )
     ) {
+        // Settings don't need an account, so the gear is there signed in or out.
+        IconButton(onClick = onSettingsClick, modifier = Modifier.align(Alignment.End)) {
+            Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings_title))
+        }
         if (state.signedInAs != null) {
-            SignedInContent(
-                email = state.signedInAs,
-                onNotificationsClick = onNotificationsClick,
-                onSignOut = { onIntent(LoginIntent.SignOut) }
-            )
+            SignedInContent(email = state.signedInAs)
         } else {
             SignedOutContent(state = state, onIntent = onIntent, onGoogleSignInClick = onGoogleSignInClick)
         }
