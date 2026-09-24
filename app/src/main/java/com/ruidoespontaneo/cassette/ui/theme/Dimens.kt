@@ -18,6 +18,8 @@ object IconSize {
     val nowPlayingButton = 64.dp
     /** The cover thumbnail on the floating toolbar's now-playing button. */
     val nowPlayingThumbnail = 24.dp
+    /** The signed-in user's initial on the Profile tab. */
+    val avatar = 64.dp
 }
 
 /** Space the floating bottom toolbar occupies; scrolling top-level screens pad their end by this so nothing hides under it. */

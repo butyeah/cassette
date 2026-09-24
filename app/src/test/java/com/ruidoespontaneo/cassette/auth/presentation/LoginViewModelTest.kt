@@ -19,8 +19,11 @@ import androidx.credentials.exceptions.CreateCredentialException
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import com.ruidoespontaneo.cassette.auth.domain.AuthRepository
+import com.ruidoespontaneo.cassette.auth.domain.model.AuthException
+import com.ruidoespontaneo.cassette.auth.domain.model.AuthFailure
 import com.ruidoespontaneo.cassette.auth.domain.model.AuthUser
 import com.ruidoespontaneo.cassette.auth.domain.usecase.ObserveAuthStateUseCase
+import com.ruidoespontaneo.cassette.auth.domain.usecase.SendPasswordResetEmailUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SignInWithEmailUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SignInWithGoogleUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SignOutUseCase
@@ -39,6 +42,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -57,84 +61,168 @@ class LoginViewModelTest {
         Dispatchers.resetMain()
     }
 
+    private fun idle() = dispatcher.scheduler.advanceUntilIdle()
+
     @Test
     fun `reflects the repository's auth state`() {
         val repository = FakeAuthRepository()
         val viewModel = viewModel(repository)
-        dispatcher.scheduler.advanceUntilIdle()
+        idle()
         assertNull(viewModel.state.value.signedInAs)
 
-        repository.emit(AuthUser(uid = "uid-1", email = "person@example.com"))
-        dispatcher.scheduler.advanceUntilIdle()
+        repository.emit(AuthUser(uid = "u1", email = "person@example.com"))
+        idle()
 
         assertEquals("person@example.com", viewModel.state.value.signedInAs)
     }
 
     @Test
-    fun `EmailChanged and PasswordChanged update the fields and clear the error`() {
-        val viewModel = viewModel(FakeAuthRepository())
-        dispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.onIntent(LoginIntent.EmailChanged("person@example.com"))
-        viewModel.onIntent(LoginIntent.PasswordChanged("hunter2"))
-
-        val state = viewModel.state.value
-        assertEquals("person@example.com", state.email)
-        assertEquals("hunter2", state.password)
-        assertNull(state.errorMessage)
-    }
-
-    @Test
-    fun `SignIn success clears the password, stops loading, and sends SignedIn`() = runBlocking {
-        val viewModel = viewModel(FakeAuthRepository())
-        dispatcher.scheduler.advanceUntilIdle()
-        viewModel.onIntent(LoginIntent.EmailChanged("person@example.com"))
-        viewModel.onIntent(LoginIntent.PasswordChanged("hunter2"))
-
-        viewModel.onIntent(LoginIntent.SignIn)
-        dispatcher.scheduler.advanceUntilIdle()
-
-        val state = viewModel.state.value
-        assertFalse(state.isLoading)
-        assertEquals("", state.password)
-        assertNull(state.errorMessage)
-        assertEquals(LoginEffect.SignedIn, viewModel.effect.first())
-    }
-
-    @Test
-    fun `SignIn failure surfaces an error message and stops loading`() {
-        val error = IllegalStateException("boom")
-        val repository = FakeAuthRepository(signInWithEmailResult = { _, _ -> Result.failure(error) })
-        val viewModel = viewModel(repository)
-        dispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.onIntent(LoginIntent.SignIn)
-        dispatcher.scheduler.advanceUntilIdle()
-
-        val state = viewModel.state.value
-        assertFalse(state.isLoading)
-        assertEquals("boom", state.errorMessage)
-    }
-
-    @Test
-    fun `SignUp forwards the current fields to the use case`() = runBlocking {
+    fun `Submit in sign-in mode signs in with the trimmed email`() = runBlocking {
         var received: Pair<String, String>? = null
-        val repository = FakeAuthRepository(
-            signUpWithEmailResult = { email, password ->
-                received = email to password
-                Result.success(Unit)
-            }
-        )
-        val viewModel = viewModel(repository)
-        dispatcher.scheduler.advanceUntilIdle()
-        viewModel.onIntent(LoginIntent.EmailChanged("new@example.com"))
-        viewModel.onIntent(LoginIntent.PasswordChanged("hunter2"))
+        val viewModel = viewModel(FakeAuthRepository(signInWithEmailResult = { email, password ->
+            received = email to password
+            Result.success(Unit)
+        }))
+        viewModel.fill(email = " person@example.com ", password = "secret")
 
-        viewModel.onIntent(LoginIntent.SignUp)
-        dispatcher.scheduler.advanceUntilIdle()
+        viewModel.onIntent(LoginIntent.Submit)
+        idle()
 
-        assertEquals("new@example.com" to "hunter2", received)
+        assertEquals("person@example.com" to "secret", received)
         assertEquals(LoginEffect.SignedIn, viewModel.effect.first())
+        assertFalse(viewModel.state.value.isLoading)
+        assertEquals("", viewModel.state.value.password)
+    }
+
+    @Test
+    fun `Submit in create-account mode signs up`() {
+        var signedUp: String? = null
+        val viewModel = viewModel(FakeAuthRepository(signUpWithEmailResult = { email, _ ->
+            signedUp = email
+            Result.success(Unit)
+        }))
+        viewModel.onIntent(LoginIntent.ModeChanged(LoginMode.CreateAccount))
+        viewModel.fill(email = "new@example.com", password = "secret1", confirmPassword = "secret1")
+
+        viewModel.onIntent(LoginIntent.Submit)
+        idle()
+
+        assertEquals("new@example.com", signedUp)
+    }
+
+    @Test
+    fun `Submit does nothing until the form is complete`() {
+        var calls = 0
+        val viewModel = viewModel(FakeAuthRepository(
+            signInWithEmailResult = { _, _ -> calls++; Result.success(Unit) },
+            signUpWithEmailResult = { _, _ -> calls++; Result.success(Unit) }
+        ))
+        viewModel.fill(email = "not-an-email", password = "secret")
+        viewModel.onIntent(LoginIntent.Submit)
+
+        viewModel.onIntent(LoginIntent.ModeChanged(LoginMode.CreateAccount))
+        viewModel.fill(email = "new@example.com", password = "secret1", confirmPassword = "secret2")
+        viewModel.onIntent(LoginIntent.Submit)
+        idle()
+
+        assertEquals(0, calls)
+    }
+
+    @Test
+    fun `a failure keeps its AuthFailure and stops loading`() {
+        val viewModel = viewModel(FakeAuthRepository(signInWithEmailResult = { _, _ ->
+            Result.failure(AuthException(AuthFailure.InvalidCredentials))
+        }))
+        viewModel.fill(email = "person@example.com", password = "wrong")
+
+        viewModel.onIntent(LoginIntent.Submit)
+        idle()
+
+        assertEquals(AuthFailure.InvalidCredentials, viewModel.state.value.failure)
+        assertFalse(viewModel.state.value.isLoading)
+    }
+
+    @Test
+    fun `an unexpected exception is reported as Unknown`() {
+        val viewModel = viewModel(FakeAuthRepository(signInWithEmailResult = { _, _ ->
+            Result.failure(IllegalStateException("boom"))
+        }))
+        viewModel.fill(email = "person@example.com", password = "secret")
+
+        viewModel.onIntent(LoginIntent.Submit)
+        idle()
+
+        assertEquals(AuthFailure.Unknown, viewModel.state.value.failure)
+    }
+
+    @Test
+    fun `editing a field clears the failure`() {
+        val viewModel = viewModel(FakeAuthRepository(signInWithEmailResult = { _, _ ->
+            Result.failure(AuthException(AuthFailure.Network))
+        }))
+        viewModel.fill(email = "person@example.com", password = "secret")
+        viewModel.onIntent(LoginIntent.Submit)
+        idle()
+
+        viewModel.onIntent(LoginIntent.PasswordChanged("secret!"))
+
+        assertNull(viewModel.state.value.failure)
+    }
+
+    @Test
+    fun `switching mode clears the passwords and the failure but keeps the email`() {
+        val viewModel = viewModel(FakeAuthRepository())
+        viewModel.fill(email = "person@example.com", password = "secret")
+
+        viewModel.onIntent(LoginIntent.ModeChanged(LoginMode.CreateAccount))
+
+        val state = viewModel.state.value
+        assertEquals(LoginMode.CreateAccount, state.mode)
+        assertEquals("person@example.com", state.email)
+        assertEquals("", state.password)
+        assertEquals("", state.confirmPassword)
+    }
+
+    @Test
+    fun `ForgotPassword sends a reset link to a plausible email`() {
+        var resetFor: String? = null
+        val viewModel = viewModel(FakeAuthRepository(sendPasswordResetResult = { email ->
+            resetFor = email
+            Result.success(Unit)
+        }))
+        viewModel.fill(email = "person@example.com")
+
+        viewModel.onIntent(LoginIntent.ForgotPassword)
+        idle()
+
+        assertEquals("person@example.com", resetFor)
+        assertEquals("person@example.com", viewModel.state.value.resetEmailSentTo)
+    }
+
+    @Test
+    fun `ForgotPassword without a usable email asks for one instead`() {
+        var calls = 0
+        val viewModel = viewModel(FakeAuthRepository(sendPasswordResetResult = { calls++; Result.success(Unit) }))
+
+        viewModel.onIntent(LoginIntent.ForgotPassword)
+        idle()
+
+        assertEquals(0, calls)
+        assertTrue(viewModel.state.value.needsEmailForReset)
+
+        viewModel.onIntent(LoginIntent.EmailChanged("p"))
+        assertFalse(viewModel.state.value.needsEmailForReset)
+    }
+
+    @Test
+    fun `TogglePasswordVisibility flips it`() {
+        val viewModel = viewModel(FakeAuthRepository())
+
+        viewModel.onIntent(LoginIntent.TogglePasswordVisibility)
+        assertTrue(viewModel.state.value.isPasswordVisible)
+
+        viewModel.onIntent(LoginIntent.TogglePasswordVisibility)
+        assertFalse(viewModel.state.value.isPasswordVisible)
     }
 
     @Test
@@ -143,40 +231,29 @@ class LoginViewModelTest {
             repository = FakeAuthRepository(),
             credentialManager = FakeCredentialManager(errorToReport = GetCredentialCancellationException())
         )
-        dispatcher.scheduler.advanceUntilIdle()
+        idle()
 
         viewModel.signInWithGoogle(FakeContext)
-        dispatcher.scheduler.advanceUntilIdle()
+        idle()
 
         assertFalse(viewModel.state.value.isLoading)
-        assertNull(viewModel.state.value.errorMessage)
+        assertNull(viewModel.state.value.failure)
     }
 
     @Test
     fun `SignOut delegates to the repository`() {
         val repository = FakeAuthRepository()
         val viewModel = viewModel(repository)
-        dispatcher.scheduler.advanceUntilIdle()
 
         viewModel.onIntent(LoginIntent.SignOut)
 
         assertEquals(1, repository.signOutCalls)
     }
 
-    @Test
-    fun `DismissError clears the error message`() {
-        val repository = FakeAuthRepository(
-            signInWithEmailResult = { _, _ -> Result.failure(IllegalStateException("boom")) }
-        )
-        val viewModel = viewModel(repository)
-        dispatcher.scheduler.advanceUntilIdle()
-        viewModel.onIntent(LoginIntent.SignIn)
-        dispatcher.scheduler.advanceUntilIdle()
-        assertEquals("boom", viewModel.state.value.errorMessage)
-
-        viewModel.onIntent(LoginIntent.DismissError)
-
-        assertNull(viewModel.state.value.errorMessage)
+    private fun LoginViewModel.fill(email: String? = null, password: String? = null, confirmPassword: String? = null) {
+        email?.let { onIntent(LoginIntent.EmailChanged(it)) }
+        password?.let { onIntent(LoginIntent.PasswordChanged(it)) }
+        confirmPassword?.let { onIntent(LoginIntent.ConfirmPasswordChanged(it)) }
     }
 
     private fun viewModel(
@@ -187,6 +264,7 @@ class LoginViewModelTest {
         signInWithEmailUseCase = SignInWithEmailUseCase(repository),
         signUpWithEmailUseCase = SignUpWithEmailUseCase(repository),
         signInWithGoogleUseCase = SignInWithGoogleUseCase(repository),
+        sendPasswordResetEmailUseCase = SendPasswordResetEmailUseCase(repository),
         signOutUseCase = SignOutUseCase(repository),
         credentialManager = credentialManager,
         getCredentialRequest = GetCredentialRequest(credentialOptions = listOf(fakeCredentialOption))
@@ -265,7 +343,8 @@ class LoginViewModelTest {
             { _, _ -> Result.success(Unit) },
         private val signUpWithEmailResult: suspend (String, String) -> Result<Unit> =
             { _, _ -> Result.success(Unit) },
-        private val signInWithGoogleResult: suspend (String) -> Result<Unit> = { Result.success(Unit) }
+        private val signInWithGoogleResult: suspend (String) -> Result<Unit> = { Result.success(Unit) },
+        private val sendPasswordResetResult: suspend (String) -> Result<Unit> = { Result.success(Unit) }
     ) : AuthRepository {
         private val userFlow = MutableStateFlow<AuthUser?>(null)
         var signOutCalls = 0
@@ -290,7 +369,7 @@ class LoginViewModelTest {
             return signInWithGoogleResult(idToken)
         }
 
-        override suspend fun sendPasswordResetEmail(email: String) = Result.success(Unit)
+        override suspend fun sendPasswordResetEmail(email: String) = sendPasswordResetResult(email)
 
         override fun signOut() {
             signOutCalls++
