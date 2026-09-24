@@ -35,7 +35,6 @@ sealed interface LoginIntent : UiIntent {
     /** Signs in or creates the account, depending on [LoginUiState.mode]. Ignored until [canSubmit]. */
     data object Submit : LoginIntent
     data object ForgotPassword : LoginIntent
-    data object SignOut : LoginIntent
     data object DismissError : LoginIntent
 }
 

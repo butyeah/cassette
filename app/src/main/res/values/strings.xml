@@ -71,4 +71,13 @@
     <string name="login_error_network">No connection. Check your internet and try again.</string>
     <string name="login_error_unknown">Something went wrong. Please try again.</string>
     <string name="signed_in">Signed in</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_language">Language</string>
+    <string name="language_system_default">System default</string>
+    <string name="language_english" translatable="false">English</string>
+    <string name="language_spanish" translatable="false">Español</string>
+    <string name="language_follows_phone">Follows your phone\'s language</string>
+    <string name="sign_out_confirm_title">Sign out?</string>
+    <string name="sign_out_confirm_body">You can sign back in any time.</string>
+    <string name="cancel">Cancel</string>
 </resources>

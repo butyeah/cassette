@@ -13,7 +13,6 @@ import com.ruidoespontaneo.cassette.auth.domain.usecase.ObserveAuthStateUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SendPasswordResetEmailUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SignInWithEmailUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SignInWithGoogleUseCase
-import com.ruidoespontaneo.cassette.auth.domain.usecase.SignOutUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SignUpWithEmailUseCase
 import com.ruidoespontaneo.cassette.core.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,7 +29,6 @@ class LoginViewModel @Inject constructor(
     private val signUpWithEmailUseCase: SignUpWithEmailUseCase,
     private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
     private val sendPasswordResetEmailUseCase: SendPasswordResetEmailUseCase,
-    private val signOutUseCase: SignOutUseCase,
     private val credentialManager: CredentialManager,
     private val getCredentialRequest: GetCredentialRequest
 ) : MviViewModel<LoginUiState, LoginIntent, LoginEffect>(LoginUiState()) {
@@ -66,7 +64,6 @@ class LoginViewModel @Inject constructor(
             LoginIntent.TogglePasswordVisibility -> setState { copy(isPasswordVisible = !isPasswordVisible) }
             LoginIntent.Submit -> submit()
             LoginIntent.ForgotPassword -> sendPasswordReset()
-            LoginIntent.SignOut -> signOutUseCase()
             LoginIntent.DismissError -> setState { copy(failure = null) }
         }
     }

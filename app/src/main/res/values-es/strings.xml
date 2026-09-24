@@ -70,4 +70,11 @@
     <string name="login_error_network">Sin conexión. Revisa tu conexión a internet y vuelve a intentarlo.</string>
     <string name="login_error_unknown">Algo salió mal. Vuelve a intentarlo.</string>
     <string name="signed_in">Sesión iniciada</string>
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_language">Idioma</string>
+    <string name="language_system_default">Predeterminado del sistema</string>
+    <string name="language_follows_phone">Usa el idioma de tu teléfono</string>
+    <string name="sign_out_confirm_title">¿Cerrar sesión?</string>
+    <string name="sign_out_confirm_body">Puedes volver a iniciar sesión cuando quieras.</string>
+    <string name="cancel">Cancelar</string>
 </resources>

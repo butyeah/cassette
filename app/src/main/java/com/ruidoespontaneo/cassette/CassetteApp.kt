@@ -29,10 +29,12 @@ import com.ruidoespontaneo.cassette.dayinhistory.presentation.OneDayLikeTodayScr
 import com.ruidoespontaneo.cassette.notifications.presentation.NotificationsScreen
 import com.ruidoespontaneo.cassette.nowplaying.presentation.NowPlayingDialog
 import com.ruidoespontaneo.cassette.nowplaying.presentation.NowPlayingViewModel
+import com.ruidoespontaneo.cassette.settings.presentation.SettingsScreen
 
 const val ROUTE_ONE_DAY_LIKE_TODAY = "oneDayLikeToday"
 const val ROUTE_LOGIN = "login"
 const val ROUTE_NOTIFICATIONS = "notifications"
+const val ROUTE_SETTINGS = "settings"
 
 const val ROUTE_ALBUM_DETAIL =
     "albumDetail/{$ALBUM_PAGER_ARG_MONTH}/{$ALBUM_PAGER_ARG_DAY}/{$ALBUM_PAGER_ARG_ALBUM_ID}"
@@ -82,6 +84,12 @@ fun CassetteApp() {
                     // pop back to once signed in — the screen already re-renders itself.
                     LoginScreen(
                         onSignedIn = {},
+                        onSettingsClick = { navController.navigate(ROUTE_SETTINGS) }
+                    )
+                }
+                composable(ROUTE_SETTINGS) {
+                    SettingsScreen(
+                        onBack = { navController.popBackStack() },
                         onNotificationsClick = { navController.navigate(ROUTE_NOTIFICATIONS) }
                     )
                 }
