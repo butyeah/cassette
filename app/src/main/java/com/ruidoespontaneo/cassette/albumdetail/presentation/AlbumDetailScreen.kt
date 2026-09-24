@@ -105,9 +105,9 @@ import dev.chrisbanes.haze.rememberHazeState
  * [viewModel] has no default — it's assisted-injected per album (see [AlbumDetailViewModel]), so
  * the caller must build it via `hiltViewModel`'s assisted-injection overload, keyed by albumId.
  *
- * [autoPlay] asks this album to start playing its previews (auto-play arriving from the previous
+ * [autoPlay] asks this album to start playing its previews (autoplay arriving from the previous
  * album); [onAutoPlayStarted] acknowledges it so it fires once. [onTracklistFinished] is called when
- * auto-play has run out of this album's previews.
+ * autoplay has run out of this album's previews.
  */
 @Composable
 fun AlbumDetailScreen(
@@ -496,7 +496,7 @@ private data class RowBounds(val top: Float, val height: Float)
 
 /**
  * The pill behind the track that's playing — M3 Expressive's active indicator. It's one indicator
- * for the whole tracklist rather than one per row, so moving between tracks (a tap, or auto-play
+ * for the whole tracklist rather than one per row, so moving between tracks (a tap, or autoplay
  * advancing) slides it across on a spatial spring that overshoots and settles. Appearing and
  * disappearing fade in place instead: sliding in from wherever it last was would read as noise.
  */
@@ -554,7 +554,7 @@ private fun TrackRow(
         animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
         label = "trackContentColor"
     )
-    // Auto-play can move on to a track that's scrolled out of view — follow it.
+    // Autoplay can move on to a track that's scrolled out of view — follow it.
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     LaunchedEffect(isActive) {
         if (isActive) bringIntoViewRequester.bringIntoView()
