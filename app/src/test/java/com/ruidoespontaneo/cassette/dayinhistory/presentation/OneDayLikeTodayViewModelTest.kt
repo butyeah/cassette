@@ -41,7 +41,7 @@ class OneDayLikeTodayViewModelTest {
         val album = Album(
             id = "album-1",
             title = "Title",
-            releaseDate = LocalDate.of(1994, today.monthValue, today.dayOfMonth),
+            releaseDate = kotlinx.datetime.LocalDate(1994, today.monthValue, today.dayOfMonth),
             artistId = null,
             artistName = "Artist"
         )

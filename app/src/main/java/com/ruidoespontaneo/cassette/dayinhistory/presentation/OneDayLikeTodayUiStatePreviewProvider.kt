@@ -4,8 +4,8 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
-import java.time.LocalDate
 import java.time.MonthDay
+import kotlinx.datetime.LocalDate
 
 private val previewGroups = listOf(
     AlbumsByYear(
@@ -14,7 +14,7 @@ private val previewGroups = listOf(
             Album(
                 id = "1",
                 title = "Origin of Symmetry",
-                releaseDate = LocalDate.of(2001, 6, 17),
+                releaseDate = LocalDate(2001, 6, 17),
                 artistId = null,
                 artistName = "Muse"
             )
@@ -26,14 +26,14 @@ private val previewGroups = listOf(
             Album(
                 id = "2",
                 title = "The Downward Spiral",
-                releaseDate = LocalDate.of(1994, 6, 17),
+                releaseDate = LocalDate(1994, 6, 17),
                 artistId = null,
                 artistName = "Nine Inch Nails"
             ),
             Album(
                 id = "3",
                 title = "Superunknown",
-                releaseDate = LocalDate.of(1994, 6, 17),
+                releaseDate = LocalDate(1994, 6, 17),
                 artistId = null,
                 artistName = "Soundgarden"
             )

@@ -8,10 +8,9 @@ import com.ruidoespontaneo.cassette.musicbrainz.domain.MusicBrainzRepository
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
+import kotlinx.datetime.LocalDate
 import timber.log.Timber
 
 class MusicBrainzRepositoryImpl @Inject constructor(
@@ -28,7 +27,7 @@ class MusicBrainzRepositoryImpl @Inject constructor(
             // MusicBrainz's Lucene search over `date` treats it as a range
             // query; `primarytype:album` keeps singles/EPs/compilations off
             // the calendar.
-            val query = "date:[${from.format(DATE_FORMAT)} TO ${to.format(DATE_FORMAT)}]" +
+            val query = "date:[$from TO $to]" +
                 " AND primarytype:album"
             val albums = api.getAlbumsByDate(query = query, limit = limit, offset = offset)
                 .releases
@@ -87,7 +86,7 @@ class MusicBrainzRepositoryImpl @Inject constructor(
             // A partial date ("2024" or "2024-01") can't be placed on a
             // calendar day, so it comes through as null rather than
             // throwing or being guessed at.
-            runCatching { LocalDate.parse(raw, DATE_FORMAT) }.getOrNull()
+            runCatching { LocalDate.parse(raw) }.getOrNull()
         },
         genres = genres.map { it.name },
         ratingValue = rating?.value,
@@ -107,15 +106,11 @@ class MusicBrainzRepositoryImpl @Inject constructor(
             // A partial date ("2024" or "2024-01") can't be placed on a
             // calendar day, so it comes through as null rather than
             // throwing or being guessed at.
-            runCatching { LocalDate.parse(raw, DATE_FORMAT) }.getOrNull()
+            runCatching { LocalDate.parse(raw) }.getOrNull()
         },
         artistId = artistCredit.firstOrNull()?.artist?.id,
         artistName = artistCredit.joinToString(separator = "") { credit ->
             credit.name + credit.joinPhrase.orEmpty()
         }
     )
-
-    private companion object {
-        val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
-    }
 }

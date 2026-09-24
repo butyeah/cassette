@@ -3,10 +3,10 @@ package com.ruidoespontaneo.cassette.albumdetail.preview
 import com.ruidoespontaneo.cassette.itunes.domain.model.TrackPreview
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
-import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.datetime.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -272,7 +272,7 @@ class PreviewQueueTest {
         title = "Album $id",
         artistName = "Artist",
         primaryType = "Album",
-        firstReleaseDate = LocalDate.of(2001, 6, 17),
+        firstReleaseDate = LocalDate(2001, 6, 17),
         genres = emptyList(),
         ratingValue = null,
         ratingVotesCount = 0,

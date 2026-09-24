@@ -9,8 +9,8 @@ import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
 import com.ruidoespontaneo.cassette.musicbrainz.domain.usecase.GetAlbumDetailUseCase
-import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.datetime.LocalDate
 
 /**
  * A real [PreviewQueue] over [player], looking albums up in [albums] (a missing id fails to load)

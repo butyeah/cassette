@@ -4,10 +4,10 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.ruidoespontaneo.cassette.dayinhistory.domain.DayInHistoryRepository
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
-import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
+import kotlinx.datetime.LocalDate
 import timber.log.Timber
 
 class DayInHistoryRepositoryImpl @Inject constructor(
@@ -41,7 +41,7 @@ class DayInHistoryRepositoryImpl @Inject constructor(
         return Album(
             id = id,
             title = title,
-            releaseDate = runCatching { LocalDate.of(year, month, day) }.getOrNull(),
+            releaseDate = runCatching { LocalDate(year, month, day) }.getOrNull(),
             // The offline pipeline doesn't upload a MusicBrainz artist id, only its name.
             artistId = null,
             artistName = artistName

@@ -13,13 +13,13 @@ import com.ruidoespontaneo.cassette.dayinhistory.domain.usecase.GetAlbumsByDayUs
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
-import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.LocalDate
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -166,7 +166,7 @@ class AlbumPagerViewModelTest {
         title = "Title",
         artistName = "Artist",
         primaryType = "Album",
-        firstReleaseDate = LocalDate.of(2001, 6, 17),
+        firstReleaseDate = LocalDate(2001, 6, 17),
         genres = emptyList(),
         ratingValue = null,
         ratingVotesCount = 0,
@@ -176,7 +176,7 @@ class AlbumPagerViewModelTest {
     private fun album(id: String, year: Int) = Album(
         id = id,
         title = "Title",
-        releaseDate = LocalDate.of(year, 6, 17),
+        releaseDate = LocalDate(year, 6, 17),
         artistId = null,
         artistName = "Artist"
     )
