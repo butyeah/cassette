@@ -20,3 +20,12 @@ fun previewTrackTitle(tracks: List<Track>, playback: TrackPlayback?): String? {
     if (playback == null) return null
     return tracks.firstOrNull { it.position == playback.position }?.title
 }
+
+/** What the preview display's status glyph shows — a readout of the player, not a control. */
+enum class PreviewStatus { Stopped, Buffering, Playing }
+
+fun previewStatus(playback: TrackPlayback?): PreviewStatus = when {
+    playback == null -> PreviewStatus.Stopped
+    playback.isLoading -> PreviewStatus.Buffering
+    else -> PreviewStatus.Playing
+}

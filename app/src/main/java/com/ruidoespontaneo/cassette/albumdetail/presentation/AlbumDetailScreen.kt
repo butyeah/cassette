@@ -2,6 +2,7 @@ package com.ruidoespontaneo.cassette.albumdetail.presentation
 
 import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.fadeIn
@@ -95,6 +96,7 @@ import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.durationText
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.hasAny
 import com.ruidoespontaneo.cassette.ui.icons.Pause
+import com.ruidoespontaneo.cassette.ui.icons.Stop
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
 import dev.chrisbanes.haze.hazeSource
@@ -273,7 +275,7 @@ private fun AlbumDetailContent(
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(top = Spacing.medium)
         )
-        Text(text = album.artistName, style = MaterialTheme.typography.titleMedium)
+        Text(text = album.artistName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = Spacing.medium))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -384,14 +386,18 @@ private fun PreviewDisplayReadout(
         MaterialTheme.typography.labelLarge.copy(color = color, fontFeatureSettings = "tnum")
     Column(modifier = modifier) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(
-                text = if (playback == null) {
-                    stringResource(R.string.preview_track_idle)
-                } else {
-                    stringResource(R.string.preview_track_number, playback.position)
-                },
-                style = style
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                PreviewStatusIcon(status = previewStatus(playback), tint = color)
+                Text(
+                    text = if (playback == null) {
+                        stringResource(R.string.preview_track_idle)
+                    } else {
+                        stringResource(R.string.preview_track_number, playback.position)
+                    },
+                    style = style,
+                    modifier = Modifier.padding(start = Spacing.extraSmall)
+                )
+            }
             Text(text = remainingTimeText(playback?.remainingMs), style = style)
         }
         Box(
@@ -421,6 +427,29 @@ private fun PreviewDisplayReadout(
 }
 
 private const val TITLE_SCROLL_INTERVAL_MS = 10_000
+
+/** A stereo-style status glyph: ■ stopped, ❚❚ buffering, ▶ playing. */
+@Composable
+private fun PreviewStatusIcon(status: PreviewStatus, tint: Color, modifier: Modifier = Modifier) {
+    Crossfade(
+        targetState = status,
+        animationSpec = MaterialTheme.motionScheme.fastEffectsSpec(),
+        label = "previewStatusIcon",
+        modifier = modifier
+    ) { shown ->
+        val (icon, description) = when (shown) {
+            PreviewStatus.Stopped -> Icons.Filled.Stop to R.string.preview_status_stopped
+            PreviewStatus.Buffering -> Icons.Filled.Pause to R.string.preview_status_buffering
+            PreviewStatus.Playing -> Icons.Filled.PlayArrow to R.string.preview_status_playing
+        }
+        Icon(
+            imageVector = icon,
+            contentDescription = stringResource(description),
+            tint = tint,
+            modifier = Modifier.size(IconSize.previewStatus)
+        )
+    }
+}
 
 @Composable
 private fun Tracklist(
