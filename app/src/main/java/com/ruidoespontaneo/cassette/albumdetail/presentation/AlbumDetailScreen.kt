@@ -81,10 +81,12 @@ import coil3.compose.AsyncImage
 import coil3.toBitmap
 import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.cover.components.AnimatedGradientBackground
+import com.ruidoespontaneo.cassette.cover.components.ContainerColors
 import com.ruidoespontaneo.cassette.cover.components.PREVIEW_WAVEFORM_LINES
 import com.ruidoespontaneo.cassette.cover.components.PreviewWaveform
 import com.ruidoespontaneo.cassette.cover.components.displayTextColor
 import com.ruidoespontaneo.cassette.cover.components.dominantColors
+import com.ruidoespontaneo.cassette.cover.components.highlightContainerColors
 import com.ruidoespontaneo.cassette.cover.components.rememberWavePhase
 import com.ruidoespontaneo.cassette.cover.components.waveformColors
 import com.ruidoespontaneo.cassette.cover.components.wavyPillBackground
@@ -362,6 +364,7 @@ private fun AlbumDetailContent(
                 tracks = album.tracks,
                 previews = previews,
                 previewPlayback = previewPlayback,
+                highlightColors = highlightContainerColors(waveColors),
                 onTogglePreview = onTogglePreview,
                 modifier = Modifier.padding(top = Spacing.large)
             )
@@ -455,10 +458,20 @@ private fun Tracklist(
     tracks: List<Track>,
     previews: Map<Int, String>,
     previewPlayback: TrackPlayback?,
+    /** The playing track's highlight, from the album's dominant colors; `null` falls back to the theme. */
+    highlightColors: ContainerColors?,
     onTogglePreview: (trackPosition: Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val activePosition = previewPlayback?.position
+    // Animated so the highlight eases over when the cover finishes decoding mid-playback (the row's
+    // content color animates on its own, in TrackRow).
+    val highlightContainer by animateColorAsState(
+        targetValue = highlightColors?.container ?: MaterialTheme.colorScheme.secondaryContainer,
+        animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
+        label = "highlightContainer"
+    )
+    val highlightContent = highlightColors?.content ?: MaterialTheme.colorScheme.onSecondaryContainer
     // Where each row sits inside the Box below, so one shared indicator can travel between them.
     val rowBounds = remember { mutableStateMapOf<Int, RowBounds>() }
     Column(modifier = modifier) {
@@ -473,7 +486,8 @@ private fun Tracklist(
         ) {
             ActiveTrackIndicator(
                 target = activePosition?.let { rowBounds[it] },
-                playing = previewPlayback?.isLoading == false
+                playing = previewPlayback?.isLoading == false,
+                color = highlightContainer
             )
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 tracks.forEach { track ->
@@ -481,6 +495,7 @@ private fun Tracklist(
                         track = track,
                         hasPreview = track.position in previews,
                         playback = previewPlayback?.takeIf { it.position == track.position },
+                        activeContentColor = highlightContent,
                         onTogglePreview = { onTogglePreview(track.position) },
                         modifier = Modifier.onPlaced { coordinates ->
                             rowBounds[track.position] = RowBounds(
@@ -508,7 +523,12 @@ private data class RowBounds(val top: Float, val height: Float)
  * ([playing]), and ease flat while it buffers or once it stops.
  */
 @Composable
-private fun ActiveTrackIndicator(target: RowBounds?, playing: Boolean, modifier: Modifier = Modifier) {
+private fun ActiveTrackIndicator(
+    target: RowBounds?,
+    playing: Boolean,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
     val motion = MaterialTheme.motionScheme
     val waveAmplitude = remember { Animatable(0f) }
     LaunchedEffect(playing) {
@@ -548,7 +568,7 @@ private fun ActiveTrackIndicator(target: RowBounds?, playing: Boolean, modifier:
                 layout(placeable.width, px) { placeable.place(0, 0) }
             }
             .wavyPillBackground(
-                color = MaterialTheme.colorScheme.secondaryContainer,
+                color = color,
                 amplitude = { waveAmplitude.value },
                 phase = { wavePhase.floatValue }
             )
@@ -561,12 +581,14 @@ private fun TrackRow(
     track: Track,
     hasPreview: Boolean,
     playback: TrackPlayback?,
+    /** Text and icon color while this row sits on the active-track highlight. */
+    activeContentColor: Color,
     onTogglePreview: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val isActive = playback != null
     val contentColor by animateColorAsState(
-        targetValue = if (isActive) MaterialTheme.colorScheme.onSecondaryContainer else LocalContentColor.current,
+        targetValue = if (isActive) activeContentColor else LocalContentColor.current,
         animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
         label = "trackContentColor"
     )
