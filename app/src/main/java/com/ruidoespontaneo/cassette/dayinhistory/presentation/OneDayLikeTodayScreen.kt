@@ -1,14 +1,28 @@
 package com.ruidoespontaneo.cassette.dayinhistory.presentation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.BoundsTransform
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.animateBounds
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.LookaheadScope
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material3.Icon
@@ -127,6 +141,7 @@ private fun OneDayLikeTodayScreenContent(
 
                 state.albumsByYear.isEmpty() -> NoAlbums(Modifier.fillMaxSize())
                 state.layout == AlbumsLayout.Grid -> AlbumsGrid(
+                    day = state.day,
                     groups = state.albumsByYear,
                     onAlbumClick = { albumId -> onAlbumClick(state.day, albumId) },
                     modifier = Modifier.fillMaxSize()
@@ -321,47 +336,159 @@ private fun AlbumRow(album: Album, onClick: () -> Unit) {
 }
 
 /**
- * Covers only, [GRID_COLUMNS] to a row, split by release year: each year's label spans the full
- * width, then its covers follow. Same order as the list, which is also the pager's order.
+ * Covers only, [GRID_COLUMNS] to a row, split by release year: each year's label, then its covers
+ * as a [CoverMosaic]. Same order as the list, which is also the pager's order.
+ *
+ * Tapping a cover expands it in place, with its title and artist; tapping the expanded cover opens
+ * the album. Which cover is expanded is plain UI state, reset whenever the [day] changes.
  */
 @Composable
-private fun AlbumsGrid(groups: List<AlbumsByYear>, onAlbumClick: (String) -> Unit, modifier: Modifier = Modifier) {
-    val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(GRID_COLUMNS),
+private fun AlbumsGrid(
+    day: MonthDay,
+    groups: List<AlbumsByYear>,
+    onAlbumClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expandedAlbumId by rememberSaveable(day) { mutableStateOf<String?>(null) }
+    LazyColumn(
         modifier = modifier,
         contentPadding = albumsContentPadding,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
         verticalArrangement = Arrangement.spacedBy(Spacing.small)
     ) {
         groups.forEachIndexed { index, group ->
-            item(key = "year-${group.year}", span = { GridItemSpan(maxLineSpan) }) {
+            item(key = "year-${group.year}") {
                 Text(
                     text = group.year.toString(),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier
+                        .animateItem()
                         // Extra room above every year but the first, so each reads as its own group.
                         .padding(top = if (index == 0) 0.dp else Spacing.medium)
                         .semantics { heading() }
                 )
             }
-            gridItems(group.albums, key = { it.id }) { album ->
-                AsyncImage(
-                    model = album.coverArtUrl(),
-                    // The cover is all there is to go on here, so it names the album.
-                    contentDescription = stringResource(R.string.album_cover_description, album.title, album.artistName),
-                    placeholder = placeholder,
-                    error = placeholder,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .aspectRatio(1f)
-                        .clip(RoundedCornerShape(Spacing.small))
-                        .clickable { onAlbumClick(album.id) }
+            item(key = "covers-${group.year}") {
+                CoverMosaic(
+                    albums = group.albums,
+                    expandedAlbumId = expandedAlbumId,
+                    onCoverClick = { albumId ->
+                        if (albumId == expandedAlbumId) onAlbumClick(albumId) else expandedAlbumId = albumId
+                    },
+                    modifier = Modifier.animateItem()
                 )
             }
         }
     }
 }
+
+/**
+ * One year's covers, [GRID_COLUMNS] square tiles to a row, packed by [mosaicCells]: the expanded
+ * cover takes 2×2 tiles and the rest flow around it. Changing which cover is expanded animates
+ * every cover — and this mosaic's own height — to its new bounds on the expressive spatial spring.
+ */
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun CoverMosaic(
+    albums: List<Album>,
+    expandedAlbumId: String?,
+    onCoverClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val expandedIndex = albums.indexOfFirst { it.id == expandedAlbumId }.takeIf { it >= 0 }
+    val cells = remember(albums.size, expandedIndex) { mosaicCells(albums.size, expandedIndex, GRID_COLUMNS) }
+    val spatialSpec = MaterialTheme.motionScheme.defaultSpatialSpec<Rect>()
+    val boundsTransform = remember(spatialSpec) { BoundsTransform { _, _ -> spatialSpec } }
+    LookaheadScope {
+        Layout(
+            modifier = modifier
+                .fillMaxWidth()
+                .animateBounds(this, boundsTransform = boundsTransform),
+            content = {
+                albums.forEach { album ->
+                    key(album.id) {
+                        CoverTile(
+                            album = album,
+                            expanded = album.id == expandedAlbumId,
+                            onClick = { onCoverClick(album.id) },
+                            modifier = Modifier.animateBounds(this, boundsTransform = boundsTransform)
+                        )
+                    }
+                }
+            }
+        ) { measurables, constraints ->
+            val gap = Spacing.small.roundToPx()
+            val tile = (constraints.maxWidth - gap * (GRID_COLUMNS - 1)) / GRID_COLUMNS
+            val placeables = measurables.mapIndexed { index, measurable ->
+                val side = tile * cells[index].span + gap * (cells[index].span - 1)
+                measurable.measure(Constraints.fixed(side, side))
+            }
+            val rows = mosaicRowCount(cells)
+            val height = if (rows == 0) 0 else rows * tile + (rows - 1) * gap
+            layout(constraints.maxWidth, height) {
+                placeables.forEachIndexed { index, placeable ->
+                    placeable.place(cells[index].column * (tile + gap), cells[index].row * (tile + gap))
+                }
+            }
+        }
+    }
+}
+
+/** A cover; while [expanded], its title and artist fade in over a scrim along the bottom. */
+@Composable
+private fun CoverTile(album: Album, expanded: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
+    val effects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(Spacing.small))
+            .clickable(
+                onClickLabel = stringResource(if (expanded) R.string.open_album else R.string.show_album_details),
+                onClick = onClick
+            )
+    ) {
+        AsyncImage(
+            model = album.coverArtUrl(),
+            // The cover is all there is to go on while collapsed, so it names the album.
+            contentDescription = stringResource(R.string.album_cover_description, album.title, album.artistName),
+            placeholder = placeholder,
+            error = placeholder,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+        AnimatedVisibility(
+            visible = expanded,
+            enter = fadeIn(effects),
+            exit = fadeOut(effects),
+            modifier = Modifier.align(Alignment.BottomStart)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = SCRIM_ALPHA))))
+                    .padding(Spacing.small)
+                    // The cover's description already names the album and artist.
+                    .clearAndSetSemantics {}
+            ) {
+                Text(
+                    text = album.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Color.White,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = album.artistName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+private const val SCRIM_ALPHA = 0.7f
 
 private const val GRID_COLUMNS = 4
 
