@@ -85,7 +85,6 @@ import java.time.Instant
 import java.time.MonthDay
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 @Composable
 fun OneDayLikeTodayScreen(
@@ -93,7 +92,6 @@ fun OneDayLikeTodayScreen(
     isCalendarOpen: Boolean,
     onCalendarDismiss: () -> Unit,
     modifier: Modifier = Modifier,
-    dayFormatter: DateTimeFormatter,
     viewModel: OneDayLikeTodayViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -103,7 +101,7 @@ fun OneDayLikeTodayScreen(
         onAlbumClick = onAlbumClick,
         isCalendarOpen = isCalendarOpen,
         onCalendarDismiss = onCalendarDismiss,
-        dayFormatter = dayFormatter,
+        dayFormatter = rememberDayFormatter(),
         modifier = modifier
     )
 }
@@ -130,8 +128,8 @@ private fun OneDayLikeTodayScreenContent(
             )
             when {
                 state.isLoading -> LoadingIndicator(Modifier.fillMaxSize())
-                state.errorMessage != null -> ErrorMessage(
-                    message = state.errorMessage,
+                state.errorRes != null -> ErrorMessage(
+                    message = stringResource(state.errorRes),
                     onRetry = { onIntent(OneDayLikeTodayIntent.Retry) },
                     modifier = Modifier.fillMaxSize()
                 )
@@ -486,8 +484,6 @@ private const val SCRIM_ALPHA = 0.7f
 
 private const val GRID_COLUMNS = 4
 
-private val previewDayFormatter: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("MMMM d", Locale.getDefault())
 
 @Preview(showBackground = true)
 @Composable
@@ -501,7 +497,7 @@ private fun OneDayLikeTodayScreenPreview(
             onAlbumClick = { _, _ -> },
             isCalendarOpen = false,
             onCalendarDismiss = {},
-            dayFormatter = previewDayFormatter
+            dayFormatter = rememberDayFormatter()
         )
     }
 }
@@ -516,7 +512,7 @@ private fun OneDayLikeTodayScreenCalendarPreview() {
             onAlbumClick = { _, _ -> },
             isCalendarOpen = true,
             onCalendarDismiss = {},
-            dayFormatter = previewDayFormatter
+            dayFormatter = rememberDayFormatter()
         )
     }
 }

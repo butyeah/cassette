@@ -1,5 +1,6 @@
 package com.ruidoespontaneo.cassette.albumdetail.presentation
 
+import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.albumdetail.preview.FakePreviewPlayer
 import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewPlayback
 import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewQueue
@@ -72,7 +73,7 @@ class AlbumDetailViewModelTest {
         val state = viewModel.state.value
         assertFalse(state.isLoading)
         assertEquals(album, state.album)
-        assertNull(state.errorMessage)
+        assertNull(state.errorRes)
         assertEquals("album-1", requestedId)
     }
 
@@ -85,7 +86,7 @@ class AlbumDetailViewModelTest {
         val state = viewModel.state.value
         assertFalse(state.isLoading)
         assertNull(state.album)
-        assertEquals("boom", state.errorMessage)
+        assertEquals(R.string.error_load_album, state.errorRes)
     }
 
     @Test
@@ -102,7 +103,7 @@ class AlbumDetailViewModelTest {
         dispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(callsAfterInit + 1, calls)
-        assertTrue(viewModel.state.value.errorMessage == null)
+        assertTrue(viewModel.state.value.errorRes == null)
     }
 
     @Test
@@ -138,7 +139,7 @@ class AlbumDetailViewModelTest {
 
         val state = viewModel.state.value
         assertEquals(album, state.album)
-        assertNull(state.errorMessage)
+        assertNull(state.errorRes)
         assertTrue(state.previews.isEmpty())
     }
 

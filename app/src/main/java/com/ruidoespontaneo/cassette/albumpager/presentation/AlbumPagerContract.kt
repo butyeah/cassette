@@ -1,5 +1,6 @@
 package com.ruidoespontaneo.cassette.albumpager.presentation
 
+import androidx.annotation.StringRes
 import com.ruidoespontaneo.cassette.core.mvi.UiEffect
 import com.ruidoespontaneo.cassette.core.mvi.UiIntent
 import com.ruidoespontaneo.cassette.core.mvi.UiState
@@ -12,7 +13,7 @@ data class AlbumPagerUiState(
     val albumIds: List<String> = emptyList(),
     /** Index into [albumIds] the pager should open on — the album that was actually tapped. */
     val initialPage: Int = 0,
-    val errorMessage: String? = null,
+    @StringRes val errorRes: Int? = null,
     /** The album [com.ruidoespontaneo.cassette.albumdetail.preview.PreviewQueue] last started a
      *  track of — when autoplay moves on to another of this pager's albums, the pager follows it. */
     val playingAlbumId: String? = null

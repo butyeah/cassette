@@ -1,6 +1,7 @@
 package com.ruidoespontaneo.cassette.dayinhistory.presentation
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import java.time.LocalDate
@@ -47,6 +48,6 @@ class OneDayLikeTodayUiStatePreviewProvider : PreviewParameterProvider<OneDayLik
         OneDayLikeTodayUiState(day = day, isLoading = false, albumsByYear = previewGroups),
         OneDayLikeTodayUiState(day = day, isLoading = false),
         OneDayLikeTodayUiState(day = day, isLoading = true),
-        OneDayLikeTodayUiState(day = day, isLoading = false, errorMessage = "Couldn't load albums")
+        OneDayLikeTodayUiState(day = day, isLoading = false, errorRes = R.string.error_load_albums)
     )
 }

@@ -2,6 +2,7 @@ package com.ruidoespontaneo.cassette.albumpager.presentation
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewQueue
 import com.ruidoespontaneo.cassette.core.mvi.MviViewModel
 import com.ruidoespontaneo.cassette.dayinhistory.domain.usecase.GetAlbumsByDayUseCase
@@ -61,7 +62,7 @@ class AlbumPagerViewModel @Inject constructor(
     }
 
     private fun loadAlbumIds() {
-        setState { copy(isLoading = true, errorMessage = null) }
+        setState { copy(isLoading = true, errorRes = null) }
         viewModelScope.launch {
             getAlbumsByDayUseCase(month, day)
                 .onSuccess { groups ->
@@ -78,7 +79,7 @@ class AlbumPagerViewModel @Inject constructor(
                 }
                 .onFailure { error ->
                     setState {
-                        copy(isLoading = false, errorMessage = error.message ?: "Couldn't load albums")
+                        copy(isLoading = false, errorRes = R.string.error_load_albums)
                     }
                 }
         }

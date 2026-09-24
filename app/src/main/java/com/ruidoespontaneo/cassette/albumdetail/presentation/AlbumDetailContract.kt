@@ -1,5 +1,6 @@
 package com.ruidoespontaneo.cassette.albumdetail.presentation
 
+import androidx.annotation.StringRes
 import com.ruidoespontaneo.cassette.core.mvi.UiEffect
 import com.ruidoespontaneo.cassette.core.mvi.UiIntent
 import com.ruidoespontaneo.cassette.core.mvi.UiState
@@ -8,7 +9,7 @@ import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 data class AlbumDetailUiState(
     val isLoading: Boolean = true,
     val album: AlbumDetail? = null,
-    val errorMessage: String? = null,
+    @StringRes val errorRes: Int? = null,
     /**
      * 30-second preview URL per [com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track.position].
      * Loaded after [album] and never blocks it — stays empty when iTunes has nothing or the lookup

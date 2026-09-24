@@ -70,6 +70,7 @@ import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -189,8 +190,8 @@ private fun AlbumDetailScreenContent(
                         .padding(innerPadding)
                 )
 
-                state.errorMessage != null -> ErrorMessage(
-                    message = state.errorMessage,
+                state.errorRes != null -> ErrorMessage(
+                    message = stringResource(state.errorRes),
                     onRetry = { onIntent(AlbumDetailIntent.Retry) },
                     modifier = Modifier
                         .fillMaxSize()
@@ -333,7 +334,12 @@ private fun AlbumDetailContent(
         val ratingValue = album.ratingValue
         if (ratingValue != null) {
             Text(
-                text = stringResource(R.string.rating_format, ratingValue, album.ratingVotesCount),
+                text = pluralStringResource(
+                    R.plurals.rating_format,
+                    album.ratingVotesCount,
+                    ratingValue,
+                    album.ratingVotesCount
+                ),
                 modifier = Modifier.padding(top = Spacing.small)
             )
         }

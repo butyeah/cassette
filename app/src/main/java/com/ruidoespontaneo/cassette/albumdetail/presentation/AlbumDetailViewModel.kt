@@ -1,6 +1,7 @@
 package com.ruidoespontaneo.cassette.albumdetail.presentation
 
 import androidx.lifecycle.viewModelScope
+import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewPlayback
 import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewPlayer
 import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewQueue
@@ -63,7 +64,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
     }
 
     private fun loadAlbum() {
-        setState { copy(isLoading = true, errorMessage = null) }
+        setState { copy(isLoading = true, errorRes = null) }
         viewModelScope.launch {
             getAlbumDetailUseCase(albumId)
                 .onSuccess { album ->
@@ -72,7 +73,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
                 }
                 .onFailure { error ->
                     setState {
-                        copy(isLoading = false, errorMessage = error.message ?: "Couldn't load album")
+                        copy(isLoading = false, errorRes = R.string.error_load_album)
                     }
                 }
         }

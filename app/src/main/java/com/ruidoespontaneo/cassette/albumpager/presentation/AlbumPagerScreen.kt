@@ -63,8 +63,8 @@ private fun AlbumPagerScreenContent(
 ) {
     when {
         state.isLoading -> LoadingScaffold(onBack, modifier)
-        state.errorMessage != null -> ErrorScaffold(
-            message = state.errorMessage,
+        state.errorRes != null -> ErrorScaffold(
+            message = stringResource(state.errorRes),
             onRetry = { onIntent(AlbumPagerIntent.Retry) },
             onBack = onBack,
             modifier = modifier
