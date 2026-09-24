@@ -20,7 +20,7 @@ class FakePreviewPlayer : PreviewPlayer {
     var stopCount = 0
         private set
 
-    override fun play(url: String) {
+    override fun play(url: String, metadata: PreviewMetadata?) {
         played += url
         _playback.value = PreviewPlayback(url, PreviewPlayback.Status.Loading)
     }

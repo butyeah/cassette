@@ -79,6 +79,8 @@ dependencies {
     implementation(libs.haze)
     // 30-second iTunes track previews on AlbumDetailScreen (albumdetail/preview).
     implementation(libs.androidx.media3.exoplayer)
+    // Keeps previews (and autoplay) going in the background, with a media notification.
+    implementation(libs.androidx.media3.session)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.hilt.android)

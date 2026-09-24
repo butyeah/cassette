@@ -4,6 +4,7 @@ import com.ruidoespontaneo.cassette.core.di.ApplicationScope
 import com.ruidoespontaneo.cassette.itunes.domain.usecase.GetTrackPreviewsUseCase
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.usecase.GetAlbumDetailUseCase
+import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -34,6 +35,8 @@ data class NowPlaying(
     /** Whether ⏮ can go anywhere: an earlier preview here, or an earlier album of the day. */
     val hasPrevious: Boolean
         get() = previews.keys.any { it < position } || albumIndex > 0
+
+    fun metadata() = PreviewMetadata(trackTitle, album.artistName, album.title, album.coverArtUrl())
 }
 
 /**
@@ -125,7 +128,7 @@ class PreviewQueue @Inject constructor(
         val url = next.previews[next.position] ?: return
         isStopped = false
         _nowPlaying.value = next
-        player.play(url)
+        player.play(url, next.metadata())
     }
 
     private fun cancelAdvance() {
