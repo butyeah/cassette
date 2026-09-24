@@ -22,8 +22,6 @@ class OneDayLikeTodayViewModel @Inject constructor(
     override fun onIntent(intent: OneDayLikeTodayIntent) {
         when (intent) {
             OneDayLikeTodayIntent.Retry -> loadAlbums(currentState.day)
-            OneDayLikeTodayIntent.NextDay -> loadAlbums(currentState.day.plusOneDay())
-            OneDayLikeTodayIntent.PreviousDay -> loadAlbums(currentState.day.minusOneDay())
             is OneDayLikeTodayIntent.SelectDate -> loadAlbums(intent.day)
             OneDayLikeTodayIntent.ToggleLayout -> setState {
                 copy(layout = if (layout == AlbumsLayout.List) AlbumsLayout.Grid else AlbumsLayout.List)
@@ -44,10 +42,3 @@ class OneDayLikeTodayViewModel @Inject constructor(
         }
     }
 }
-
-// MonthDay has no plusDays/minusDays of its own — round-tripping through a fixed leap year
-// keeps Feb 29 a valid intermediate step regardless of what year it's actually being viewed in.
-private const val LEAP_YEAR = 2020
-
-private fun MonthDay.plusOneDay(): MonthDay = MonthDay.from(atYear(LEAP_YEAR).plusDays(1))
-private fun MonthDay.minusOneDay(): MonthDay = MonthDay.from(atYear(LEAP_YEAR).minusDays(1))

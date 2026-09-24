@@ -85,42 +85,6 @@ class OneDayLikeTodayViewModelTest {
     }
 
     @Test
-    fun `NextDay and PreviousDay reload the adjacent day`() {
-        var requestedMonth: Int? = null
-        var requestedDay: Int? = null
-        val viewModel = viewModel { month, day ->
-            requestedMonth = month
-            requestedDay = day
-            Result.success(emptyList())
-        }
-        dispatcher.scheduler.advanceUntilIdle()
-
-        // Computed straight from today's real LocalDate, independent of however the
-        // ViewModel steps a MonthDay forward/back, so this can't pass by mirroring a bug there.
-        val today = MonthDay.from(LocalDate.now())
-        val expectedNext = MonthDay.from(LocalDate.now().plusDays(1))
-        val expectedPrevious = MonthDay.from(LocalDate.now().minusDays(1))
-
-        viewModel.onIntent(OneDayLikeTodayIntent.NextDay)
-        dispatcher.scheduler.advanceUntilIdle()
-        assertEquals(expectedNext.monthValue, requestedMonth)
-        assertEquals(expectedNext.dayOfMonth, requestedDay)
-        assertEquals(expectedNext, viewModel.state.value.day)
-
-        viewModel.onIntent(OneDayLikeTodayIntent.PreviousDay)
-        dispatcher.scheduler.advanceUntilIdle()
-        assertEquals(today.monthValue, requestedMonth)
-        assertEquals(today.dayOfMonth, requestedDay)
-        assertEquals(today, viewModel.state.value.day)
-
-        viewModel.onIntent(OneDayLikeTodayIntent.PreviousDay)
-        dispatcher.scheduler.advanceUntilIdle()
-        assertEquals(expectedPrevious.monthValue, requestedMonth)
-        assertEquals(expectedPrevious.dayOfMonth, requestedDay)
-        assertEquals(expectedPrevious, viewModel.state.value.day)
-    }
-
-    @Test
     fun `SelectDate loads the selected day`() {
         var requestedMonth: Int? = null
         var requestedDay: Int? = null
@@ -180,7 +144,7 @@ class OneDayLikeTodayViewModelTest {
         dispatcher.scheduler.advanceUntilIdle()
         viewModel.onIntent(OneDayLikeTodayIntent.ToggleLayout)
 
-        viewModel.onIntent(OneDayLikeTodayIntent.NextDay)
+        viewModel.onIntent(OneDayLikeTodayIntent.SelectDate(MonthDay.of(3, 1)))
         dispatcher.scheduler.advanceUntilIdle()
         viewModel.onIntent(OneDayLikeTodayIntent.SelectDate(MonthDay.of(6, 17)))
         dispatcher.scheduler.advanceUntilIdle()
