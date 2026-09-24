@@ -1,6 +1,25 @@
 package com.ruidoespontaneo.cassette.albumdetail.presentation
 
 import android.graphics.Bitmap
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.positionInParent
+import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -371,21 +390,82 @@ private fun Tracklist(
     onTogglePreview: (trackPosition: Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val activePosition = previewPlayback?.position
+    // Where each row sits inside the Box below, so one shared indicator can travel between them.
+    val rowBounds = remember { mutableStateMapOf<Int, RowBounds>() }
     Column(modifier = modifier) {
         Text(
             text = stringResource(R.string.tracklist_title),
             style = MaterialTheme.typography.titleMedium
         )
-        tracks.forEach { track ->
-            TrackRow(
-                track = track,
-                hasPreview = track.position in previews,
-                playback = previewPlayback?.takeIf { it.position == track.position },
-                onTogglePreview = { onTogglePreview(track.position) },
-                modifier = Modifier.padding(top = Spacing.small)
-            )
+        Box(modifier = Modifier.padding(top = Spacing.small)) {
+            ActiveTrackIndicator(target = activePosition?.let { rowBounds[it] })
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                tracks.forEach { track ->
+                    TrackRow(
+                        track = track,
+                        hasPreview = track.position in previews,
+                        playback = previewPlayback?.takeIf { it.position == track.position },
+                        onTogglePreview = { onTogglePreview(track.position) },
+                        modifier = Modifier.onPlaced { coordinates ->
+                            rowBounds[track.position] = RowBounds(
+                                top = coordinates.positionInParent().y,
+                                height = coordinates.size.height.toFloat()
+                            )
+                        }
+                    )
+                }
+            }
         }
     }
+}
+
+/** A track row's offset and height inside [Tracklist]'s Box, in px. */
+private data class RowBounds(val top: Float, val height: Float)
+
+/**
+ * The pill behind the track that's playing — M3 Expressive's active indicator. It's one indicator
+ * for the whole tracklist rather than one per row, so moving between tracks (a tap, or auto-play
+ * advancing) slides it across on a spatial spring that overshoots and settles. Appearing and
+ * disappearing fade in place instead: sliding in from wherever it last was would read as noise.
+ */
+@Composable
+private fun ActiveTrackIndicator(target: RowBounds?, modifier: Modifier = Modifier) {
+    val motion = MaterialTheme.motionScheme
+    val top = remember { Animatable(0f) }
+    val height = remember { Animatable(0f) }
+    var isShown by remember { mutableStateOf(false) }
+    val alpha by animateFloatAsState(
+        targetValue = if (target != null) 1f else 0f,
+        animationSpec = motion.defaultEffectsSpec(),
+        label = "indicatorAlpha"
+    )
+    LaunchedEffect(target) {
+        if (target == null) {
+            isShown = false
+        } else if (!isShown) {
+            top.snapTo(target.top)
+            height.snapTo(target.height)
+            isShown = true
+        } else {
+            launch { top.animateTo(target.top, motion.defaultSpatialSpec()) }
+            launch { height.animateTo(target.height, motion.defaultSpatialSpec()) }
+        }
+    }
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                translationY = top.value
+                this.alpha = alpha
+            }
+            .layout { measurable, constraints ->
+                val px = height.value.roundToInt().coerceAtLeast(0)
+                val placeable = measurable.measure(constraints.copy(minHeight = px, maxHeight = px))
+                layout(placeable.width, px) { placeable.place(0, 0) }
+            }
+            .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)
+    )
 }
 
 /** [playback] is non-null only for the one track whose preview is buffering or playing. */
@@ -397,29 +477,47 @@ private fun TrackRow(
     onTogglePreview: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "${track.position}. ${track.title}",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f)
-        )
-        val durationText = track.durationText()
-        if (durationText != null) {
+    val isActive = playback != null
+    val contentColor by animateColorAsState(
+        targetValue = if (isActive) MaterialTheme.colorScheme.onSecondaryContainer else LocalContentColor.current,
+        animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
+        label = "trackContentColor"
+    )
+    // Auto-play can move on to a track that's scrolled out of view — follow it.
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    LaunchedEffect(isActive) {
+        if (isActive) bringIntoViewRequester.bringIntoView()
+    }
+    CompositionLocalProvider(LocalContentColor provides contentColor) {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .bringIntoViewRequester(bringIntoViewRequester)
+                .padding(start = Spacing.large, end = Spacing.extraSmall),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
-                text = durationText,
+                text = "${track.position}. ${track.title}",
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(start = Spacing.small)
+                modifier = Modifier.weight(1f)
             )
-        }
-        if (hasPreview) {
-            PreviewButton(track.title, playback, onTogglePreview)
+            val durationText = track.durationText()
+            if (durationText != null) {
+                Text(
+                    text = durationText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(start = Spacing.small)
+                )
+            }
+            if (hasPreview) {
+                PreviewButton(track.title, playback, onTogglePreview)
+            }
         }
     }
 }
+
+private enum class PreviewButtonState { Idle, Loading, Playing }
 
 @Composable
 private fun PreviewButton(trackTitle: String, playback: TrackPlayback?, onClick: () -> Unit) {
@@ -427,19 +525,35 @@ private fun PreviewButton(trackTitle: String, playback: TrackPlayback?, onClick:
         if (playback == null) R.string.play_preview else R.string.stop_preview,
         trackTitle
     )
+    val state = when {
+        playback == null -> PreviewButtonState.Idle
+        playback.isLoading -> PreviewButtonState.Loading
+        else -> PreviewButtonState.Playing
+    }
+    val motion = MaterialTheme.motionScheme
     // The description sits on the button rather than its icon, since a buffering clip shows a
     // spinner in the icon's place — and tapping it then stops the clip, same as while playing.
     IconButton(
         onClick = onClick,
         modifier = Modifier.semantics { contentDescription = description }) {
-        when {
-            playback == null -> Icon(Icons.Filled.PlayArrow, contentDescription = null)
-            playback.isLoading -> CircularProgressIndicator(
-                strokeWidth = IconSize.previewSpinnerStroke,
-                modifier = Modifier.size(IconSize.previewSpinner)
-            )
+        AnimatedContent(
+            targetState = state,
+            contentAlignment = Alignment.Center,
+            transitionSpec = {
+                (fadeIn(motion.fastEffectsSpec()) + scaleIn(motion.fastSpatialSpec(), initialScale = 0.6f))
+                    .togetherWith(fadeOut(motion.fastEffectsSpec()))
+            },
+            label = "previewButtonIcon"
+        ) { buttonState ->
+            when (buttonState) {
+                PreviewButtonState.Idle -> Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                PreviewButtonState.Loading -> CircularProgressIndicator(
+                    strokeWidth = IconSize.previewSpinnerStroke,
+                    modifier = Modifier.size(IconSize.previewSpinner)
+                )
 
-            else -> Icon(Icons.Filled.Pause, contentDescription = null)
+                PreviewButtonState.Playing -> Icon(Icons.Filled.Pause, contentDescription = null)
+            }
         }
     }
 }
