@@ -6,15 +6,20 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -33,6 +38,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.ColorPainter
@@ -64,8 +70,8 @@ private val bottomNavTabs = listOf(
  * so pushed screens (album detail, notifications) aren't covered by it. On Daily, it also carries a
  * FAB that opens the jump-to-date calendar via [onCalendarClick].
  *
- * While [showNowPlaying] (a preview is loaded), a third button after the tabs shows [nowPlaying]'s
- * album cover and opens the now-playing dialog via [onNowPlayingClick].
+ * While [showNowPlaying] (a preview is loaded), a separate floating button to the toolbar's left
+ * shows [nowPlaying]'s album cover and opens the now-playing dialog via [onNowPlayingClick].
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -92,22 +98,32 @@ fun CassetteFloatingToolbar(
                     onClick = { navigateToTab(navController, tab.route) }
                 )
             }
-            // nowPlaying outlives the playback itself, so the thumbnail stays put while fading out.
-            AnimatedVisibility(visible = showNowPlaying && nowPlaying != null, enter = fadeIn(), exit = fadeOut()) {
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Beside the toolbar, not in it. nowPlaying outlives the playback itself, so the cover
+            // stays put while it shrinks away.
+            AnimatedVisibility(
+                visible = showNowPlaying && nowPlaying != null,
+                enter = fadeIn() + scaleIn() + expandHorizontally(),
+                exit = fadeOut() + scaleOut() + shrinkHorizontally()
+            ) {
                 nowPlaying?.let { NowPlayingButton(it, onClick = onNowPlayingClick) }
             }
-        }
-        if (currentRoute == ROUTE_ONE_DAY_LIKE_TODAY) {
-            HorizontalFloatingToolbar(
-                expanded = true,
-                floatingActionButton = {
-                    FloatingToolbarDefaults.VibrantFloatingActionButton(onClick = onCalendarClick) {
-                        Icon(Icons.Default.DateRange, contentDescription = stringResource(R.string.open_calendar))
+            if (currentRoute == ROUTE_ONE_DAY_LIKE_TODAY) {
+                HorizontalFloatingToolbar(
+                    expanded = true,
+                    floatingActionButton = {
+                        FloatingToolbarDefaults.VibrantFloatingActionButton(onClick = onCalendarClick) {
+                            Icon(Icons.Default.DateRange, contentDescription = stringResource(R.string.open_calendar))
+                        }
                     }
-                }
-            ) { tabs() }
-        } else {
-            HorizontalFloatingToolbar(expanded = true) { tabs() }
+                ) { tabs() }
+            } else {
+                HorizontalFloatingToolbar(expanded = true) { tabs() }
+            }
         }
     }
 }
@@ -130,12 +146,13 @@ private fun NowPlayingButton(nowPlaying: NowPlaying, onClick: () -> Unit) {
     )
     Box(
         modifier = Modifier
-            .padding(horizontal = 4.dp)
             .size(IconSize.nowPlayingThumbnail)
             .graphicsLayer {
                 rotationZ = rotation
                 shape = wavyCircle
                 clip = true
+                // It floats on its own now, so it gets the toolbar's lift.
+                shadowElevation = NOW_PLAYING_ELEVATION.toPx()
             }
             .clickable(role = Role.Button, onClick = onClick)
     ) {
@@ -152,6 +169,8 @@ private fun NowPlayingButton(nowPlaying: NowPlaying, onClick: () -> Unit) {
         )
     }
 }
+
+private val NOW_PLAYING_ELEVATION = 6.dp
 
 /** How long the wavy outline takes to go once round — a new wave passes every 1/12th of it. */
 private const val NOW_PLAYING_WAVE_TURN_MS = 16_000
