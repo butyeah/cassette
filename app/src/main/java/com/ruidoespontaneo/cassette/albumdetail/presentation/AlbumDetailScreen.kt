@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,6 +56,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -291,6 +293,7 @@ private fun AlbumDetailContent(
             ) {
                 PreviewDisplayReadout(
                     playback = previewPlayback,
+                    title = previewTrackTitle(album.tracks, previewPlayback),
                     color = displayTextColor(dominant = waveColors, background = Color.Black),
                     modifier = Modifier
                         .align(Alignment.TopStart)
@@ -364,28 +367,60 @@ private fun AlbumDetailContent(
     }
 }
 
-/** "Track n" and the clip's remaining time, or dashes for both while no preview is playing. */
+/**
+ * "Track n" and the clip's remaining time, with the track's [title] in a box under them — dashes for
+ * all three while no preview is playing. The box is filled with [color] so it stands out on the
+ * black display; a title too long for it scrolls across every [TITLE_SCROLL_INTERVAL_MS].
+ */
 @Composable
 private fun PreviewDisplayReadout(
     playback: TrackPlayback?,
+    title: String?,
     color: Color,
     modifier: Modifier = Modifier
 ) {
     // Tabular figures keep the countdown's digits from shifting as they change.
     val style =
         MaterialTheme.typography.labelLarge.copy(color = color, fontFeatureSettings = "tnum")
-    Row(modifier = modifier, horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(
-            text = if (playback == null) {
-                stringResource(R.string.preview_track_idle)
-            } else {
-                stringResource(R.string.preview_track_number, playback.position)
-            },
-            style = style
-        )
-        Text(text = remainingTimeText(playback?.remainingMs), style = style)
+    Column(modifier = modifier) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(
+                text = if (playback == null) {
+                    stringResource(R.string.preview_track_idle)
+                } else {
+                    stringResource(R.string.preview_track_number, playback.position)
+                },
+                style = style
+            )
+            Text(text = remainingTimeText(playback?.remainingMs), style = style)
+        }
+        Box(
+            modifier = Modifier
+                .padding(top = Spacing.small)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(Spacing.extraSmall))
+                .background(color)
+                .padding(horizontal = Spacing.small, vertical = Spacing.extraSmall)
+        ) {
+            // Keyed so the marquee starts over, from its initial delay, whenever the track changes.
+            key(title) {
+                Text(
+                    text = title ?: stringResource(R.string.preview_title_idle),
+                    // [color] is readable on black, so black is readable on [color].
+                    style = MaterialTheme.typography.labelLarge.copy(color = Color.Black),
+                    maxLines = 1,
+                    modifier = Modifier.basicMarquee(
+                        iterations = Int.MAX_VALUE,
+                        initialDelayMillis = TITLE_SCROLL_INTERVAL_MS,
+                        repeatDelayMillis = TITLE_SCROLL_INTERVAL_MS
+                    )
+                )
+            }
+        }
     }
 }
+
+private const val TITLE_SCROLL_INTERVAL_MS = 10_000
 
 @Composable
 private fun Tracklist(
