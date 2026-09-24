@@ -41,6 +41,7 @@ class SendPasswordResetEmailUseCaseTest {
             override suspend fun signUpWithEmail(email: String, password: String) = Result.success(Unit)
             override suspend fun signInWithGoogleIdToken(idToken: String) = Result.success(Unit)
             override suspend fun sendPasswordResetEmail(email: String) = sendPasswordResetEmail(email)
+            override suspend fun deleteAccount() = Result.success(Unit)
             override fun signOut() = Unit
         }
 }

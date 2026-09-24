@@ -41,6 +41,11 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun sendPasswordResetEmail(email: String): Result<Unit> =
         runCatchingAuthCall { firebaseAuth.sendPasswordResetEmail(email).await() }
 
+    // Cassette keeps no per-user data of its own (its Firestore collections are public and
+    // read-only), so the Auth user is the whole account. Deleting it also signs it out.
+    override suspend fun deleteAccount(): Result<Unit> =
+        runCatchingAuthCall { firebaseAuth.currentUser?.delete()?.await() }
+
     override fun signOut() = firebaseAuth.signOut()
 
     private suspend fun runCatchingAuthCall(block: suspend () -> Unit): Result<Unit> {
