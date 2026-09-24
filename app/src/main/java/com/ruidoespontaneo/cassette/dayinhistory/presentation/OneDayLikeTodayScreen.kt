@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.animateBounds
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -361,7 +362,6 @@ private fun AlbumsGrid(
                     text = group.year.toString(),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier
-                        .animateItem()
                         // Extra room above every year but the first, so each reads as its own group.
                         .padding(top = if (index == 0) 0.dp else Spacing.medium)
                         .semantics { heading() }
@@ -373,8 +373,7 @@ private fun AlbumsGrid(
                     expandedAlbumId = expandedAlbumId,
                     onCoverClick = { albumId ->
                         if (albumId == expandedAlbumId) onAlbumClick(albumId) else expandedAlbumId = albumId
-                    },
-                    modifier = Modifier.animateItem()
+                    }
                 )
             }
         }
@@ -384,7 +383,11 @@ private fun AlbumsGrid(
 /**
  * One year's covers, [GRID_COLUMNS] square tiles to a row, packed by [mosaicCells]: the expanded
  * cover takes 2×2 tiles and the rest flow around it. Changing which cover is expanded animates
- * every cover — and this mosaic's own height — to its new bounds on the expressive spatial spring.
+ * every cover to its new bounds on the expressive spatial spring.
+ *
+ * The mosaic's height animates on the same spring, clipping to it as it goes, and the list items
+ * below just sit under it: animating them separately let them lag behind the growing covers,
+ * which then drew over the next year until everything settled.
  */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -398,35 +401,42 @@ private fun CoverMosaic(
     val cells = remember(albums.size, expandedIndex) { mosaicCells(albums.size, expandedIndex, GRID_COLUMNS) }
     val spatialSpec = MaterialTheme.motionScheme.defaultSpatialSpec<Rect>()
     val boundsTransform = remember(spatialSpec) { BoundsTransform { _, _ -> spatialSpec } }
-    LookaheadScope {
-        Layout(
-            modifier = modifier
-                .fillMaxWidth()
-                .animateBounds(this, boundsTransform = boundsTransform),
-            content = {
-                albums.forEach { album ->
-                    key(album.id) {
-                        CoverTile(
-                            album = album,
-                            expanded = album.id == expandedAlbumId,
-                            onClick = { onCoverClick(album.id) },
-                            modifier = Modifier.animateBounds(this, boundsTransform = boundsTransform)
-                        )
+    // animateContentSize clips to the animated size, so covers moving past the bottom edge are
+    // cropped for a moment rather than drawn over the next year. It sits outside the
+    // LookaheadScope, as a plain size animation of the whole mosaic.
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(MaterialTheme.motionScheme.defaultSpatialSpec())
+    ) {
+        LookaheadScope {
+            Layout(
+                modifier = Modifier.fillMaxWidth(),
+                content = {
+                    albums.forEach { album ->
+                        key(album.id) {
+                            CoverTile(
+                                album = album,
+                                expanded = album.id == expandedAlbumId,
+                                onClick = { onCoverClick(album.id) },
+                                modifier = Modifier.animateBounds(this, boundsTransform = boundsTransform)
+                            )
+                        }
                     }
                 }
-            }
-        ) { measurables, constraints ->
-            val gap = Spacing.small.roundToPx()
-            val tile = (constraints.maxWidth - gap * (GRID_COLUMNS - 1)) / GRID_COLUMNS
-            val placeables = measurables.mapIndexed { index, measurable ->
-                val side = tile * cells[index].span + gap * (cells[index].span - 1)
-                measurable.measure(Constraints.fixed(side, side))
-            }
-            val rows = mosaicRowCount(cells)
-            val height = if (rows == 0) 0 else rows * tile + (rows - 1) * gap
-            layout(constraints.maxWidth, height) {
-                placeables.forEachIndexed { index, placeable ->
-                    placeable.place(cells[index].column * (tile + gap), cells[index].row * (tile + gap))
+            ) { measurables, constraints ->
+                val gap = Spacing.small.roundToPx()
+                val tile = (constraints.maxWidth - gap * (GRID_COLUMNS - 1)) / GRID_COLUMNS
+                val placeables = measurables.mapIndexed { index, measurable ->
+                    val side = tile * cells[index].span + gap * (cells[index].span - 1)
+                    measurable.measure(Constraints.fixed(side, side))
+                }
+                val rows = mosaicRowCount(cells)
+                val height = if (rows == 0) 0 else rows * tile + (rows - 1) * gap
+                layout(constraints.maxWidth, height) {
+                    placeables.forEachIndexed { index, placeable ->
+                        placeable.place(cells[index].column * (tile + gap), cells[index].row * (tile + gap))
+                    }
                 }
             }
         }
