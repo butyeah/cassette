@@ -6,13 +6,17 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.ruidoespontaneo.cassette.albumdetail.preview.FakePreviewPlayer
+import com.ruidoespontaneo.cassette.albumdetail.preview.testPreviewQueue
 import com.ruidoespontaneo.cassette.dayinhistory.domain.DayInHistoryRepository
 import com.ruidoespontaneo.cassette.dayinhistory.domain.usecase.GetAlbumsByDayUseCase
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
+import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
+import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
 import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -108,7 +112,7 @@ class AlbumPagerViewModelTest {
     }
 
     @Test
-    fun `StopPreview stops the shared player`() {
+    fun `StopPreview stops the queue`() {
         val player = FakePreviewPlayer()
         val viewModel = viewModel(initialAlbumId = "late", previewPlayer = player) { _, _ ->
             Result.success(listOf(late))
@@ -121,7 +125,7 @@ class AlbumPagerViewModelTest {
     }
 
     @Test
-    fun `leaving the pager stops the shared player`() {
+    fun `leaving the pager keeps playing`() {
         val player = FakePreviewPlayer()
         val store = ViewModelStore()
         val viewModel = ViewModelProvider(
@@ -129,13 +133,44 @@ class AlbumPagerViewModelTest {
             viewModelFactory { initializer { viewModel(initialAlbumId = "late", previewPlayer = player) { _, _ -> Result.success(listOf(late)) } } }
         )[AlbumPagerViewModel::class.java]
         dispatcher.scheduler.advanceUntilIdle()
-        assertEquals(0, player.stopCount)
 
         store.clear()
 
-        assertEquals(1, player.stopCount)
+        assertEquals(0, player.stopCount)
         assertNull(viewModel.state.value.errorMessage)
     }
+
+    @Test
+    fun `mirrors the album the queue is playing`() {
+        val player = FakePreviewPlayer()
+        val queue = testPreviewQueue(player, TestScope(dispatcher))
+        val viewModel = AlbumPagerViewModel(
+            SavedStateHandle(mapOf(ALBUM_PAGER_ARG_MONTH to 6, ALBUM_PAGER_ARG_DAY to 17, ALBUM_PAGER_ARG_ALBUM_ID to "late")),
+            GetAlbumsByDayUseCase(object : DayInHistoryRepository {
+                override suspend fun getAlbumsByDay(month: Int, day: Int) = Result.success(listOf(late))
+            }),
+            queue
+        )
+        dispatcher.scheduler.advanceUntilIdle()
+        assertNull(viewModel.state.value.playingAlbumId)
+
+        queue.play(albumDetail("late"), mapOf(1 to "https://p/late/1"), 1, listOf("late"))
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals("late", viewModel.state.value.playingAlbumId)
+    }
+
+    private fun albumDetail(id: String) = AlbumDetail(
+        id = id,
+        title = "Title",
+        artistName = "Artist",
+        primaryType = "Album",
+        firstReleaseDate = LocalDate.of(2001, 6, 17),
+        genres = emptyList(),
+        ratingValue = null,
+        ratingVotesCount = 0,
+        tracks = listOf(Track(position = 1, title = "One", lengthMs = 200_000))
+    )
 
     private fun album(id: String, year: Int) = Album(
         id = id,
@@ -161,6 +196,10 @@ class AlbumPagerViewModelTest {
                 ALBUM_PAGER_ARG_ALBUM_ID to initialAlbumId
             )
         )
-        return AlbumPagerViewModel(savedStateHandle, GetAlbumsByDayUseCase(repository), previewPlayer)
+        return AlbumPagerViewModel(
+            savedStateHandle,
+            GetAlbumsByDayUseCase(repository),
+            testPreviewQueue(previewPlayer, TestScope(dispatcher))
+        )
     }
 }

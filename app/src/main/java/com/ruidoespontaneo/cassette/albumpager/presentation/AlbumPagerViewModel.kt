@@ -2,7 +2,7 @@ package com.ruidoespontaneo.cassette.albumpager.presentation
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewPlayer
+import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewQueue
 import com.ruidoespontaneo.cassette.core.mvi.MviViewModel
 import com.ruidoespontaneo.cassette.dayinhistory.domain.usecase.GetAlbumsByDayUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,15 +21,15 @@ const val ALBUM_PAGER_ARG_ALBUM_ID = "albumId"
  * (title, tracklist, ...) stays with [com.ruidoespontaneo.cassette.albumdetail.presentation.AlbumDetailViewModel],
  * one instance per page.
  *
- * Also owns stopping the shared [PreviewPlayer] when the pager is left, since it's the one
- * ViewModel that lives exactly as long as the pager's nav destination — the per-page
- * AlbumDetailViewModels can't tell "paged away" from "still on screen".
+ * Also mirrors which album the app-wide [PreviewQueue] is playing, so the pager can follow autoplay,
+ * and stops the queue when the user pages away from it. Leaving the pager doesn't stop anything:
+ * playback and autoplay carry on from the Daily screen.
  */
 @HiltViewModel
 class AlbumPagerViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getAlbumsByDayUseCase: GetAlbumsByDayUseCase,
-    private val previewPlayer: PreviewPlayer
+    private val previewQueue: PreviewQueue
 ) : MviViewModel<AlbumPagerUiState, AlbumPagerIntent, AlbumPagerEffect>(
     AlbumPagerUiState()
 ) {
@@ -46,18 +46,18 @@ class AlbumPagerViewModel @Inject constructor(
 
     init {
         loadAlbumIds()
+        viewModelScope.launch {
+            previewQueue.nowPlaying.collect { nowPlaying ->
+                setState { copy(playingAlbumId = nowPlaying?.album?.id) }
+            }
+        }
     }
 
     override fun onIntent(intent: AlbumPagerIntent) {
         when (intent) {
             AlbumPagerIntent.Retry -> loadAlbumIds()
-            AlbumPagerIntent.StopPreview -> previewPlayer.stop()
+            AlbumPagerIntent.StopPreview -> previewQueue.stop()
         }
-    }
-
-    override fun onCleared() {
-        previewPlayer.stop()
-        super.onCleared()
     }
 
     private fun loadAlbumIds() {
