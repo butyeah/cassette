@@ -6,8 +6,8 @@ import com.ruidoespontaneo.cassette.itunes.data.model.ItunesResultDto
 import com.ruidoespontaneo.cassette.itunes.domain.model.TrackPreview
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.StreamingLinks
-import java.time.LocalDate
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -20,7 +20,7 @@ class ItunesRepositoryImplTest {
         title = "In Between Dreams",
         artistName = "Jack Johnson",
         primaryType = "Album",
-        firstReleaseDate = LocalDate.of(2005, 3, 1),
+        firstReleaseDate = LocalDate(2005, 3, 1),
         genres = emptyList(),
         ratingValue = null,
         ratingVotesCount = 0

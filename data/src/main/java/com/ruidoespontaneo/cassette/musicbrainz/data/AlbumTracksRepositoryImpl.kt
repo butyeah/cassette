@@ -6,10 +6,10 @@ import com.ruidoespontaneo.cassette.musicbrainz.domain.AlbumTracksRepository
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.StreamingLinks
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
-import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
+import kotlinx.datetime.LocalDate
 import timber.log.Timber
 
 class AlbumTracksRepositoryImpl @Inject constructor(
@@ -41,7 +41,7 @@ class AlbumTracksRepositoryImpl @Inject constructor(
         val year = getLong(FIELD_YEAR)?.toInt() ?: return null
         val month = getLong(FIELD_MONTH)?.toInt() ?: return null
         val day = getLong(FIELD_DAY)?.toInt() ?: return null
-        val firstReleaseDate = runCatching { LocalDate.of(year, month, day) }.getOrNull() ?: return null
+        val firstReleaseDate = runCatching { LocalDate(year, month, day) }.getOrNull() ?: return null
         return AlbumDetail(
             id = id,
             title = title,

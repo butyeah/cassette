@@ -5,14 +5,14 @@ import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.StreamingLinks
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
 
 private val previewAlbum = AlbumDetail(
     id = "album-1",
     title = "Origin of Symmetry",
     artistName = "Muse",
     primaryType = "Album",
-    firstReleaseDate = LocalDate.of(2001, 6, 17),
+    firstReleaseDate = LocalDate(2001, 6, 17),
     genres = listOf("Alternative Rock", "Space Rock"),
     ratingValue = 4.3,
     ratingVotesCount = 128,

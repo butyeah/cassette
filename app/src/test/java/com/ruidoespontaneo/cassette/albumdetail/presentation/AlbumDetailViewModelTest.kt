@@ -14,7 +14,6 @@ import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
 import com.ruidoespontaneo.cassette.musicbrainz.domain.usecase.GetAlbumDetailUseCase
-import java.time.LocalDate
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,6 +21,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.LocalDate
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -50,7 +50,7 @@ class AlbumDetailViewModelTest {
         title = "Title",
         artistName = "Artist",
         primaryType = "Album",
-        firstReleaseDate = LocalDate.of(2001, 6, 17),
+        firstReleaseDate = LocalDate(2001, 6, 17),
         genres = listOf("Rock"),
         ratingValue = 4.0,
         ratingVotesCount = 10,
