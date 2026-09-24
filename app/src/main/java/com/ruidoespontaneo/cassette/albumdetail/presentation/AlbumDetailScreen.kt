@@ -366,9 +366,14 @@ private fun AlbumDetailContent(
 
 /** "Track n" and the clip's remaining time, or dashes for both while no preview is playing. */
 @Composable
-private fun PreviewDisplayReadout(playback: TrackPlayback?, color: Color, modifier: Modifier = Modifier) {
+private fun PreviewDisplayReadout(
+    playback: TrackPlayback?,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
     // Tabular figures keep the countdown's digits from shifting as they change.
-    val style = MaterialTheme.typography.labelLarge.copy(color = color, fontFeatureSettings = "tnum")
+    val style =
+        MaterialTheme.typography.labelLarge.copy(color = color, fontFeatureSettings = "tnum")
     Row(modifier = modifier, horizontalArrangement = Arrangement.SpaceBetween) {
         Text(
             text = if (playback == null) {
@@ -398,7 +403,11 @@ private fun Tracklist(
             text = stringResource(R.string.tracklist_title),
             style = MaterialTheme.typography.titleMedium
         )
-        Box(modifier = Modifier.padding(top = Spacing.small)) {
+        Box(
+            modifier = Modifier
+                .padding(top = Spacing.small)
+                .clip(RoundedCornerShape(Spacing.small))
+        ) {
             ActiveTrackIndicator(target = activePosition?.let { rowBounds[it] })
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
                 tracks.forEach { track ->
@@ -540,7 +549,10 @@ private fun PreviewButton(trackTitle: String, playback: TrackPlayback?, onClick:
             targetState = state,
             contentAlignment = Alignment.Center,
             transitionSpec = {
-                (fadeIn(motion.fastEffectsSpec()) + scaleIn(motion.fastSpatialSpec(), initialScale = 0.6f))
+                (fadeIn(motion.fastEffectsSpec()) + scaleIn(
+                    motion.fastSpatialSpec(),
+                    initialScale = 0.6f
+                ))
                     .togetherWith(fadeOut(motion.fastEffectsSpec()))
             },
             label = "previewButtonIcon"
