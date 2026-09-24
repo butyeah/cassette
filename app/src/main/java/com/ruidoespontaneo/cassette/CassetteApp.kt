@@ -12,6 +12,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -25,6 +27,8 @@ import com.ruidoespontaneo.cassette.auth.presentation.LoginScreen
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import com.ruidoespontaneo.cassette.dayinhistory.presentation.OneDayLikeTodayScreen
 import com.ruidoespontaneo.cassette.notifications.presentation.NotificationsScreen
+import com.ruidoespontaneo.cassette.nowplaying.presentation.NowPlayingDialog
+import com.ruidoespontaneo.cassette.nowplaying.presentation.NowPlayingViewModel
 import java.time.format.DateTimeFormatter
 
 const val ROUTE_ONE_DAY_LIKE_TODAY = "oneDayLikeToday"
@@ -43,6 +47,10 @@ fun CassetteApp(dayFormatter: DateTimeFormatter) {
     // Hoisted here because the button that opens it lives in the floating toolbar, outside the
     // Daily screen that shows it.
     var isCalendarOpen by rememberSaveable { mutableStateOf(false) }
+    // Activity-scoped: playback outlives every screen, so what's playing is tracked at the top.
+    val nowPlayingViewModel: NowPlayingViewModel = hiltViewModel()
+    val nowPlayingState by nowPlayingViewModel.state.collectAsStateWithLifecycle()
+    var isNowPlayingOpen by rememberSaveable { mutableStateOf(false) }
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         // Consumed so the screens' own Scaffolds (album detail, notifications, ...) don't apply the
         // status/navigation bar insets a second time on top of innerPadding.
@@ -86,8 +94,21 @@ fun CassetteApp(dayFormatter: DateTimeFormatter) {
             CassetteFloatingToolbar(
                 navController = navController,
                 onCalendarClick = { isCalendarOpen = true },
+                nowPlaying = nowPlayingState.nowPlaying,
+                showNowPlaying = nowPlayingState.isActive,
+                onNowPlayingClick = { isNowPlayingOpen = true },
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = Spacing.large)
             )
         }
+    }
+    // Stays open after Stop so the track can be played again; only dismissing closes it.
+    val nowPlaying = nowPlayingState.nowPlaying
+    if (isNowPlayingOpen && nowPlaying != null) {
+        NowPlayingDialog(
+            nowPlaying = nowPlaying,
+            status = nowPlayingState.status,
+            onIntent = nowPlayingViewModel::onIntent,
+            onDismiss = { isNowPlayingOpen = false }
+        )
     }
 }
