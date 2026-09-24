@@ -39,4 +39,7 @@
     <string name="preview_title_idle">--</string>
     <string name="preview_status_stopped">Stopped</string>
     <string name="preview_status_playing">Playing</string>
+    <string name="show_as_grid">Show as grid</string>
+    <string name="show_as_list">Show as list</string>
+    <string name="album_cover_description">%1$s by %2$s</string>
 </resources>

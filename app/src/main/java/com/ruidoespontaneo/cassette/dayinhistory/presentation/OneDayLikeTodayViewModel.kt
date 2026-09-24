@@ -25,6 +25,9 @@ class OneDayLikeTodayViewModel @Inject constructor(
             OneDayLikeTodayIntent.NextDay -> loadAlbums(currentState.day.plusOneDay())
             OneDayLikeTodayIntent.PreviousDay -> loadAlbums(currentState.day.minusOneDay())
             is OneDayLikeTodayIntent.SelectDate -> loadAlbums(intent.day)
+            OneDayLikeTodayIntent.ToggleLayout -> setState {
+                copy(layout = if (layout == AlbumsLayout.List) AlbumsLayout.Grid else AlbumsLayout.List)
+            }
         }
     }
 
