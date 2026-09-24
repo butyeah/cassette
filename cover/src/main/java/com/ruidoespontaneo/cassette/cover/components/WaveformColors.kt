@@ -56,3 +56,24 @@ fun waveformColors(dominant: List<Color>?, fallback: List<Color>, background: Co
     }
     return fromAlbum + topUp
 }
+
+/** A container fill and the content color to draw on it. */
+data class ContainerColors(val container: Color, val content: Color)
+
+/**
+ * Colors for a highlight container drawn over the album's dominant-color background: the
+ * [dominant] color that stands out most from the most dominant one (which the background is mostly
+ * made of), with black or white content, whichever reads better on it. `null` until there are at
+ * least two dominant colors to choose between — callers fall back to their theme colors.
+ */
+fun highlightContainerColors(dominant: List<Color>?): ContainerColors? {
+    if (dominant == null || dominant.size < 2) return null
+    val backdrop = dominant.first()
+    val container = dominant.drop(1).maxBy { contrastRatio(it, backdrop) }
+    val content = if (contrastRatio(Color.Black, container) >= contrastRatio(Color.White, container)) {
+        Color.Black
+    } else {
+        Color.White
+    }
+    return ContainerColors(container, content)
+}

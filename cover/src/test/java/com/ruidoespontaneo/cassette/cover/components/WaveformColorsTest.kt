@@ -90,4 +90,24 @@ class WaveformColorsTest {
 
         assertTrue(contrastRatio(result.single(), Color.Black) >= 3f)
     }
+
+    @Test
+    fun `highlightContainerColors needs at least two dominant colors`() {
+        assertEquals(null, highlightContainerColors(null))
+        assertEquals(null, highlightContainerColors(listOf(Color.Red)))
+    }
+
+    @Test
+    fun `highlightContainerColors picks the dominant color that stands out most from the backdrop`() {
+        val backdrop = Color(0xFF202020)
+        val similar = Color(0xFF303030)
+        val standout = Color(0xFFF0E68C)
+        assertEquals(standout, highlightContainerColors(listOf(backdrop, similar, standout))?.container)
+    }
+
+    @Test
+    fun `highlightContainerColors uses dark content on a light container and light on a dark one`() {
+        assertEquals(Color.Black, highlightContainerColors(listOf(Color.Black, Color(0xFFF0E68C)))?.content)
+        assertEquals(Color.White, highlightContainerColors(listOf(Color.White, Color(0xFF1A237E)))?.content)
+    }
 }
