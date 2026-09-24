@@ -1,13 +1,15 @@
 package com.ruidoespontaneo.cassette
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
@@ -18,15 +20,19 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.ColorPainter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -40,6 +46,7 @@ import coil3.compose.AsyncImage
 import com.ruidoespontaneo.cassette.albumdetail.preview.NowPlaying
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
+import kotlinx.coroutines.delay
 
 private data class BottomNavTab(val route: String, val icon: ImageVector, val labelRes: Int)
 
@@ -101,25 +108,44 @@ fun CassetteFloatingToolbar(
     }
 }
 
-/** Shaped like [ToolbarTab]: the playing album's cover where the icon goes, then "Now playing". */
+/**
+ * The playing album's cover, cut into Material 3 Expressive's flower shape — the button itself, no
+ * label. Every [NOW_PLAYING_SPIN_INTERVAL_MS] it spins one full turn on the expressive spatial
+ * spring, a small sign that something is playing.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun NowPlayingButton(nowPlaying: NowPlaying, onClick: () -> Unit) {
     val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
-    TextButton(onClick = onClick) {
-        AsyncImage(
-            model = nowPlaying.album.coverArtUrl(),
-            contentDescription = null, // decorative — the label names the button
-            placeholder = placeholder,
-            error = placeholder,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(IconSize.nowPlayingThumbnail)
-                .clip(CircleShape)
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(stringResource(R.string.now_playing_title))
+    val flower = MaterialShapes.Flower.toShape()
+    val spinSpec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
+    val rotation = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(NOW_PLAYING_SPIN_INTERVAL_MS)
+            rotation.animateTo(rotation.value + 360f, spinSpec)
+            rotation.snapTo(rotation.value % 360f)
+        }
     }
+    AsyncImage(
+        model = nowPlaying.album.coverArtUrl(),
+        contentDescription = stringResource(R.string.now_playing_title),
+        placeholder = placeholder,
+        error = placeholder,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .padding(horizontal = 4.dp)
+            .size(IconSize.nowPlayingThumbnail)
+            .graphicsLayer {
+                rotationZ = rotation.value
+                shape = flower
+                clip = true
+            }
+            .clickable(role = Role.Button, onClick = onClick)
+    )
 }
+
+private const val NOW_PLAYING_SPIN_INTERVAL_MS = 10_000L
 
 @Composable
 private fun ToolbarTab(tab: BottomNavTab, selected: Boolean, onClick: () -> Unit) {
