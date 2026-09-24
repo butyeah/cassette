@@ -42,4 +42,6 @@
     <string name="show_as_grid">Show as grid</string>
     <string name="show_as_list">Show as list</string>
     <string name="album_cover_description">%1$s by %2$s</string>
+    <string name="show_album_details">Show details</string>
+    <string name="open_album">Open album</string>
 </resources>
