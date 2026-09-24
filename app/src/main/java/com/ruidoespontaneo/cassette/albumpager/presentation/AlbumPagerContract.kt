@@ -12,13 +12,16 @@ data class AlbumPagerUiState(
     val albumIds: List<String> = emptyList(),
     /** Index into [albumIds] the pager should open on — the album that was actually tapped. */
     val initialPage: Int = 0,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    /** The album [com.ruidoespontaneo.cassette.albumdetail.preview.PreviewQueue] last started a
+     *  track of — when autoplay moves on to another of this pager's albums, the pager follows it. */
+    val playingAlbumId: String? = null
 ) : UiState
 
 sealed interface AlbumPagerIntent : UiIntent {
     data object Retry : AlbumPagerIntent
 
-    /** Sent when the user pages away or the screen leaves the foreground — see [AlbumPagerViewModel]. */
+    /** Sent when the user pages away from the album that's playing. */
     data object StopPreview : AlbumPagerIntent
 }
 

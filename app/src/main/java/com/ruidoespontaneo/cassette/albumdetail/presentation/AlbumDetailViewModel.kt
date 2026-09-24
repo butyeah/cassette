@@ -3,6 +3,7 @@ package com.ruidoespontaneo.cassette.albumdetail.presentation
 import androidx.lifecycle.viewModelScope
 import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewPlayback
 import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewPlayer
+import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewQueue
 import com.ruidoespontaneo.cassette.core.mvi.MviViewModel
 import com.ruidoespontaneo.cassette.itunes.domain.usecase.GetTrackPreviewsUseCase
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
@@ -25,49 +26,43 @@ import kotlinx.coroutines.launch
  * Playback itself belongs to the app-wide [PreviewPlayer] (one clip at a time across every page);
  * this ViewModel only starts and stops clips for its own album and mirrors the player's state back
  * into [AlbumDetailUiState.previewPlayback] when the playing clip is one of its own. Stopping when
- * the pager is left or paged away from is AlbumPagerViewModel's job.
+ * the user pages away is the pager's job; leaving the pager doesn't stop anything.
  *
- * Autoplay: when one of its clips plays to the end, it starts the next track that has a preview;
- * after the last one it sends [AlbumDetailEffect.TracklistFinished] so the pager can move on to the
- * next album, which it starts with [AlbumDetailIntent.AutoPlay].
+ * Starting and stopping goes through the app-wide [PreviewQueue], which also owns autoplay: it
+ * carries on through the rest of this album and the following [dayAlbumIds] even after the pager is
+ * gone. This ViewModel only needs to hand it the day's album order along with the track.
  */
 @HiltViewModel(assistedFactory = AlbumDetailViewModel.Factory::class)
 class AlbumDetailViewModel @AssistedInject constructor(
     @Assisted private val albumId: String,
+    @Assisted private val dayAlbumIds: List<String>,
     private val getAlbumDetailUseCase: GetAlbumDetailUseCase,
     private val getTrackPreviewsUseCase: GetTrackPreviewsUseCase,
-    private val previewPlayer: PreviewPlayer
+    private val previewPlayer: PreviewPlayer,
+    private val previewQueue: PreviewQueue
 ) : MviViewModel<AlbumDetailUiState, AlbumDetailIntent, AlbumDetailEffect>(
     AlbumDetailUiState()
 ) {
 
     @AssistedFactory
     interface Factory {
-        fun create(albumId: String): AlbumDetailViewModel
+        /** [dayAlbumIds] is every album of the day in pager order, for autoplay to continue through. */
+        fun create(albumId: String, dayAlbumIds: List<String>): AlbumDetailViewModel
     }
-
-    /** Set by [AlbumDetailIntent.AutoPlay] while previews are still loading. */
-    private var autoPlayPending = false
-
-    /** Whether the preview lookup has finished, successfully or not. */
-    private var previewsKnown = false
 
     init {
         loadAlbum()
         observePlayback()
-        observeCompletions()
     }
 
     override fun onIntent(intent: AlbumDetailIntent) {
         when (intent) {
             AlbumDetailIntent.Retry -> loadAlbum()
             is AlbumDetailIntent.TogglePreview -> togglePreview(intent.trackPosition)
-            AlbumDetailIntent.AutoPlay -> autoPlay()
         }
     }
 
     private fun loadAlbum() {
-        previewsKnown = false
         setState { copy(isLoading = true, errorMessage = null) }
         viewModelScope.launch {
             getAlbumDetailUseCase(albumId)
@@ -79,8 +74,6 @@ class AlbumDetailViewModel @AssistedInject constructor(
                     setState {
                         copy(isLoading = false, errorMessage = error.message ?: "Couldn't load album")
                     }
-                    // Nothing to play here, so autoplay shouldn't stall on the error screen.
-                    onPreviewsKnown()
                 }
         }
     }
@@ -91,46 +84,6 @@ class AlbumDetailViewModel @AssistedInject constructor(
     private fun loadPreviews(album: AlbumDetail) {
         viewModelScope.launch {
             getTrackPreviewsUseCase(album).onSuccess { previews -> setState { copy(previews = previews) } }
-            onPreviewsKnown()
-        }
-    }
-
-    private fun onPreviewsKnown() {
-        previewsKnown = true
-        if (autoPlayPending) {
-            autoPlayPending = false
-            autoPlay()
-        }
-    }
-
-    private fun autoPlay() {
-        if (!previewsKnown) {
-            autoPlayPending = true
-            return
-        }
-        val first = currentState.previews.minByOrNull { it.key }
-        if (first != null) {
-            previewPlayer.play(first.value)
-        } else {
-            sendEffect { AlbumDetailEffect.TracklistFinished }
-        }
-    }
-
-    private fun observeCompletions() {
-        viewModelScope.launch {
-            previewPlayer.completions.collect { url -> playNextAfter(url) }
-        }
-    }
-
-    /** Only reacts to [url] if it's one of this album's clips — the player is shared. */
-    private fun playNextAfter(url: String) {
-        val previews = currentState.previews
-        val position = previews.entries.firstOrNull { it.value == url }?.key ?: return
-        val next = previews.filterKeys { it > position }.minByOrNull { it.key }
-        if (next != null) {
-            previewPlayer.play(next.value)
-        } else {
-            sendEffect { AlbumDetailEffect.TracklistFinished }
         }
     }
 
@@ -143,11 +96,12 @@ class AlbumDetailViewModel @AssistedInject constructor(
     }
 
     private fun togglePreview(trackPosition: Int) {
-        val url = currentState.previews[trackPosition] ?: return
+        val album = currentState.album ?: return
+        if (trackPosition !in currentState.previews) return
         if (currentState.previewPlayback?.position == trackPosition) {
-            previewPlayer.stop()
+            previewQueue.stop()
         } else {
-            previewPlayer.play(url)
+            previewQueue.play(album, currentState.previews, trackPosition, dayAlbumIds)
         }
     }
 

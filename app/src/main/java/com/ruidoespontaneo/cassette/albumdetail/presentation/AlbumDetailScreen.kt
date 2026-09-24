@@ -107,36 +107,14 @@ import dev.chrisbanes.haze.rememberHazeState
 /**
  * [viewModel] has no default — it's assisted-injected per album (see [AlbumDetailViewModel]), so
  * the caller must build it via `hiltViewModel`'s assisted-injection overload, keyed by albumId.
- *
- * [autoPlay] asks this album to start playing its previews (autoplay arriving from the previous
- * album); [onAutoPlayStarted] acknowledges it so it fires once. [onTracklistFinished] is called when
- * autoplay has run out of this album's previews.
  */
 @Composable
 fun AlbumDetailScreen(
     onBack: () -> Unit,
     viewModel: AlbumDetailViewModel,
-    modifier: Modifier = Modifier,
-    autoPlay: Boolean = false,
-    onAutoPlayStarted: () -> Unit = {},
-    onTracklistFinished: () -> Unit = {}
+    modifier: Modifier = Modifier
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val currentOnAutoPlayStarted by rememberUpdatedState(onAutoPlayStarted)
-    val currentOnTracklistFinished by rememberUpdatedState(onTracklistFinished)
-    LaunchedEffect(autoPlay) {
-        if (autoPlay) {
-            viewModel.onIntent(AlbumDetailIntent.AutoPlay)
-            currentOnAutoPlayStarted()
-        }
-    }
-    LaunchedEffect(viewModel) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                AlbumDetailEffect.TracklistFinished -> currentOnTracklistFinished()
-            }
-        }
-    }
     AlbumDetailScreenContent(
         state = state,
         onIntent = viewModel::onIntent,
