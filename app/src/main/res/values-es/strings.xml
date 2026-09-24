@@ -42,8 +42,8 @@
     <string name="album_cover_description">%1$s de %2$s</string>
     <string name="show_album_details">Ver detalles</string>
     <string name="open_album">Abrir álbum</string>
-    <string name="now_playing_stop">Detener la vista previa</string>
-    <string name="now_playing_replay">Volver a reproducir la vista previa</string>
+    <string name="now_playing_stop">Detener</string>
+    <string name="now_playing_replay">Volver a reproducir</string>
     <string name="now_playing_title">Reproduciendo</string>
     <string name="now_playing_previous">Pista anterior</string>
     <string name="now_playing_next">Pista siguiente</string>
