@@ -52,7 +52,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -69,7 +68,6 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import com.ruidoespontaneo.cassette.BuildConfig
 import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.cover.components.AnimatedGradientBackground
 import com.ruidoespontaneo.cassette.cover.components.CoverCard
@@ -127,8 +125,6 @@ private fun OneDayLikeTodayScreenContent(
             DayHeader(
                 day = state.day,
                 layout = state.layout,
-                onPrevious = { onIntent(OneDayLikeTodayIntent.PreviousDay) },
-                onNext = { onIntent(OneDayLikeTodayIntent.NextDay) },
                 onToggleLayout = { onIntent(OneDayLikeTodayIntent.ToggleLayout) },
                 dayFormatter = dayFormatter
             )
@@ -173,8 +169,6 @@ private fun OneDayLikeTodayScreenContent(
 private fun DayHeader(
     day: MonthDay,
     layout: AlbumsLayout,
-    onPrevious: () -> Unit,
-    onNext: () -> Unit,
     onToggleLayout: () -> Unit,
     dayFormatter: DateTimeFormatter,
     modifier: Modifier = Modifier
@@ -186,23 +180,13 @@ private fun DayHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Previous/next are still being tested — only expose them in dev builds. Without them, a
-        // spacer as wide as the layout toggle balances it so the date stays centered.
-        if (BuildConfig.DEBUG) {
-            TextButton(onClick = onPrevious) { Text(stringResource(R.string.previous_day)) }
-        } else {
-            Spacer(Modifier.size(IconSize.minTouchTarget))
-        }
+        // As wide as the layout toggle, balancing it so the date stays centered.
+        Spacer(Modifier.size(IconSize.minTouchTarget))
         Text(
             text = day.format(dayFormatter),
             style = MaterialTheme.typography.titleLarge
         )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (BuildConfig.DEBUG) {
-                TextButton(onClick = onNext) { Text(stringResource(R.string.next_day)) }
-            }
-            LayoutToggle(layout = layout, onClick = onToggleLayout)
-        }
+        LayoutToggle(layout = layout, onClick = onToggleLayout)
     }
 }
 

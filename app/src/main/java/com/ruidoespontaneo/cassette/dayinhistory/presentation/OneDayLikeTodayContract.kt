@@ -25,8 +25,6 @@ enum class AlbumsLayout {
 
 sealed interface OneDayLikeTodayIntent : UiIntent {
     data object Retry : OneDayLikeTodayIntent
-    data object NextDay : OneDayLikeTodayIntent
-    data object PreviousDay : OneDayLikeTodayIntent
     data class SelectDate(val day: MonthDay) : OneDayLikeTodayIntent
 
     /** Switches between [AlbumsLayout.List] and [AlbumsLayout.Grid]. */
