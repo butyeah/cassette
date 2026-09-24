@@ -62,29 +62,27 @@ fun Modifier.wavyPillBackground(
     val path = Path()
     val inset = maxAmplitude.toPx()
     val wavelengthPx = wavelength.toPx()
-    val top = inset
     val bottom = size.height - inset
-    val radius = ((bottom - top) / 2f).coerceAtLeast(0f)
-    val start = radius
-    val end = (size.width - radius).coerceAtLeast(start)
+    val radius = ((bottom - inset) / 2f).coerceAtLeast(0f)
+    val end = (size.width - radius).coerceAtLeast(radius)
     onDrawBehind {
         val swing = amplitude().coerceIn(0f, 1f) * inset
         val shift = phase()
         path.reset()
         // Top edge, left to right, then the right cap; bottom edge back, then the left cap. The
         // bottom mirrors the top, so the pill swells and pinches rather than bending.
-        path.moveTo(start, top)
-        var x = start
+        path.moveTo(radius, inset)
+        var x = radius
         while (x < end) {
             x = min(x + SAMPLE_STEP_PX, end)
-            path.lineTo(x, top - wavyEdgeOffset(x, start, end, swing, wavelengthPx, shift))
+            path.lineTo(x, inset - wavyEdgeOffset(x, radius, end, swing, wavelengthPx, shift))
         }
-        path.arcTo(Rect(end - radius, top, end + radius, bottom), -90f, 180f, false)
-        while (x > start) {
-            x = maxOf(x - SAMPLE_STEP_PX, start)
-            path.lineTo(x, bottom + wavyEdgeOffset(x, start, end, swing, wavelengthPx, shift))
+        path.arcTo(Rect(end - radius, inset, end + radius, bottom), -90f, 180f, false)
+        while (x > radius) {
+            x = maxOf(x - SAMPLE_STEP_PX, radius)
+            path.lineTo(x, bottom + wavyEdgeOffset(x, radius, end, swing, wavelengthPx, shift))
         }
-        path.arcTo(Rect(start - radius, top, start + radius, bottom), 90f, 180f, false)
+        path.arcTo(Rect(radius - radius, inset, radius + radius, bottom), 90f, 180f, false)
         path.close()
         drawPath(path, color)
     }

@@ -50,7 +50,7 @@ private val bottomNavTabs = listOf(
 
 /**
  * Floating pill holding the app's top-level sections. It only shows on those sections' own routes,
- * so pushed screens (album detail, notifications) aren't covered by it. On Daily it also carries a
+ * so pushed screens (album detail, notifications) aren't covered by it. On Daily, it also carries a
  * FAB that opens the jump-to-date calendar via [onCalendarClick].
  *
  * While [showNowPlaying] (a preview is loaded), a third button after the tabs shows [nowPlaying]'s
