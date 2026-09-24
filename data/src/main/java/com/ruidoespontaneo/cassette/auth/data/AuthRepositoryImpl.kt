@@ -4,6 +4,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.ruidoespontaneo.cassette.auth.domain.AuthRepository
+import com.ruidoespontaneo.cassette.auth.domain.model.AuthException
 import com.ruidoespontaneo.cassette.auth.domain.model.AuthUser
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -37,6 +38,9 @@ class AuthRepositoryImpl @Inject constructor(
             firebaseAuth.signInWithCredential(credential).await()
         }
 
+    override suspend fun sendPasswordResetEmail(email: String): Result<Unit> =
+        runCatchingAuthCall { firebaseAuth.sendPasswordResetEmail(email).await() }
+
     override fun signOut() = firebaseAuth.signOut()
 
     private suspend fun runCatchingAuthCall(block: suspend () -> Unit): Result<Unit> {
@@ -49,7 +53,7 @@ class AuthRepositoryImpl @Inject constructor(
             throw e
         } catch (e: Exception) {
             Timber.e(e, "Firebase auth call failed")
-            Result.failure(e)
+            Result.failure(AuthException(e.toAuthFailure(), e))
         }
     }
 

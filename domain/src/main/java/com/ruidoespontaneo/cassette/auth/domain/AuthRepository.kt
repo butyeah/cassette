@@ -9,8 +9,10 @@ interface AuthRepository {
     val currentUser: Flow<AuthUser?>
 
     /**
-     * @return [Result.success] once signed in, or [Result.failure] with the underlying
-     * exception (wrong password, no such account, ...) — callers decide how to surface that.
+     * @return [Result.success] once signed in, or [Result.failure] with an
+     * [com.ruidoespontaneo.cassette.auth.domain.model.AuthException] saying why (wrong
+     * credentials, network, ...) — callers decide how to surface that. Every call below fails the
+     * same way.
      */
     suspend fun signInWithEmail(email: String, password: String): Result<Unit>
 
@@ -19,6 +21,9 @@ interface AuthRepository {
 
     /** Signs in with a Google ID token obtained via Credential Manager. */
     suspend fun signInWithGoogleIdToken(idToken: String): Result<Unit>
+
+    /** Emails [email] a link to reset its password. */
+    suspend fun sendPasswordResetEmail(email: String): Result<Unit>
 
     fun signOut()
 }

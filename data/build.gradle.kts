@@ -34,6 +34,11 @@ android {
     buildFeatures {
         buildConfig = true
     }
+    testOptions {
+        // Firebase's exception constructors call android.text.TextUtils, which is only a stub in
+        // local unit tests; default return values let AuthFailureMappingTest build them.
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
