@@ -58,8 +58,8 @@ class PreviewDisplayFormattingTest {
     }
 
     @Test
-    fun `the status is buffering while the clip loads`() {
-        assertEquals(PreviewStatus.Buffering, previewStatus(TrackPlayback(position = 1, isLoading = true)))
+    fun `a buffering clip already counts as playing`() {
+        assertEquals(PreviewStatus.Playing, previewStatus(TrackPlayback(position = 1, isLoading = true)))
     }
 
     @Test

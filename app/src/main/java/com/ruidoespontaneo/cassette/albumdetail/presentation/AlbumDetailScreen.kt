@@ -96,7 +96,6 @@ import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.durationText
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.hasAny
 import com.ruidoespontaneo.cassette.ui.icons.Pause
-import com.ruidoespontaneo.cassette.ui.icons.Stop
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
 import dev.chrisbanes.haze.hazeSource
@@ -428,7 +427,7 @@ private fun PreviewDisplayReadout(
 
 private const val TITLE_SCROLL_INTERVAL_MS = 10_000
 
-/** A stereo-style status glyph: ■ stopped, ❚❚ buffering, ▶ playing. */
+/** Media-control style: ▶ while stopped, ❚❚ while a clip is buffering or playing. */
 @Composable
 private fun PreviewStatusIcon(status: PreviewStatus, tint: Color, modifier: Modifier = Modifier) {
     Crossfade(
@@ -438,9 +437,8 @@ private fun PreviewStatusIcon(status: PreviewStatus, tint: Color, modifier: Modi
         modifier = modifier
     ) { shown ->
         val (icon, description) = when (shown) {
-            PreviewStatus.Stopped -> Icons.Filled.Stop to R.string.preview_status_stopped
-            PreviewStatus.Buffering -> Icons.Filled.Pause to R.string.preview_status_buffering
-            PreviewStatus.Playing -> Icons.Filled.PlayArrow to R.string.preview_status_playing
+            PreviewStatus.Stopped -> Icons.Filled.PlayArrow to R.string.preview_status_stopped
+            PreviewStatus.Playing -> Icons.Filled.Pause to R.string.preview_status_playing
         }
         Icon(
             imageVector = icon,

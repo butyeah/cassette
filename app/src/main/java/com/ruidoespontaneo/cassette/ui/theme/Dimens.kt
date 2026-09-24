@@ -10,7 +10,7 @@ object IconSize {
     /** The loading spinner that stands in for a track row's play button while its preview buffers. */
     val previewSpinner = 20.dp
     val previewSpinnerStroke = 2.dp
-    /** The play/pause/stop status glyph beside the preview display's "Track n" label. */
+    /** The play/pause status glyph beside the preview display's "Track n" label. */
     val previewStatus = 16.dp
 }
 
