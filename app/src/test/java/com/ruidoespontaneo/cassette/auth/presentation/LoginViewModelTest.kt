@@ -290,6 +290,8 @@ class LoginViewModelTest {
             return signInWithGoogleResult(idToken)
         }
 
+        override suspend fun sendPasswordResetEmail(email: String) = Result.success(Unit)
+
         override fun signOut() {
             signOutCalls++
         }

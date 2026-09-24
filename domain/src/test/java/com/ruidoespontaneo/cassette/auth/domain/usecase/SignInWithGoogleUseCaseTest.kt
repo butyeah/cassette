@@ -47,6 +47,8 @@ class SignInWithGoogleUseCaseTest {
         override suspend fun signInWithGoogleIdToken(idToken: String) =
             signInWithGoogleIdToken(idToken)
 
+        override suspend fun sendPasswordResetEmail(email: String) = Result.success(Unit)
+
         override fun signOut() = Unit
     }
 }

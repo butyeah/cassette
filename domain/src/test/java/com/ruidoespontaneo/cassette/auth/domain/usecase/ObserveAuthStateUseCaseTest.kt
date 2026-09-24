@@ -26,6 +26,7 @@ class ObserveAuthStateUseCaseTest {
         override suspend fun signInWithEmail(email: String, password: String) = Result.success(Unit)
         override suspend fun signUpWithEmail(email: String, password: String) = Result.success(Unit)
         override suspend fun signInWithGoogleIdToken(idToken: String) = Result.success(Unit)
+        override suspend fun sendPasswordResetEmail(email: String) = Result.success(Unit)
         override fun signOut() = Unit
     }
 }
