@@ -32,8 +32,13 @@ android {
             isPseudoLocalesEnabled = true
         }
         release {
+            // R8: shrinks, optimizes and obfuscates the release build. Libraries bring their own
+            // keep rules; proguard-rules.pro has the app's few extras.
             optimization {
-                enable = false
+                enable = true
+                keepRules {
+                    files.add(file("proguard-rules.pro"))
+                }
             }
         }
     }
