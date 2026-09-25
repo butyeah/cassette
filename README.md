@@ -39,6 +39,19 @@ cd Cassette
 
 Or open the project directly in Android Studio and run the `app` configuration.
 
+### iOS (in progress)
+
+An iOS app lives in [`iosApp/`](iosApp): SwiftUI screens on top of the same domain and data code
+as Android, shared through Kotlin Multiplatform (`:domain` and `:data` build a `Shared` framework).
+It has the Daily screen and album details so far; previews, sign-in and settings are still to come.
+
+- Xcode 26 and the iOS 26 simulator runtime
+- A JDK for the Gradle build phase: `JAVA_HOME`, or Android Studio's bundled one
+
+Open `iosApp/iosApp.xcodeproj` and run the `iosApp` scheme. The project is generated from
+`iosApp/project.yml` with [XcodeGen](https://github.com/yonaskolb/XcodeGen); after editing that
+file, run `xcodegen generate` in `iosApp/`.
+
 ## Data sources
 
 | Source | Used for | How |

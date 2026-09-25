@@ -30,3 +30,8 @@ scripts/.venv/
 # <project>-firebase-adminsdk-*.json
 *firebase-adminsdk*.json
 serviceAccountKey.json
+
+# Xcode (iosApp): per-user state and build output
+xcuserdata/
+*.xcuserstate
+DerivedData/
