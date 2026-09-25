@@ -8,7 +8,9 @@ import com.ruidoespontaneo.cassette.core.mvi.UiState
 data class NowPlayingUiState(
     /** The track the queue last started — kept after it stops, so it can be played again. */
     val nowPlaying: NowPlaying? = null,
-    val status: NowPlayingStatus = NowPlayingStatus.Stopped
+    val status: NowPlayingStatus = NowPlayingStatus.Stopped,
+    /** [nowPlaying]'s lyrics, looked up again whenever the track changes. */
+    val lyrics: LyricsUiState = LyricsUiState.Loading
 ) : UiState {
     /** Whether something is loaded: buffering, playing, or autoplay looking up the next album. */
     val isActive: Boolean get() = status != NowPlayingStatus.Stopped
@@ -20,6 +22,20 @@ enum class NowPlayingStatus {
     /** Buffering the clip, or autoplay looking up the next album. */
     Loading,
     Playing
+}
+
+sealed interface LyricsUiState {
+    data object Loading : LyricsUiState
+
+    data class Found(val text: String) : LyricsUiState
+
+    data object Instrumental : LyricsUiState
+
+    /** LRCLIB has nothing for this track. */
+    data object NotFound : LyricsUiState
+
+    /** The lookup itself failed (offline, say). */
+    data object Failed : LyricsUiState
 }
 
 sealed interface NowPlayingIntent : UiIntent {

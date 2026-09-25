@@ -1,5 +1,10 @@
 package com.ruidoespontaneo.cassette.nowplaying.presentation
 
+import androidx.annotation.StringRes
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.semantics.heading
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,12 +46,14 @@ import com.ruidoespontaneo.cassette.ui.theme.IconSize
  * The album cover, the track and album, and the controls: one big button — ❚❚ stops the preview,
  * ▶ plays the track again from the start (autoplay carries on from there), a spinner while it
  * buffers or an album is being looked up — between ⏮ and ⏭, which move through the day's previews
- * in autoplay order, across albums. Follows autoplay live while it's open.
+ * in autoplay order, across albums. Follows autoplay live while it's open, [lyrics] included; the
+ * whole dialog scrolls, so long lyrics never push the controls out of reach.
  */
 @Composable
 fun NowPlayingDialog(
     nowPlaying: NowPlaying,
     status: NowPlayingStatus,
+    lyrics: LyricsUiState,
     onIntent: (NowPlayingIntent) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -56,7 +63,9 @@ fun NowPlayingDialog(
             color = MaterialTheme.colorScheme.surfaceContainerHigh
         ) {
             Column(
-                modifier = Modifier.padding(Spacing.extraLarge),
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(Spacing.extraLarge),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 CoverArt(
@@ -97,6 +106,7 @@ fun NowPlayingDialog(
                         Icon(Icons.Filled.SkipNext, contentDescription = stringResource(R.string.now_playing_next))
                     }
                 }
+                LyricsSection(lyrics = lyrics, modifier = Modifier.padding(top = Spacing.extraLarge))
             }
         }
     }
@@ -123,4 +133,52 @@ private fun PlayStopButton(status: NowPlayingStatus, onIntent: (NowPlayingIntent
             NowPlayingStatus.Playing -> Icon(Icons.Filled.Pause, contentDescription = null)
         }
     }
+}
+
+/** The playing track's lyrics under a heading, or why there are none, then LRCLIB's credit. */
+@Composable
+private fun LyricsSection(lyrics: LyricsUiState, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(R.string.lyrics_title),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.semantics { heading() }
+        )
+        when (lyrics) {
+            LyricsUiState.Loading -> CircularProgressIndicator(
+                strokeWidth = IconSize.previewSpinnerStroke,
+                modifier = Modifier
+                    .padding(top = Spacing.medium)
+                    .size(IconSize.previewSpinner)
+            )
+
+            is LyricsUiState.Found -> SelectionContainer {
+                Text(
+                    text = lyrics.text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = Spacing.small)
+                )
+            }
+
+            LyricsUiState.Instrumental -> LyricsMessage(R.string.lyrics_instrumental)
+            LyricsUiState.NotFound -> LyricsMessage(R.string.lyrics_not_found)
+            LyricsUiState.Failed -> LyricsMessage(R.string.lyrics_failed)
+        }
+        Text(
+            text = stringResource(R.string.lyrics_credit),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = Spacing.large)
+        )
+    }
+}
+
+@Composable
+private fun LyricsMessage(@StringRes text: Int) {
+    Text(
+        text = stringResource(text),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = Spacing.small)
+    )
 }
