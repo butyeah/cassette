@@ -28,6 +28,9 @@ kotlin {
             // Backs the JVM `actual` of Inject, so Hilt still sees javax.inject.Inject.
             implementation(libs.javax.inject)
         }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
         jvmTest.dependencies {
             implementation(libs.junit)
             implementation(libs.kotlinx.coroutines.test)

@@ -1,8 +1,8 @@
 package com.ruidoespontaneo.cassette.itunes.domain
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 
 class TitleNormalizerTest {
 
@@ -32,6 +32,14 @@ class TitleNormalizerTest {
     @Test
     fun `keeps non-latin letters`() {
         assertEquals("ключ", "Ключ".normalizedForMatching())
+    }
+
+    @Test
+    fun `keeps numbers in any form`() {
+        // Fullwidth digits, Roman numerals and superscripts are numbers too (\p{N}).
+        assertEquals("symphony５", "Symphony ５".normalizedForMatching())
+        assertEquals("rockyⅳ", "Rocky Ⅳ".normalizedForMatching())
+        assertEquals("emc²", "E＝mc²".normalizedForMatching())
     }
 
     @Test
