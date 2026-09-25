@@ -17,10 +17,20 @@ extension Font {
 /// Android's fallback Material palette (cover/src/main/java/.../cover/theme/Color.kt): Purple,
 /// PurpleGrey and Pink, the 40 tones in light mode and the 80 tones in dark. Android prefers the
 /// wallpaper's colours where it can; iOS has no equivalent, so it always uses these.
+enum Palette {
+    static let light: [UInt32] = [0x6650A4, 0x625B71, 0x7D5260]
+    static let dark: [UInt32] = [0xD0BCFF, 0xCCC2DC, 0xEFB8C8]
+
+    /// Primary, secondary and tertiary, for the colour maths in CoverColors.swift.
+    static func rgb(for scheme: ColorScheme) -> [RGB] {
+        (scheme == .dark ? dark : light).map(RGB.init)
+    }
+}
+
 extension Color {
-    static let palettePrimary = Color(light: 0x6650A4, dark: 0xD0BCFF)
-    static let paletteSecondary = Color(light: 0x625B71, dark: 0xCCC2DC)
-    static let paletteTertiary = Color(light: 0x7D5260, dark: 0xEFB8C8)
+    static let palettePrimary = Color(light: Palette.light[0], dark: Palette.dark[0])
+    static let paletteSecondary = Color(light: Palette.light[1], dark: Palette.dark[1])
+    static let paletteTertiary = Color(light: Palette.light[2], dark: Palette.dark[2])
 
     /// `0xRRGGBB` in light mode and `dark` in dark mode.
     init(light: UInt32, dark: UInt32) {
