@@ -155,9 +155,8 @@ private struct PreviewDisplay: View {
             .foregroundStyle(textColor)
 
             // The text colour is readable on black, so black is readable on it.
-            Text(title ?? "--")
+            MarqueeText(title ?? "--")
                 .font(.handjet(19))
-                .lineLimit(1)
                 .foregroundStyle(.black)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 2)
