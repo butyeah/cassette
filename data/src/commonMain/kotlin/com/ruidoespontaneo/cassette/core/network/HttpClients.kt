@@ -16,18 +16,23 @@ private const val MUSICBRAINZ_BASE_URL = "https://musicbrainz.org/ws/2/"
 
 private const val ITUNES_BASE_URL = "https://itunes.apple.com/"
 
-/** Where MusicBrainz can reach us about this client — see [musicBrainzUserAgent]. */
-private const val MUSICBRAINZ_CONTACT = "https://github.com/butyeah/cassette"
+private const val LRCLIB_BASE_URL = "https://lrclib.net/api/"
 
-/** The `ApplicationName/Version ( contact )` User-Agent MusicBrainz asks every client to send. */
-fun musicBrainzUserAgent(appVersion: String): String = "Cassette/$appVersion ($MUSICBRAINZ_CONTACT)"
+/** Where the APIs we call can reach us about this client — see [cassetteUserAgent]. */
+private const val CASSETTE_CONTACT = "https://github.com/butyeah/cassette"
+
+/**
+ * The `ApplicationName/Version ( contact )` User-Agent that MusicBrainz asks every client to send,
+ * and LRCLIB asks for too.
+ */
+fun cassetteUserAgent(appVersion: String): String = "Cassette/$appVersion ($CASSETTE_CONTACT)"
 
 /** Both APIs send fields the DTOs don't model; like Moshi before, those are skipped, not errors. */
 private val json = Json { ignoreUnknownKeys = true }
 
 /**
  * The client every [com.ruidoespontaneo.cassette.musicbrainz.data.api.MusicBrainzApi] call goes
- * through. [userAgent] comes from [musicBrainzUserAgent]: MusicBrainz rate-limits or blocks generic
+ * through. [userAgent] comes from [cassetteUserAgent]: MusicBrainz rate-limits or blocks generic
  * ones (see https://musicbrainz.org/doc/MusicBrainz_API/Rate_Limiting).
  * [logger] logs full request and response bodies; pass `null` in release builds.
  */
@@ -63,6 +68,18 @@ fun itunesHttpClient(engine: HttpClientEngine, logger: Logger?): HttpClient = Ht
         json(json, ContentType.parse("text/javascript"))
     }
     defaultRequest { url(ITUNES_BASE_URL) }
+    logger?.let { install(Logging) { this.logger = it; level = LogLevel.BODY } }
+}
+
+/**
+ * The client every [com.ruidoespontaneo.cassette.lyrics.data.api.LrclibApi] call goes through.
+ * [userAgent] comes from [cassetteUserAgent]: LRCLIB asks clients to identify themselves.
+ */
+fun lrclibHttpClient(engine: HttpClientEngine, userAgent: String, logger: Logger?): HttpClient = HttpClient(engine) {
+    expectSuccess = true
+    install(UserAgent) { agent = userAgent }
+    install(ContentNegotiation) { json(json) }
+    defaultRequest { url(LRCLIB_BASE_URL) }
     logger?.let { install(Logging) { this.logger = it; level = LogLevel.BODY } }
 }
 

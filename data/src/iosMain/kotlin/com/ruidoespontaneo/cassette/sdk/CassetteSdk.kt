@@ -11,17 +11,22 @@ import com.ruidoespontaneo.cassette.auth.domain.usecase.SignInWithEmailUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SignOutUseCase
 import com.ruidoespontaneo.cassette.auth.domain.usecase.SignUpWithEmailUseCase
 import com.ruidoespontaneo.cassette.core.firestore.FirestoreRestDocuments
+import com.ruidoespontaneo.cassette.core.network.cassetteUserAgent
 import com.ruidoespontaneo.cassette.core.network.firebaseAuthHttpClient
 import com.ruidoespontaneo.cassette.core.network.firestoreHttpClient
 import com.ruidoespontaneo.cassette.core.network.itunesHttpClient
+import com.ruidoespontaneo.cassette.core.network.lrclibHttpClient
 import com.ruidoespontaneo.cassette.core.network.musicBrainzHttpClient
-import com.ruidoespontaneo.cassette.core.network.musicBrainzUserAgent
 import com.ruidoespontaneo.cassette.dayinhistory.data.DayInHistoryRepositoryImpl
 import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.dayinhistory.domain.usecase.GetAlbumsByDayUseCase
 import com.ruidoespontaneo.cassette.itunes.data.ItunesRepositoryImpl
 import com.ruidoespontaneo.cassette.itunes.data.api.KtorItunesApi
 import com.ruidoespontaneo.cassette.itunes.domain.usecase.GetTrackPreviewsUseCase
+import com.ruidoespontaneo.cassette.lyrics.data.LrclibLyricsRepository
+import com.ruidoespontaneo.cassette.lyrics.data.api.KtorLrclibApi
+import com.ruidoespontaneo.cassette.lyrics.domain.model.Lyrics
+import com.ruidoespontaneo.cassette.lyrics.domain.usecase.GetTrackLyricsUseCase
 import com.ruidoespontaneo.cassette.musicbrainz.data.AlbumTracksRepositoryImpl
 import com.ruidoespontaneo.cassette.musicbrainz.data.MusicBrainzRepositoryImpl
 import com.ruidoespontaneo.cassette.musicbrainz.data.api.KtorMusicBrainzApi
@@ -58,7 +63,7 @@ class CassetteSdk(appVersion: String, sessionStore: AuthSessionStore) {
     private val firestore = FirestoreRestDocuments(firestoreHttpClient(Darwin.create(), logger = null), FIREBASE_PROJECT_ID)
 
     private val musicBrainzRepository = MusicBrainzRepositoryImpl(
-        KtorMusicBrainzApi(musicBrainzHttpClient(Darwin.create(), musicBrainzUserAgent(appVersion), logger = null))
+        KtorMusicBrainzApi(musicBrainzHttpClient(Darwin.create(), cassetteUserAgent(appVersion), logger = null))
     )
 
     private val getAlbumsByDay = GetAlbumsByDayUseCase(DayInHistoryRepositoryImpl(firestore))
@@ -67,6 +72,10 @@ class CassetteSdk(appVersion: String, sessionStore: AuthSessionStore) {
 
     private val getTrackPreviews = GetTrackPreviewsUseCase(
         ItunesRepositoryImpl(KtorItunesApi(itunesHttpClient(Darwin.create(), logger = null)))
+    )
+
+    private val getTrackLyrics = GetTrackLyricsUseCase(
+        LrclibLyricsRepository(KtorLrclibApi(lrclibHttpClient(Darwin.create(), cassetteUserAgent(appVersion), logger = null)))
     )
 
     private val authRepository = RestAuthRepository(
@@ -94,6 +103,10 @@ class CassetteSdk(appVersion: String, sessionStore: AuthSessionStore) {
     /** See [GetTrackPreviewsUseCase]: preview URL by track position, only for tracks that have one. */
     @Throws(Exception::class)
     suspend fun trackPreviews(album: AlbumDetail): Map<Int, String> = getTrackPreviews(album).getOrThrow()
+
+    /** Lyrics for the track at [position] on [album], or `null` when LRCLIB has none. */
+    @Throws(Exception::class)
+    suspend fun trackLyrics(album: AlbumDetail, position: Int): Lyrics? = getTrackLyrics(album, position).getOrThrow()
 
     /** Who's signed in right now, or `null`. */
     val currentUser: AuthUser? get() = authRepository.currentUser.value
