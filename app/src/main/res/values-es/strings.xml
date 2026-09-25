@@ -47,6 +47,11 @@
     <string name="now_playing_title">Reproduciendo</string>
     <string name="now_playing_previous">Pista anterior</string>
     <string name="now_playing_next">Pista siguiente</string>
+    <string name="lyrics_title">Letra</string>
+    <string name="lyrics_not_found">No hay letra para esta pista</string>
+    <string name="lyrics_instrumental">Instrumental</string>
+    <string name="lyrics_failed">No se pudo cargar la letra</string>
+    <string name="lyrics_credit">Letra de LRCLIB</string>
     <string name="login_title">Te damos la bienvenida a Cassette</string>
     <string name="login_subtitle">Inicia sesión para llevar contigo tus recordatorios y preferencias.</string>
     <string name="continue_with_google">Continuar con Google</string>

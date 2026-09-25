@@ -113,6 +113,7 @@ fun CassetteApp() {
         NowPlayingDialog(
             nowPlaying = nowPlaying,
             status = nowPlayingState.status,
+            lyrics = nowPlayingState.lyrics,
             onIntent = nowPlayingViewModel::onIntent,
             onDismiss = { isNowPlayingOpen = false }
         )
