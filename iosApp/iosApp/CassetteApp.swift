@@ -7,6 +7,7 @@ struct CassetteApp: App {
     private let sdk: CassetteSdk
     /// App-wide, so one clip plays at a time and autoplay outlives the album screen.
     @State private var player: PreviewPlayer
+    @State private var auth: AuthModel
 
     init() {
         // Covers are loaded with AsyncImage, which only caches through URLCache; the default one is
@@ -19,12 +20,14 @@ struct CassetteApp: App {
         )
         self.sdk = sdk
         _player = State(initialValue: PreviewPlayer(sdk: sdk))
+        _auth = State(initialValue: AuthModel(sdk: sdk))
     }
 
     var body: some Scene {
         WindowGroup {
-            DailyView(sdk: sdk)
+            RootView(sdk: sdk)
                 .environment(player)
+                .environment(auth)
         }
     }
 }
