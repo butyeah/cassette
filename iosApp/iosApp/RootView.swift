@@ -41,8 +41,8 @@ struct RootView: View {
         // Presented here, not from the toolbar's button, so it stays open after Stop, when the
         // button shrinks away.
         .sheet(isPresented: $isShowingNowPlaying) {
-            NowPlayingSheet()
-                .presentationDetents([.medium])
+            NowPlayingSheet(sdk: sdk)
+                .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
         // Tapping the daily reminder opens today's albums (DailyView handles the day itself).

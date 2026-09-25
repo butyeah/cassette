@@ -133,6 +133,16 @@
         }
       }
     },
+    "Couldn't load the lyrics" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo cargar la letra"
+          }
+        }
+      }
+    },
     "Couldn't load this album." : {
       "localizations" : {
         "es" : {
@@ -313,12 +323,42 @@
         }
       }
     },
+    "Instrumental" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instrumental"
+          }
+        }
+      }
+    },
     "Language" : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Idioma"
+          }
+        }
+      }
+    },
+    "Lyrics" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letra"
+          }
+        }
+      }
+    },
+    "Lyrics from LRCLIB" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letra de LRCLIB"
           }
         }
       }
@@ -379,6 +419,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No hay recordatorio diario"
+          }
+        }
+      }
+    },
+    "No lyrics found for this track" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay letra para esta pista"
           }
         }
       }
