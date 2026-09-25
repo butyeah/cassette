@@ -24,6 +24,7 @@ struct DailyView: View {
     var body: some View {
         NavigationStack(path: $path) {
             content
+                .background { AnimatedGradientBackground() }
                 .overlay(alignment: .bottomLeading) {
                     NowPlayingButton().padding(20)
                 }
@@ -147,6 +148,7 @@ private struct YearCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        // Frosted glass over the gradient, as Android's CoverCard is.
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 }
