@@ -36,6 +36,10 @@ struct NowPlaying {
 extension CassetteSdk {
     /// Preview URL by track position, or none when iTunes has nothing or the lookup fails: a
     /// missing preview just means no play button, never an error.
+    ///
+    /// `@MainActor` like every other Kotlin call site: a nonisolated async function runs on a
+    /// background thread, and Kotlin/Native used to crash when a suspend function started there.
+    @MainActor
     func previews(for album: AlbumDetail) async -> [Int: String] {
         guard let previews = try? await trackPreviews(album: album) else { return [:] }
         return Dictionary(uniqueKeysWithValues: previews.map { (Int($0.key.int32Value), $0.value) })

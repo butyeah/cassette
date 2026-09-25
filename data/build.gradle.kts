@@ -41,6 +41,10 @@ kotlin {
             baseName = "Shared"
             isStatic = true
             export(project(":domain"))
+            // By default, calling a suspend function from Swift anywhere but the main thread
+            // crashes the app, and Swift runs nonisolated async code on background threads. The
+            // shared code launches its own coroutines, so it doesn't care which thread calls it.
+            binaryOption("objcExportSuspendFunctionLaunchThreadRestriction", "none")
             xcFramework.add(this)
         }
     }
