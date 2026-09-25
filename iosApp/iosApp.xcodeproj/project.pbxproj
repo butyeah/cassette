@@ -27,6 +27,7 @@
 		8FEE360DBE0F5E1386577368 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61F79D5D14F51BF4A8A008D0 /* NotificationsView.swift */; };
 		9368CE07651A4743DA59DB9A /* AuthModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73ECBF999E6BE5928CBB26F0 /* AuthModel.swift */; };
 		971B598F52DE0B8BCF3AF6EA /* DailyReminder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A030FCD756AF20B701E5AB49 /* DailyReminder.swift */; };
+		9AE088D87497B4D6580A66BB /* AnimatedGradientBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = A76596E43B5F53D293C24C63 /* AnimatedGradientBackground.swift */; };
 		A0AC444EE8227A1FD3FF9819 /* CassetteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52D653AC35EAEB096B6D98D3 /* CassetteApp.swift */; };
 		A68B33A02A415EFFA6066AF6 /* AlbumDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E30A6684F4510D445B5901A /* AlbumDetailViewModel.swift */; };
 		AB10D385E5DA9EC5D4AFE541 /* NowPlaying.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12AB71F47615894DE2B48B9E /* NowPlaying.swift */; };
@@ -57,6 +58,7 @@
 		A030FCD756AF20B701E5AB49 /* DailyReminder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyReminder.swift; sourceTree = "<group>"; };
 		A6A27C72A7A0ADA118CD45FC /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		A6E49D054F3B6875BCD1A751 /* DailyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyView.swift; sourceTree = "<group>"; };
+		A76596E43B5F53D293C24C63 /* AnimatedGradientBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedGradientBackground.swift; sourceTree = "<group>"; };
 		C117AD187833E2513BD2F553 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C53316ACD88C30A2AB94798B /* PreviewPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewPlayer.swift; sourceTree = "<group>"; };
 		CF81B851053B5270038B358E /* Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatting.swift; sourceTree = "<group>"; };
@@ -98,6 +100,7 @@
 		2473D22FB9B12B57A9CE3F6A /* Common */ = {
 			isa = PBXGroup;
 			children = (
+				A76596E43B5F53D293C24C63 /* AnimatedGradientBackground.swift */,
 				8A2C7D39B60B22635AFB4CDD /* CoverImage.swift */,
 				CF81B851053B5270038B358E /* Formatting.swift */,
 				A6A27C72A7A0ADA118CD45FC /* Theme.swift */,
@@ -274,6 +277,7 @@
 			knownRegions = (
 				Base,
 				en,
+				es,
 			);
 			mainGroup = 38B69C3F79CD97858CF7B609;
 			minimizedProjectReferenceProxies = 1;
@@ -331,6 +335,7 @@
 				60E1A5E7B4D6CEC24740C4F1 /* AlbumDetailView.swift in Sources */,
 				A68B33A02A415EFFA6066AF6 /* AlbumDetailViewModel.swift in Sources */,
 				273E2A05581E016541121AF0 /* AlbumPagerView.swift in Sources */,
+				9AE088D87497B4D6580A66BB /* AnimatedGradientBackground.swift in Sources */,
 				9368CE07651A4743DA59DB9A /* AuthModel.swift in Sources */,
 				A0AC444EE8227A1FD3FF9819 /* CassetteApp.swift in Sources */,
 				6B3799B0D8260C303FBF8660 /* CoverImage.swift in Sources */,
