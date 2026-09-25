@@ -70,7 +70,7 @@ struct NowPlayingSheet: View {
                             }
                         }
                     }
-                    .accessibilityLabel(player.status == .stopped ? "Play" : "Stop")
+                    .accessibilityLabel(player.status == .stopped ? Text("Play") : Text("Stop"))
 
                     Button { player.skipToNext() } label: {
                         Image(systemName: "forward.end.fill").font(.title2)

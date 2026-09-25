@@ -46,7 +46,7 @@ struct DailyView: View {
                         Button { model.toggleLayout() } label: {
                             Image(systemName: model.layout == .grid ? "list.bullet" : "square.grid.2x2")
                         }
-                        .accessibilityLabel(model.layout == .grid ? "Show as list" : "Show as grid")
+                        .accessibilityLabel(model.layout == .grid ? Text("Show as list") : Text("Show as grid"))
                     }
                 }
                 .navigationDestination(for: AlbumRoute.self) { route in

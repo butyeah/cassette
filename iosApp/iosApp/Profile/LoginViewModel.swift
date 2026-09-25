@@ -58,18 +58,18 @@ final class LoginViewModel {
     /// A hint under the email field, once something's been typed or a reset asked for it.
     var emailHint: String? {
         if !email.trimmingCharacters(in: .whitespaces).isEmpty && !LoginRulesKt.isPlausibleEmail(email: email) {
-            return "Enter a valid email address."
+            return String(localized: "Enter a valid email address.")
         }
-        return needsEmailForReset ? "Enter your email and we'll send you a reset link." : nil
+        return needsEmailForReset ? String(localized: "Enter your email and we'll send you a reset link.") : nil
     }
 
     var passwordHint: String? {
         guard mode == .createAccount, !password.isEmpty, !LoginRulesKt.isValidPassword(password: password) else { return nil }
-        return "Use at least \(LoginRulesKt.MIN_PASSWORD_LENGTH) characters."
+        return String(localized: "Use at least \(Int(LoginRulesKt.MIN_PASSWORD_LENGTH)) characters.")
     }
 
     var confirmPasswordHint: String? {
-        !confirmPassword.isEmpty && confirmPassword != password ? "The passwords don't match." : nil
+        !confirmPassword.isEmpty && confirmPassword != password ? String(localized: "The passwords don't match.") : nil
     }
 
     func submit() async {
