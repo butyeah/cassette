@@ -52,6 +52,14 @@
     <string name="lyrics_instrumental">Instrumental</string>
     <string name="lyrics_failed">No se pudo cargar la letra</string>
     <string name="lyrics_credit">Letra de LRCLIB</string>
+    <string name="about_album_title">Sobre este álbum</string>
+    <string name="facts_produced_by">Producido por</string>
+    <string name="facts_recorded_at">Grabado en</string>
+    <string name="facts_cover_art_by">Portada de</string>
+    <string name="facts_label">Sello</string>
+    <string name="facts_awards">Premios</string>
+    <string name="facts_nominations">Nominaciones</string>
+    <string name="facts_credit">Datos de Wikidata</string>
     <string name="login_title">Te damos la bienvenida a Cassette</string>
     <string name="login_subtitle">Inicia sesión para llevar contigo tus recordatorios y preferencias.</string>
     <string name="continue_with_google">Continuar con Google</string>

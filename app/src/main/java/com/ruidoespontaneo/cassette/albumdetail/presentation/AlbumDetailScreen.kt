@@ -90,6 +90,7 @@ import com.ruidoespontaneo.cassette.cover.components.rememberWavePhase
 import com.ruidoespontaneo.cassette.cover.components.waveformColors
 import com.ruidoespontaneo.cassette.cover.components.wavyPillBackground
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
+import com.ruidoespontaneo.cassette.facts.domain.model.AlbumFacts
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.StreamingLinks
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
@@ -100,6 +101,7 @@ import com.ruidoespontaneo.cassette.musicbrainz.presentation.hasAny
 import com.ruidoespontaneo.cassette.ui.icons.Pause
 import com.ruidoespontaneo.cassette.ui.theme.CassetteTheme
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
+import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 
@@ -204,6 +206,8 @@ private fun AlbumDetailScreenContent(
                     scrollState = scrollState,
                     waveColors = dominantColors,
                     onCoverLoaded = { coverBitmap = it },
+                    facts = state.facts,
+                    hazeState = hazeState,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
@@ -241,6 +245,10 @@ private fun AlbumDetailContent(
     /** The album's dominant colors once its cover has decoded; the waveform falls back to theme colors until then. */
     waveColors: List<Color>?,
     onCoverLoaded: (Bitmap) -> Unit,
+    /** Shown in a card after the tracklist when there are any. */
+    facts: AlbumFacts?,
+    /** The background's, so the facts card can frost it. */
+    hazeState: HazeState,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -346,6 +354,9 @@ private fun AlbumDetailContent(
                 onTogglePreview = onTogglePreview,
                 modifier = Modifier.padding(top = Spacing.large)
             )
+        }
+        if (facts != null) {
+            AboutAlbumCard(facts = facts, hazeState = hazeState, modifier = Modifier.padding(top = Spacing.large))
         }
     }
 }

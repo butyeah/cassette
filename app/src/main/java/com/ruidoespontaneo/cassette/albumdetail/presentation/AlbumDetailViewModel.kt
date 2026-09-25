@@ -6,6 +6,7 @@ import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewPlayback
 import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewPlayer
 import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewQueue
 import com.ruidoespontaneo.cassette.core.mvi.MviViewModel
+import com.ruidoespontaneo.cassette.facts.domain.usecase.GetAlbumFactsUseCase
 import com.ruidoespontaneo.cassette.itunes.domain.usecase.GetTrackPreviewsUseCase
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.usecase.GetAlbumDetailUseCase
@@ -14,6 +15,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 /**
  * One instance per album, constructed with an explicit [albumId] rather than pulling it from a
@@ -39,6 +41,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
     @Assisted private val dayAlbumIds: List<String>,
     private val getAlbumDetailUseCase: GetAlbumDetailUseCase,
     private val getTrackPreviewsUseCase: GetTrackPreviewsUseCase,
+    private val getAlbumFactsUseCase: GetAlbumFactsUseCase,
     private val previewPlayer: PreviewPlayer,
     private val previewQueue: PreviewQueue
 ) : MviViewModel<AlbumDetailUiState, AlbumDetailIntent, AlbumDetailEffect>(
@@ -70,6 +73,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
                 .onSuccess { album ->
                     setState { copy(isLoading = false, album = album) }
                     loadPreviews(album)
+                    loadFacts(album)
                 }
                 .onFailure { error ->
                     setState {
@@ -85,6 +89,13 @@ class AlbumDetailViewModel @AssistedInject constructor(
     private fun loadPreviews(album: AlbumDetail) {
         viewModelScope.launch {
             getTrackPreviewsUseCase(album).onSuccess { previews -> setState { copy(previews = previews) } }
+        }
+    }
+
+    // Independent in the same way: no facts just means no card.
+    private fun loadFacts(album: AlbumDetail) {
+        viewModelScope.launch {
+            getAlbumFactsUseCase(album, Locale.getDefault().language).onSuccess { facts -> setState { copy(facts = facts) } }
         }
     }
 
