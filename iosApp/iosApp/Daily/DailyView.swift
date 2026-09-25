@@ -12,12 +12,14 @@ struct DailyView: View {
     let sdk: CassetteSdk
 
     @State private var model: DailyViewModel
+    @Binding var path: NavigationPath
+
     @State private var isPickingDay = false
-    @State private var path = NavigationPath()
     @Environment(DailyReminder.self) private var reminder
 
-    init(sdk: CassetteSdk) {
+    init(sdk: CassetteSdk, path: Binding<NavigationPath>) {
         self.sdk = sdk
+        _path = path
         _model = State(initialValue: DailyViewModel(sdk: sdk))
     }
 
@@ -25,9 +27,6 @@ struct DailyView: View {
         NavigationStack(path: $path) {
             content
                 .background { AnimatedGradientBackground() }
-                .overlay(alignment: .bottomLeading) {
-                    NowPlayingButton().padding(20)
-                }
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .principal) {

@@ -1,34 +1,6 @@
 import Shared
 import SwiftUI
 
-/// The round cover of what's playing, floating over the Daily screen; opens `NowPlayingSheet`.
-/// Shown once something has played, and kept after it stops so it can be replayed, as on Android.
-struct NowPlayingButton: View {
-    @Environment(PreviewPlayer.self) private var player
-    @State private var isShowingSheet = false
-
-    var body: some View {
-        if let nowPlaying = player.nowPlaying {
-            Button { isShowingSheet = true } label: {
-                CoverImage(url: nowPlaying.album.coverURL, cornerRadius: 32)
-                    .frame(width: 64)
-                    .overlay {
-                        if player.status == .loading {
-                            ProgressView().tint(.white)
-                        }
-                    }
-                    .shadow(radius: 6, y: 2)
-            }
-            .accessibilityLabel("Now playing: \(nowPlaying.trackTitle ?? nowPlaying.album.title)")
-            .sheet(isPresented: $isShowingSheet) {
-                NowPlayingSheet()
-                    .presentationDetents([.medium])
-                    .presentationDragIndicator(.visible)
-            }
-        }
-    }
-}
-
 /// Cover, track, album and artist, with previous / stop-or-replay / next. Mirrors Android's
 /// NowPlayingDialog.
 struct NowPlayingSheet: View {

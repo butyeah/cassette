@@ -11,6 +11,7 @@
 		1790859FD2595332A3660716 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7087878BADB6D9C7026DC534 /* ProfileView.swift */; };
 		17E0B0AF49A644C12E78D82C /* DailyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68EED9531311A5D81B24EA7C /* DailyViewModel.swift */; };
 		1D58BA5B4BECC83C024E025B /* DayPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F532BE0014E5CEFB2558809 /* DayPickerSheet.swift */; };
+		1EA7EEB33EFCAE52ED33CD4A /* FloatingToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21975DCBFA18C632E6C6BDF3 /* FloatingToolbar.swift */; };
 		22EA1CB33A17DCC6FC82406D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F543015C899423D4B01CEB2E /* Assets.xcassets */; };
 		24605E1E989AE077BE8970D4 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 968D41B54D5F4CD066475948 /* SettingsView.swift */; };
 		267C40AE4BB74116C1F947DF /* CoverColorsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAD3A60F4764D62D4CC141A2 /* CoverColorsTests.swift */; };
@@ -60,6 +61,7 @@
 		0E252437544D9D6BDB611CE4 /* AlbumDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumDetailView.swift; sourceTree = "<group>"; };
 		12AB71F47615894DE2B48B9E /* NowPlaying.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlaying.swift; sourceTree = "<group>"; };
 		12FF96E62D4C7654C77328B3 /* MosaicLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicLayout.swift; sourceTree = "<group>"; };
+		21975DCBFA18C632E6C6BDF3 /* FloatingToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingToolbar.swift; sourceTree = "<group>"; };
 		21C50BA4B0D3062D9E7A2A0C /* WavyPillTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WavyPillTests.swift; sourceTree = "<group>"; };
 		2925723D1B4AC9FBF45C9F3F /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		3F9533FDACC586E81B16D6A4 /* MonthDay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthDay.swift; sourceTree = "<group>"; };
@@ -133,6 +135,7 @@
 				4FA3A61A94F9B149FB8C00B9 /* CoverColors.swift */,
 				8A2C7D39B60B22635AFB4CDD /* CoverImage.swift */,
 				D9CC4CA05EBB72F9304A9B4F /* DominantColors.swift */,
+				21975DCBFA18C632E6C6BDF3 /* FloatingToolbar.swift */,
 				CF81B851053B5270038B358E /* Formatting.swift */,
 				985CB2EB4E363DB83F9CEA59 /* MarqueeText.swift */,
 				EFAE1FDDCD430459C34DE470 /* PreviewWaveform.swift */,
@@ -411,6 +414,7 @@
 				17E0B0AF49A644C12E78D82C /* DailyViewModel.swift in Sources */,
 				1D58BA5B4BECC83C024E025B /* DayPickerSheet.swift in Sources */,
 				7631BBA447BBB7DB1E98D4EF /* DominantColors.swift in Sources */,
+				1EA7EEB33EFCAE52ED33CD4A /* FloatingToolbar.swift in Sources */,
 				8D6A1E2BD3BD0630601A805A /* Formatting.swift in Sources */,
 				54FD17F6FC35A4DE2A9C31DA /* KeychainSessionStore.swift in Sources */,
 				B2B2090D1C82758996143F10 /* LoginViewModel.swift in Sources */,

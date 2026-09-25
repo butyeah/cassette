@@ -3,10 +3,12 @@ import SwiftUI
 
 /// Who's signed in, or the form to sign in or create an account. Mirrors Android's Profile tab.
 struct ProfileView: View {
+    @Binding var path: NavigationPath
+
     @Environment(AuthModel.self) private var auth
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ScrollView {
                 if let user = auth.user {
                     SignedInContent(email: user.email ?? "")
@@ -19,16 +21,26 @@ struct ProfileView: View {
             .scrollDismissesKeyboard(.interactively)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        SettingsView()
-                    } label: {
+                    NavigationLink(value: ProfileRoute.settings) {
                         Image(systemName: "gearshape")
                     }
                     .accessibilityLabel("Settings")
                 }
             }
+            .navigationDestination(for: ProfileRoute.self) { route in
+                switch route {
+                case .settings: SettingsView()
+                case .notifications: NotificationsView()
+                }
+            }
         }
     }
+}
+
+/// The screens pushed from Profile, as values so the tab's path knows when one is showing.
+enum ProfileRoute: Hashable {
+    case settings
+    case notifications
 }
 
 /// An avatar with the email's initial, the email, and "Signed in". Mirrors SignedInContent.kt.
