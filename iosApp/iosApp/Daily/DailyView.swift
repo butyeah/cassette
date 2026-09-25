@@ -89,7 +89,14 @@ struct DailyView: View {
                 LazyVStack(alignment: .leading, spacing: 24) {
                     ForEach(model.albumsByYear, id: \.year) { group in
                         switch model.layout {
-                        case .grid: YearGrid(group: group, albumIds: model.albumIds)
+                        case .grid:
+                            YearGrid(group: group, expandedAlbumId: model.expandedAlbumId) { albumId in
+                                if albumId == model.expandedAlbumId {
+                                    path.append(AlbumRoute(albumIds: model.albumIds, albumId: albumId))
+                                } else {
+                                    withAnimation(.spring(duration: 0.5, bounce: 0.2)) { model.expandedAlbumId = albumId }
+                                }
+                            }
                         case .list: YearCard(group: group, albumIds: model.albumIds)
                         }
                     }
@@ -100,25 +107,60 @@ struct DailyView: View {
     }
 }
 
-/// One year's covers, four per row.
+/// One year's covers, four tiles to a row, packed by the shared `mosaicCells`: the expanded cover
+/// takes 2×2 tiles and the rest flow around it. Tapping a cover calls `onCoverTap`; the caller
+/// decides whether that expands it or opens it.
 private struct YearGrid: View {
     let group: AlbumsByYear
-    let albumIds: [String]
-
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 4)
+    let expandedAlbumId: String?
+    let onCoverTap: (String) -> Void
 
     var body: some View {
+        let expandedIndex = group.albums.firstIndex { $0.id == expandedAlbumId }
         VStack(alignment: .leading, spacing: 8) {
             Text(String(group.year)).font(.pixel(20, weight: .medium))
-            LazyVGrid(columns: columns, spacing: 8) {
+            MosaicLayout(cells: mosaicCells(count: group.albums.count, expandedIndex: expandedIndex)) {
                 ForEach(group.albums, id: \.id) { album in
-                    NavigationLink(value: AlbumRoute(albumIds: albumIds, albumId: album.id)) {
-                        CoverImage(url: album.coverURL)
+                    CoverTile(album: album, expanded: album.id == expandedAlbumId) {
+                        onCoverTap(album.id)
                     }
-                    .accessibilityLabel("\(album.title) by \(album.artistName)")
                 }
             }
         }
+    }
+}
+
+/// A cover; while `expanded`, its title and artist fade in over a scrim along the bottom.
+private struct CoverTile: View {
+    let album: Album
+    let expanded: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            CoverImage(url: album.coverURL)
+                .overlay(alignment: .bottomLeading) {
+                    if expanded {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(album.title).font(.pixel(15, weight: .medium)).lineLimit(2)
+                            Text(album.artistName).font(.handjet(17)).lineLimit(1)
+                        }
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.leading)
+                        .padding(8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(LinearGradient(colors: [.clear, .black.opacity(0.7)], startPoint: .top, endPoint: .bottom))
+                        .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 8, bottomTrailingRadius: 8))
+                        .transition(.opacity)
+                    }
+                }
+        }
+        .buttonStyle(.plain)
+        // The cover's label already names the album and artist.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(album.title) by \(album.artistName)")
+        .accessibilityHint(expanded ? Text("Open album") : Text("Show details"))
+        .accessibilityAddTraits(.isButton)
     }
 }
 

@@ -39,6 +39,7 @@
 		AFB97CAE8BF0B3234849CF46 /* handjet.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8EF4BB7FA4397CDB768AC43E /* handjet.ttf */; };
 		B2B2090D1C82758996143F10 /* LoginViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD71A4E0F212504ED192EF3F /* LoginViewModel.swift */; };
 		B8E1D86B6CB36F8F49196E68 /* WavyPill.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41DB783A070C8306B6F95E18 /* WavyPill.swift */; };
+		BB6A4684A35FDD5029C7F907 /* MosaicLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12FF96E62D4C7654C77328B3 /* MosaicLayout.swift */; };
 		DEFD061FC42A0E991843D140 /* DominantColorsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 098110F866DC52C23B4F8C88 /* DominantColorsTests.swift */; };
 		FFF93642A27B8411D7A8E6BE /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2925723D1B4AC9FBF45C9F3F /* RootView.swift */; };
 /* End PBXBuildFile section */
@@ -57,6 +58,7 @@
 		098110F866DC52C23B4F8C88 /* DominantColorsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DominantColorsTests.swift; sourceTree = "<group>"; };
 		0E252437544D9D6BDB611CE4 /* AlbumDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumDetailView.swift; sourceTree = "<group>"; };
 		12AB71F47615894DE2B48B9E /* NowPlaying.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlaying.swift; sourceTree = "<group>"; };
+		12FF96E62D4C7654C77328B3 /* MosaicLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicLayout.swift; sourceTree = "<group>"; };
 		21C50BA4B0D3062D9E7A2A0C /* WavyPillTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WavyPillTests.swift; sourceTree = "<group>"; };
 		2925723D1B4AC9FBF45C9F3F /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		3F9533FDACC586E81B16D6A4 /* MonthDay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthDay.swift; sourceTree = "<group>"; };
@@ -272,6 +274,7 @@
 				68EED9531311A5D81B24EA7C /* DailyViewModel.swift */,
 				9F532BE0014E5CEFB2558809 /* DayPickerSheet.swift */,
 				3F9533FDACC586E81B16D6A4 /* MonthDay.swift */,
+				12FF96E62D4C7654C77328B3 /* MosaicLayout.swift */,
 			);
 			path = Daily;
 			sourceTree = "<group>";
@@ -409,6 +412,7 @@
 				54FD17F6FC35A4DE2A9C31DA /* KeychainSessionStore.swift in Sources */,
 				B2B2090D1C82758996143F10 /* LoginViewModel.swift in Sources */,
 				737EC36F503151942D597665 /* MonthDay.swift in Sources */,
+				BB6A4684A35FDD5029C7F907 /* MosaicLayout.swift in Sources */,
 				8FEE360DBE0F5E1386577368 /* NotificationsView.swift in Sources */,
 				AB10D385E5DA9EC5D4AFE541 /* NowPlaying.swift in Sources */,
 				51D3F39ABB705B0BE9985454 /* NowPlayingSheet.swift in Sources */,

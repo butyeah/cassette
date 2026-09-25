@@ -1,4 +1,4 @@
-package com.ruidoespontaneo.cassette.dayinhistory.presentation
+package com.ruidoespontaneo.cassette.dayinhistory.domain.layout
 
 /** Where one cover sits in the Daily grid's mosaic: its top-left tile and how many tiles wide/tall. */
 data class MosaicCell(val row: Int, val column: Int, val span: Int)
