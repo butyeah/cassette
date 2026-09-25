@@ -1,9 +1,9 @@
 package com.ruidoespontaneo.cassette.itunes.data.model
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
 
 /** Response body of iTunes' `GET /lookup` and `GET /search`. */
-@JsonClass(generateAdapter = true)
+@Serializable
 data class ItunesResponse(
     val results: List<ItunesResultDto> = emptyList()
 )
@@ -13,7 +13,7 @@ data class ItunesResponse(
  * describing the album, followed by `wrapperType == "track"` rows for its songs. Every field is
  * optional because each kind only fills in its own.
  */
-@JsonClass(generateAdapter = true)
+@Serializable
 data class ItunesResultDto(
     val wrapperType: String? = null,
     val kind: String? = null,

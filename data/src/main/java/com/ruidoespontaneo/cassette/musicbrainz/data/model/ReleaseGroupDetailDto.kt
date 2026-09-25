@@ -1,27 +1,27 @@
 package com.ruidoespontaneo.cassette.musicbrainz.data.model
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /** Response body of `GET /ws/2/release-group/{id}?inc=artist-credits+genres+ratings`. */
-@JsonClass(generateAdapter = true)
+@Serializable
 data class ReleaseGroupDetailDto(
     val id: String,
     val title: String,
-    @param:Json(name = "primary-type") val primaryType: String? = null,
+    @SerialName("primary-type") val primaryType: String? = null,
     // ISO 8601, but MusicBrainz allows partial dates ("2024" or "2024-01")
     // when a release group's first release's day or month isn't known.
-    @param:Json(name = "first-release-date") val firstReleaseDate: String? = null,
-    @param:Json(name = "artist-credit") val artistCredit: List<ArtistCreditDto> = emptyList(),
+    @SerialName("first-release-date") val firstReleaseDate: String? = null,
+    @SerialName("artist-credit") val artistCredit: List<ArtistCreditDto> = emptyList(),
     val genres: List<GenreDto> = emptyList(),
     val rating: RatingDto? = null
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class GenreDto(val name: String)
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class RatingDto(
     val value: Double? = null,
-    @param:Json(name = "votes-count") val votesCount: Int = 0
+    @SerialName("votes-count") val votesCount: Int = 0
 )
