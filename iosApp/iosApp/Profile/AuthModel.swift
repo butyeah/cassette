@@ -23,6 +23,16 @@ final class AuthModel {
     deinit {
         subscription?.cancel()
     }
+
+    func signOut() {
+        sdk.signOut()
+    }
+
+    /// Permanently deletes the signed-in account, which also signs it out. Throws with an
+    /// `AuthFailure` (see `authFailure(of:)`), e.g. when the sign-in is too old.
+    func deleteAccount() async throws {
+        try await sdk.deleteAccount()
+    }
 }
 
 /// Why a shared auth call failed. Kotlin exceptions reach Swift as an NSError that carries the
