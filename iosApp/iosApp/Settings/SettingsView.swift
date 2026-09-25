@@ -14,9 +14,7 @@ struct SettingsView: View {
     var body: some View {
         List {
             Section {
-                NavigationLink {
-                    NotificationsView()
-                } label: {
+                NavigationLink(value: ProfileRoute.notifications) {
                     Label("Notifications", systemImage: "bell")
                 }
                 // iOS has its own per-app language picker, on the app's page in the Settings app.
