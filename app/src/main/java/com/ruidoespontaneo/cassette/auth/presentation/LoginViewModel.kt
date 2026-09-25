@@ -7,6 +7,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.viewModelScope
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.ruidoespontaneo.cassette.auth.domain.isPlausibleEmail
 import com.ruidoespontaneo.cassette.auth.domain.model.AuthException
 import com.ruidoespontaneo.cassette.auth.domain.model.AuthFailure
 import com.ruidoespontaneo.cassette.auth.domain.usecase.ObserveAuthStateUseCase

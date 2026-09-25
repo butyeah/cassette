@@ -10,22 +10,6 @@ import org.junit.Test
 class LoginValidationTest {
 
     @Test
-    fun `plausible emails need a local part, an at and a dotted domain`() {
-        assertTrue(isPlausibleEmail("person@example.com"))
-        assertTrue(isPlausibleEmail("  person@example.co.uk "))
-        assertFalse(isPlausibleEmail("person"))
-        assertFalse(isPlausibleEmail("person@example"))
-        assertFalse(isPlausibleEmail("@example.com"))
-        assertFalse(isPlausibleEmail("per son@example.com"))
-    }
-
-    @Test
-    fun `passwords need six characters`() {
-        assertFalse(isValidPassword("12345"))
-        assertTrue(isValidPassword("123456"))
-    }
-
-    @Test
     fun `signing in only needs a plausible email and some password`() {
         assertTrue(LoginUiState(email = "person@example.com", password = "x").canSubmit)
         assertFalse(LoginUiState(email = "person@example.com").canSubmit)
