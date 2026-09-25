@@ -25,6 +25,10 @@
 		<string>pixelify_sans.ttf</string>
 		<string>handjet.ttf</string>
 	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

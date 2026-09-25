@@ -2,7 +2,21 @@ package com.ruidoespontaneo.cassette.itunes.domain
 
 private val BRACKETED = Regex("""\([^)]*\)|\[[^\]]*]""")
 private val DASH_SUFFIX = Regex("""\s+-\s+.*$""")
-private val NOT_ALPHANUMERIC = Regex("""[^\p{L}\p{N}]+""")
+
+/**
+ * Letters and numbers in any script: what `\p{L}` and `\p{N}` match. Not a regex, because
+ * Kotlin/Native's regex engine doesn't support those classes: compiling `[^\p{L}\p{N}]+` throws
+ * PatternSyntaxException, and on iOS takes the whole file, and the app, down with it.
+ */
+private fun Char.isLetterOrNumber(): Boolean = isLetter() || category in NUMBER_CATEGORIES
+
+private val NUMBER_CATEGORIES = setOf(
+    CharCategory.DECIMAL_DIGIT_NUMBER,
+    CharCategory.LETTER_NUMBER,
+    CharCategory.OTHER_NUMBER
+)
+
+private fun String.lettersAndNumbers(): String = filter { it.isLetterOrNumber() }
 
 /**
  * A comparison key for matching the same album or song across MusicBrainz and iTunes, which
@@ -18,6 +32,6 @@ fun String.normalizedForMatching(): String {
     val stripped = lowered
         .replace(BRACKETED, " ")
         .replace(DASH_SUFFIX, "")
-        .replace(NOT_ALPHANUMERIC, "")
-    return stripped.ifEmpty { lowered.replace(NOT_ALPHANUMERIC, "") }
+        .lettersAndNumbers()
+    return stripped.ifEmpty { lowered.lettersAndNumbers() }
 }

@@ -43,7 +43,8 @@ Or open the project directly in Android Studio and run the `app` configuration.
 
 An iOS app lives in [`iosApp/`](iosApp): SwiftUI screens on top of the same domain and data code
 as Android, shared through Kotlin Multiplatform (`:domain` and `:data` build a `Shared` framework).
-It has the Daily screen and album details so far; previews, sign-in and settings are still to come.
+It has the Daily screen, album details and previews (with autoplay, background audio and lock
+screen controls); sign-in, reminders and settings are still to come.
 
 - Xcode 26 and the iOS 26 simulator runtime
 - A JDK for the Gradle build phase: `JAVA_HOME`, or Android Studio's bundled one
