@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00650A5A04D93904A9059843 /* AboutAlbumCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E9004E56642979A634AAB73 /* AboutAlbumCard.swift */; };
 		06107A1021D024CF56F79C5F /* WavyPillTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21C50BA4B0D3062D9E7A2A0C /* WavyPillTests.swift */; };
 		1790859FD2595332A3660716 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7087878BADB6D9C7026DC534 /* ProfileView.swift */; };
 		17E0B0AF49A644C12E78D82C /* DailyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68EED9531311A5D81B24EA7C /* DailyViewModel.swift */; };
@@ -85,6 +86,7 @@
 		968D41B54D5F4CD066475948 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		985CB2EB4E363DB83F9CEA59 /* MarqueeText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarqueeText.swift; sourceTree = "<group>"; };
 		9E245F95DF361D313AEDB59D /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
+		9E9004E56642979A634AAB73 /* AboutAlbumCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutAlbumCard.swift; sourceTree = "<group>"; };
 		9F532BE0014E5CEFB2558809 /* DayPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayPickerSheet.swift; sourceTree = "<group>"; };
 		A030FCD756AF20B701E5AB49 /* DailyReminder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyReminder.swift; sourceTree = "<group>"; };
 		A30EBE3D126C9A61F5694608 /* TVStatic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVStatic.swift; sourceTree = "<group>"; };
@@ -182,6 +184,7 @@
 		5B11E485528E5E1CBB3F75A6 /* Album */ = {
 			isa = PBXGroup;
 			children = (
+				9E9004E56642979A634AAB73 /* AboutAlbumCard.swift */,
 				0E252437544D9D6BDB611CE4 /* AlbumDetailView.swift */,
 				7E30A6684F4510D445B5901A /* AlbumDetailViewModel.swift */,
 				DF332B3966236FD55C44405B /* AlbumPagerView.swift */,
@@ -407,6 +410,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				00650A5A04D93904A9059843 /* AboutAlbumCard.swift in Sources */,
 				60E1A5E7B4D6CEC24740C4F1 /* AlbumDetailView.swift in Sources */,
 				A68B33A02A415EFFA6066AF6 /* AlbumDetailViewModel.swift in Sources */,
 				273E2A05581E016541121AF0 /* AlbumPagerView.swift in Sources */,
