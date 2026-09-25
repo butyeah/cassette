@@ -8,6 +8,8 @@ struct CassetteApp: App {
     /// App-wide, so one clip plays at a time and autoplay outlives the album screen.
     @State private var player: PreviewPlayer
     @State private var auth: AuthModel
+    /// Created at launch so it's the notification delegate before a tapped reminder is delivered.
+    @State private var reminder = DailyReminder()
 
     init() {
         // Covers are loaded with AsyncImage, which only caches through URLCache; the default one is
@@ -28,6 +30,8 @@ struct CassetteApp: App {
             RootView(sdk: sdk)
                 .environment(player)
                 .environment(auth)
+                .environment(reminder)
+                .task { await reminder.refresh() }
         }
     }
 }

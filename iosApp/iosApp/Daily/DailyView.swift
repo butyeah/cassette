@@ -13,6 +13,8 @@ struct DailyView: View {
 
     @State private var model: DailyViewModel
     @State private var isPickingDay = false
+    @State private var path = NavigationPath()
+    @Environment(DailyReminder.self) private var reminder
 
     init(sdk: CassetteSdk) {
         self.sdk = sdk
@@ -20,7 +22,7 @@ struct DailyView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             content
                 .overlay(alignment: .bottomLeading) {
                     NowPlayingButton().padding(20)
@@ -56,6 +58,10 @@ struct DailyView: View {
                     }
                 }
                 .task { await model.loadIfNeeded() }
+                .onChange(of: reminder.openTodayRequests) {
+                    path = NavigationPath()
+                    Task { await model.select(.today()) }
+                }
         }
     }
 
