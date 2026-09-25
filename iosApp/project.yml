@@ -23,6 +23,9 @@ targets:
         buildPhase: resources
       - path: ../cover/src/main/res/font/handjet.ttf
         buildPhase: resources
+    configFiles:
+      Debug: Signing.xcconfig
+      Release: Signing.xcconfig
     info:
       path: iosApp/Info.plist
       properties:

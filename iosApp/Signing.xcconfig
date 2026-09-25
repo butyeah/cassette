@@ -1,0 +1,8 @@
+// Signing for device builds. Your Apple Developer team is personal, so it goes in
+// Signing.local.xcconfig (git-ignored) instead of the project:
+//
+//   DEVELOPMENT_TEAM = <your team ID>
+//
+// Simulator builds don't need it.
+CODE_SIGN_STYLE = Automatic
+#include? "Signing.local.xcconfig"

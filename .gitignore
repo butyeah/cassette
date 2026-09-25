@@ -35,3 +35,6 @@ serviceAccountKey.json
 xcuserdata/
 *.xcuserstate
 DerivedData/
+
+# Personal signing team for iosApp (see iosApp/Signing.xcconfig)
+iosApp/Signing.local.xcconfig

@@ -48,7 +48,8 @@ It has the Daily screen and album details so far; previews, sign-in and settings
 - Xcode 26 and the iOS 26 simulator runtime
 - A JDK for the Gradle build phase: `JAVA_HOME`, or Android Studio's bundled one
 
-Open `iosApp/iosApp.xcodeproj` and run the `iosApp` scheme. The project is generated from
+Open `iosApp/iosApp.xcodeproj` and run the `iosApp` scheme. To run on an iPhone, put your team in
+`iosApp/Signing.local.xcconfig` (git-ignored) as `DEVELOPMENT_TEAM = <team ID>`. The project is generated from
 `iosApp/project.yml` with [XcodeGen](https://github.com/yonaskolb/XcodeGen); after editing that
 file, run `xcodegen generate` in `iosApp/`.
 
