@@ -35,9 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -47,7 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import coil3.compose.AsyncImage
+import com.ruidoespontaneo.cassette.ui.components.CoverArt
 import com.ruidoespontaneo.cassette.albumdetail.preview.NowPlaying
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl
 import com.ruidoespontaneo.cassette.ui.theme.IconSize
@@ -130,7 +128,6 @@ fun CassetteFloatingToolbar(
  */
 @Composable
 private fun NowPlayingButton(nowPlaying: NowPlaying, onClick: () -> Unit) {
-    val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
     val growSpec = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
     val settleSpec = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
     val scale = remember { Animatable(1f) }
@@ -141,12 +138,9 @@ private fun NowPlayingButton(nowPlaying: NowPlaying, onClick: () -> Unit) {
             scale.animateTo(1f, settleSpec)
         }
     }
-    AsyncImage(
-        model = nowPlaying.album.coverArtUrl(),
+    CoverArt(
+        url = nowPlaying.album.coverArtUrl(),
         contentDescription = stringResource(R.string.now_playing_title),
-        placeholder = placeholder,
-        error = placeholder,
-        contentScale = ContentScale.Crop,
         modifier = Modifier
             .size(IconSize.nowPlayingThumbnail)
             .graphicsLayer {
