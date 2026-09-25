@@ -1,80 +1,100 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+
 plugins {
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt)
 }
 
-android {
-    namespace = "com.ruidoespontaneo.cassette.data"
-    compileSdk {
-        version = release(37)
-    }
-
-    defaultConfig {
+kotlin {
+    android {
+        namespace = "com.ruidoespontaneo.cassette.data"
+        compileSdk = 37
         minSdk = 24
-        // NetworkModule's MusicBrainz User-Agent needs a contact + version string. A library
-        // module's BuildConfig has no versionName (that's app-only in the AGP library DSL), and
-        // it can't read :app's BuildConfig either, so both are duplicated here — keep in sync
-        // with app/build.gradle.kts's defaultConfig.versionName/MUSICBRAINZ_CONTACT.
-        buildConfigField("String", "APP_VERSION_NAME", "\"1.0\"")
-        buildConfigField(
-            "String",
-            "MUSICBRAINZ_CONTACT",
-            "\"https://github.com/butyeah/cassette\""
-        )
+
+        // Hilt's KSP processor generates Java (factories, hilt_aggregated_deps), which this plugin
+        // only compiles when Java is enabled.
+        withJava()
+
+        compilerOptions {
+            // Match :app's compileOptions (JavaVersion.VERSION_11).
+            jvmTarget.set(JvmTarget.JVM_11)
+        }
+
+        // GoogleCredentialModule reads google_web_client_id from res/values/strings.xml.
+        androidResources { enable = true }
+
+        withHostTest {
+            // Firebase's exception constructors call android.text.TextUtils, which is only a stub in
+            // local unit tests; default return values let AuthFailureMappingTest build them.
+            isReturnDefaultValues = true
+        }
     }
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-        // java.time (DayInHistoryRepositoryImpl, MusicBrainzRepositoryImpl) needs desugaring
-        // below API 26, and minSdk here is 24 — matches app/build.gradle.kts's compileOptions.
-        isCoreLibraryDesugaringEnabled = true
+    // The framework iosApp links: this module's shared code plus :domain's models and use cases.
+    // iosX64 is the simulator on Intel Macs, iosSimulatorArm64 on Apple silicon.
+    val xcFramework = XCFramework("Shared")
+    listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
+        target.binaries.framework {
+            baseName = "Shared"
+            isStatic = true
+            export(project(":domain"))
+            xcFramework.add(this)
+        }
     }
-    buildFeatures {
-        buildConfig = true
-    }
-    testOptions {
-        // Firebase's exception constructors call android.text.TextUtils, which is only a stub in
-        // local unit tests; default return values let AuthFailureMappingTest build them.
-        unitTests.isReturnDefaultValues = true
+
+    sourceSets {
+        commonMain.dependencies {
+            // `api` so the framework can export :domain to Swift.
+            api(project(":domain"))
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.client.logging)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.kotlinx.serialization.json)
+        }
+        androidMain.dependencies {
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.kotlinx.coroutines.android)
+            // Bridges Firestore's Task-based API into suspend functions via `.await()`.
+            implementation(libs.kotlinx.coroutines.play.services)
+
+            implementation(libs.ktor.client.okhttp)
+            implementation(libs.okhttp)
+
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            implementation(libs.firebase.firestore)
+            implementation(libs.firebase.auth)
+
+            // Credential Manager + Google ID: the current Google-recommended way to offer Google
+            // Sign-In, replacing the deprecated GoogleSignInClient API.
+            implementation(libs.androidx.credentials)
+            implementation(libs.androidx.credentials.play.services.auth)
+            implementation(libs.googleid)
+
+            implementation(libs.hilt.android)
+
+            implementation(libs.timber)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.ktor.client.mock)
+        }
+        getByName("androidHostTest").dependencies {
+            implementation(libs.junit)
+        }
     }
 }
 
 dependencies {
-    api(project(":domain"))
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
-
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.kotlinx.coroutines.android)
-    // Bridges Firestore's Task-based API into suspend functions via `.await()`.
-    implementation(libs.kotlinx.coroutines.play.services)
-
-    implementation(libs.ktor.client.core)
-    implementation(libs.ktor.client.okhttp)
-    implementation(libs.ktor.client.content.negotiation)
-    implementation(libs.ktor.client.logging)
-    implementation(libs.ktor.serialization.kotlinx.json)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.okhttp)
-
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.firestore)
-    implementation(libs.firebase.auth)
-
-    // Credential Manager + Google ID: the current Google-recommended way to offer Google
-    // Sign-In, replacing the deprecated GoogleSignInClient API.
-    implementation(libs.androidx.credentials)
-    implementation(libs.androidx.credentials.play.services.auth)
-    implementation(libs.googleid)
-
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
-
-    implementation(libs.timber)
-
-    testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.ktor.client.mock)
+    // Hilt's annotation processor for the Android target's @Module/@Inject classes. The Hilt
+    // Gradle plugin isn't needed here: it only rewrites @AndroidEntryPoint classes, and :data has none.
+    add("kspAndroid", libs.hilt.compiler)
 }
