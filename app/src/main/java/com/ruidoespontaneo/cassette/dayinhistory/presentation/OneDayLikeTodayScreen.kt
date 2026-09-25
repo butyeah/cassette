@@ -73,6 +73,8 @@ import com.ruidoespontaneo.cassette.cover.components.AnimatedGradientBackground
 import com.ruidoespontaneo.cassette.cover.components.CoverCard
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import com.ruidoespontaneo.cassette.ui.theme.ToolbarSize
+import com.ruidoespontaneo.cassette.dayinhistory.domain.layout.mosaicCells
+import com.ruidoespontaneo.cassette.dayinhistory.domain.layout.mosaicRowCount
 import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Album
 import com.ruidoespontaneo.cassette.musicbrainz.presentation.coverArtUrl

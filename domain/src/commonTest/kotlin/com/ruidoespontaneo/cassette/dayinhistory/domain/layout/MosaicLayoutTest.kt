@@ -1,10 +1,10 @@
-package com.ruidoespontaneo.cassette.dayinhistory.presentation
+package com.ruidoespontaneo.cassette.dayinhistory.domain.layout
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import kotlin.test.Test
 
-class CoverMosaicTest {
+class MosaicLayoutTest {
 
     @Test
     fun `with nothing expanded covers fill rows of four in order`() {
@@ -52,7 +52,7 @@ class CoverMosaicTest {
                 val tiles = cells.flatMap { cell ->
                     (0 until cell.span).flatMap { dr -> (0 until cell.span).map { dc -> (cell.row + dr) to (cell.column + dc) } }
                 }
-                assertEquals("overlap with count=$count expanded=$expanded", tiles.size, tiles.toSet().size)
+                assertEquals(tiles.size, tiles.toSet().size, "overlap with count=$count expanded=$expanded")
                 assertTrue(tiles.all { (_, column) -> column in 0 until 4 })
             }
         }

@@ -22,6 +22,9 @@ final class DailyViewModel {
     private(set) var albumsByYear: [AlbumsByYear] = []
     /// Kept for the session only; changing day doesn't reset it.
     var layout = Layout.grid
+    /// The grid cover grown to 2×2 with its title, which a second tap opens. Reset on a day
+    /// change, as Android's is.
+    var expandedAlbumId: String?
 
     private let sdk: CassetteSdk
     private var hasLoaded = false
@@ -48,6 +51,7 @@ final class DailyViewModel {
     func select(_ newDay: MonthDay) async {
         guard newDay != day else { return }
         day = newDay
+        expandedAlbumId = nil
         await load()
     }
 
