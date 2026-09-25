@@ -22,6 +22,9 @@ struct DailyView: View {
     var body: some View {
         NavigationStack {
             content
+                .overlay(alignment: .bottomLeading) {
+                    NowPlayingButton().padding(20)
+                }
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .principal) {

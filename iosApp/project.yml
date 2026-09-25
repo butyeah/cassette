@@ -34,6 +34,8 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen: {}
         UIAppFonts: [pixelify_sans.ttf, handjet.ttf]
+        # Previews keep playing with the screen off or the app in the background.
+        UIBackgroundModes: [audio]
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
     settings:
       base:

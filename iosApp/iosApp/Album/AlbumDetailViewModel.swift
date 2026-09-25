@@ -3,14 +3,16 @@ import Observation
 import Shared
 
 /// State for one album page: its details from the offline index, or live MusicBrainz when it isn't
-/// there (see GetAlbumDetailUseCase). Mirrors Android's AlbumDetailViewModel, minus previews,
-/// which come with playback.
+/// there (see GetAlbumDetailUseCase), then its previews. Mirrors Android's AlbumDetailViewModel.
 @MainActor
 @Observable
 final class AlbumDetailViewModel {
     private(set) var album: AlbumDetail?
     private(set) var isLoading = false
     private(set) var failed = false
+    /// Preview URL by track position. Loaded after the album and never blocks it: stays empty when
+    /// iTunes has nothing, and tracks missing from it just get no play button.
+    private(set) var previews: [Int: String] = [:]
 
     private let sdk: CassetteSdk
     private let albumId: String
@@ -39,5 +41,8 @@ final class AlbumDetailViewModel {
             failed = true
         }
         isLoading = false
+        if let album {
+            previews = await sdk.previews(for: album)
+        }
     }
 }
