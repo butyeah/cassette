@@ -23,15 +23,16 @@ extension AlbumDetail {
     }
 
     var genresText: String? {
-        genres.isEmpty ? nil : "Genres: \(genres.joined(separator: ", "))"
+        genres.isEmpty ? nil : String(localized: "Genres: \(genres.joined(separator: ", "))")
     }
 
     /// "4.5 / 5 (12 ratings)", or `nil` when the album has no community rating (always the case
-    /// for albums served from the offline index).
+    /// for albums served from the offline index). "rating" / "ratings" is a plural in the string
+    /// catalog, as rating_format is on Android.
     var ratingText: String? {
         guard let value = ratingValue?.doubleValue else { return nil }
-        let votes = Int(ratingVotesCount)
-        return String(format: "%.1f / 5 (%d %@)", value, votes, votes == 1 ? "rating" : "ratings")
+        let rating = value.formatted(.number.precision(.fractionLength(1)))
+        return String(localized: "\(rating) / 5 (\(Int(ratingVotesCount)) ratings)")
     }
 }
 

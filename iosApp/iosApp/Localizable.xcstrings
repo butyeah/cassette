@@ -1,0 +1,798 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@ / 5 (%lld ratings)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ / 5 (%#@votes@)"
+          },
+          "substitutions" : {
+            "votes" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg rating"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg ratings"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ / 5 (%#@votes@)"
+          },
+          "substitutions" : {
+            "votes" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg valoración"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg valoraciones"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg valoraciones"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%@ by %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ de %2$@"
+          }
+        }
+      }
+    },
+    "%@ · %@" : {
+      "shouldTranslate" : false
+    },
+    "%d. %@" : {
+      "shouldTranslate" : false
+    },
+    "Cancel" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        }
+      }
+    },
+    "Choose a stronger password." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige una contraseña más segura."
+          }
+        }
+      }
+    },
+    "Choose another day" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir otro día"
+          }
+        }
+      }
+    },
+    "Couldn't delete your account" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo eliminar tu cuenta"
+          }
+        }
+      }
+    },
+    "Couldn't load the albums." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudieron cargar los álbumes."
+          }
+        }
+      }
+    },
+    "Couldn't load this album." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo cargar este álbum."
+          }
+        }
+      }
+    },
+    "Create account" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear cuenta"
+          }
+        }
+      }
+    },
+    "Daily" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoy"
+          }
+        }
+      }
+    },
+    "Daily reminder at %02d:%02d" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recordatorio diario a las %1$02d:%2$02d"
+          }
+        }
+      }
+    },
+    "Day" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Día"
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar"
+          }
+        }
+      }
+    },
+    "Delete account" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar cuenta"
+          }
+        }
+      }
+    },
+    "Delete your account?" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Eliminar tu cuenta?"
+          }
+        }
+      }
+    },
+    "Done" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listo"
+          }
+        }
+      }
+    },
+    "Email" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correo electrónico"
+          }
+        }
+      }
+    },
+    "Enable notifications" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar notificaciones"
+          }
+        }
+      }
+    },
+    "Enter a valid email address." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Introduce un correo electrónico válido."
+          }
+        }
+      }
+    },
+    "Enter your email and we'll send you a reset link." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Introduce tu correo y te enviaremos un enlace para restablecerla."
+          }
+        }
+      }
+    },
+    "Follows your phone's language" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa el idioma de tu teléfono"
+          }
+        }
+      }
+    },
+    "For your security, sign out, sign back in, and then delete your account." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por seguridad, cierra sesión, vuelve a iniciarla y luego elimina tu cuenta."
+          }
+        }
+      }
+    },
+    "Forgot password?" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Olvidaste tu contraseña?"
+          }
+        }
+      }
+    },
+    "Genres: %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Géneros: %@"
+          }
+        }
+      }
+    },
+    "Hide password" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar contraseña"
+          }
+        }
+      }
+    },
+    "Language" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idioma"
+          }
+        }
+      }
+    },
+    "Manage in Settings" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestionar en Ajustes"
+          }
+        }
+      }
+    },
+    "Mode" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo"
+          }
+        }
+      }
+    },
+    "Next track" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pista siguiente"
+          }
+        }
+      }
+    },
+    "No albums released on this day" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se publicó ningún álbum este día"
+          }
+        }
+      }
+    },
+    "No connection. Check your internet and try again." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin conexión. Revisa tu conexión a internet y vuelve a intentarlo."
+          }
+        }
+      }
+    },
+    "No daily reminder set" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay recordatorio diario"
+          }
+        }
+      }
+    },
+    "Notifications" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificaciones"
+          }
+        }
+      }
+    },
+    "Notifications are off" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificaciones desactivadas"
+          }
+        }
+      }
+    },
+    "Notifications enabled" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notificaciones activadas"
+          }
+        }
+      }
+    },
+    "Now playing: %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproduciendo: %@"
+          }
+        }
+      }
+    },
+    "OK" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aceptar"
+          }
+        }
+      }
+    },
+    "One day like today" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un día como hoy"
+          }
+        }
+      }
+    },
+    "Play" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproducir"
+          }
+        }
+      }
+    },
+    "Play preview of %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproducir la vista previa de %@"
+          }
+        }
+      }
+    },
+    "Previous track" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pista anterior"
+          }
+        }
+      }
+    },
+    "Profile" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perfil"
+          }
+        }
+      }
+    },
+    "Retry" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reintentar"
+          }
+        }
+      }
+    },
+    "Save" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar"
+          }
+        }
+      }
+    },
+    "Settings" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes"
+          }
+        }
+      }
+    },
+    "Show as grid" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver como cuadrícula"
+          }
+        }
+      }
+    },
+    "Show as list" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver como lista"
+          }
+        }
+      }
+    },
+    "Show password" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar contraseña"
+          }
+        }
+      }
+    },
+    "Sign in" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar sesión"
+          }
+        }
+      }
+    },
+    "Sign in to keep your reminders and preferences with you." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicia sesión para llevar contigo tus recordatorios y preferencias."
+          }
+        }
+      }
+    },
+    "Sign out" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar sesión"
+          }
+        }
+      }
+    },
+    "Sign out?" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Cerrar sesión?"
+          }
+        }
+      }
+    },
+    "Signed in" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesión iniciada"
+          }
+        }
+      }
+    },
+    "Something went wrong. Please try again." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algo salió mal. Vuelve a intentarlo."
+          }
+        }
+      }
+    },
+    "Stop" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detener"
+          }
+        }
+      }
+    },
+    "Stop preview of %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detener la vista previa de %@"
+          }
+        }
+      }
+    },
+    "That email address isn't valid." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ese correo electrónico no es válido."
+          }
+        }
+      }
+    },
+    "The passwords don't match." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las contraseñas no coinciden."
+          }
+        }
+      }
+    },
+    "There's already an account with this email. Try signing in." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya existe una cuenta con este correo. Prueba a iniciar sesión."
+          }
+        }
+      }
+    },
+    "This account has been disabled." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta cuenta está desactivada."
+          }
+        }
+      }
+    },
+    "This permanently deletes your account and signs you out. It can't be undone." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu cuenta se eliminará de forma permanente y se cerrará la sesión. No se puede deshacer."
+          }
+        }
+      }
+    },
+    "Time" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hora"
+          }
+        }
+      }
+    },
+    "Today's albums released in history are ready — take a look!" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya están listos los álbumes que se publicaron un día como hoy. ¡Échales un vistazo!"
+          }
+        }
+      }
+    },
+    "Too many attempts. Please try again in a few minutes." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demasiados intentos. Vuelve a intentarlo en unos minutos."
+          }
+        }
+      }
+    },
+    "Track %lld" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pista %lld"
+          }
+        }
+      }
+    },
+    "Track --" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pista --"
+          }
+        }
+      }
+    },
+    "Tracklist" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Canciones"
+          }
+        }
+      }
+    },
+    "Turn off" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivar"
+          }
+        }
+      }
+    },
+    "Use at least %lld characters." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa al menos %lld caracteres."
+          }
+        }
+      }
+    },
+    "We sent a reset link to %@." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviamos un enlace para restablecerla a %@."
+          }
+        }
+      }
+    },
+    "Welcome to Cassette" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Te damos la bienvenida a Cassette"
+          }
+        }
+      }
+    },
+    "Wrong email or password." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correo o contraseña incorrectos."
+          }
+        }
+      }
+    },
+    "You can sign back in any time." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puedes volver a iniciar sesión cuando quieras."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

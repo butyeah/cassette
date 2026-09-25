@@ -48,15 +48,15 @@ extension AuthFailure {
     /// The same wording as Android (app/src/main/res/values/strings.xml, login_error_*).
     var message: String {
         switch self {
-        case .invalidcredentials: "Wrong email or password."
-        case .emailinuse: "There's already an account with this email. Try signing in."
-        case .weakpassword: "Choose a stronger password."
-        case .invalidemail: "That email address isn't valid."
-        case .userdisabled: "This account has been disabled."
-        case .toomanyrequests: "Too many attempts. Please try again in a few minutes."
-        case .requiresrecentlogin: "For your security, sign out, sign back in, and then delete your account."
-        case .network: "No connection. Check your internet and try again."
-        default: "Something went wrong. Please try again."
+        case .invalidcredentials: String(localized: "Wrong email or password.")
+        case .emailinuse: String(localized: "There's already an account with this email. Try signing in.")
+        case .weakpassword: String(localized: "Choose a stronger password.")
+        case .invalidemail: String(localized: "That email address isn't valid.")
+        case .userdisabled: String(localized: "This account has been disabled.")
+        case .toomanyrequests: String(localized: "Too many attempts. Please try again in a few minutes.")
+        case .requiresrecentlogin: String(localized: "For your security, sign out, sign back in, and then delete your account.")
+        case .network: String(localized: "No connection. Check your internet and try again.")
+        default: String(localized: "Something went wrong. Please try again.")
         }
     }
 }

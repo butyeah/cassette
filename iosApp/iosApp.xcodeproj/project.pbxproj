@@ -13,6 +13,7 @@
 		22EA1CB33A17DCC6FC82406D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F543015C899423D4B01CEB2E /* Assets.xcassets */; };
 		24605E1E989AE077BE8970D4 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 968D41B54D5F4CD066475948 /* SettingsView.swift */; };
 		273E2A05581E016541121AF0 /* AlbumPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF332B3966236FD55C44405B /* AlbumPagerView.swift */; };
+		4361743AA269158A01337511 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 6A8D1EB5C724332B1C0F728D /* Localizable.xcstrings */; };
 		51D3F39ABB705B0BE9985454 /* NowPlayingSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DFA4AB2875FDC4A672923B3 /* NowPlayingSheet.swift */; };
 		54B7E84CF3EC3639B6009E0E /* PreviewPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C53316ACD88C30A2AB94798B /* PreviewPlayer.swift */; };
 		54FD17F6FC35A4DE2A9C31DA /* KeychainSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF9F0E79BF7F40948C277820 /* KeychainSessionStore.swift */; };
@@ -42,6 +43,7 @@
 		52D653AC35EAEB096B6D98D3 /* CassetteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CassetteApp.swift; sourceTree = "<group>"; };
 		61F79D5D14F51BF4A8A008D0 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 		68EED9531311A5D81B24EA7C /* DailyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyViewModel.swift; sourceTree = "<group>"; };
+		6A8D1EB5C724332B1C0F728D /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		7087878BADB6D9C7026DC534 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		73ECBF999E6BE5928CBB26F0 /* AuthModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthModel.swift; sourceTree = "<group>"; };
 		7DFA4AB2875FDC4A672923B3 /* NowPlayingSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingSheet.swift; sourceTree = "<group>"; };
@@ -80,6 +82,7 @@
 				F543015C899423D4B01CEB2E /* Assets.xcassets */,
 				52D653AC35EAEB096B6D98D3 /* CassetteApp.swift */,
 				C117AD187833E2513BD2F553 /* Info.plist */,
+				6A8D1EB5C724332B1C0F728D /* Localizable.xcstrings */,
 				2925723D1B4AC9FBF45C9F3F /* RootView.swift */,
 				5B11E485528E5E1CBB3F75A6 /* Album */,
 				2473D22FB9B12B57A9CE3F6A /* Common */,
@@ -290,6 +293,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				22EA1CB33A17DCC6FC82406D /* Assets.xcassets in Resources */,
+				4361743AA269158A01337511 /* Localizable.xcstrings in Resources */,
 				AFB97CAE8BF0B3234849CF46 /* handjet.ttf in Resources */,
 				579318B97D19935B1E5D6235 /* pixelify_sans.ttf in Resources */,
 			);
@@ -399,12 +403,14 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 			};
@@ -463,6 +469,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -470,6 +477,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};

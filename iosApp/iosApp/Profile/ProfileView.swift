@@ -102,7 +102,7 @@ private struct LoginForm: View {
                             Image(systemName: model.isPasswordVisible ? "eye.slash" : "eye")
                         }
                         .buttonStyle(.borderless)
-                        .accessibilityLabel(model.isPasswordVisible ? "Hide password" : "Show password")
+                        .accessibilityLabel(model.isPasswordVisible ? Text("Hide password") : Text("Show password"))
                     }
                 }
 
@@ -124,7 +124,7 @@ private struct LoginForm: View {
                         if model.isLoading {
                             ProgressView()
                         } else {
-                            Text(model.mode == .signIn ? "Sign in" : "Create account")
+                            model.mode == .signIn ? Text("Sign in") : Text("Create account")
                         }
                     }
                     .font(.pixel(17, weight: .medium))

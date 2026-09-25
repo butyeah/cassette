@@ -124,7 +124,7 @@ private struct PreviewDisplay: View {
         HStack(spacing: 10) {
             Image(systemName: activePosition == nil ? "play.fill" : "waveform")
                 .symbolEffect(.variableColor.iterative, isActive: activePosition != nil && player.status == .playing)
-            Text(activePosition.map { "Track \($0)" } ?? "Track --")
+            Text(activePosition.map { String(localized: "Track \($0)") } ?? String(localized: "Track --"))
                 .font(.pixel(15, weight: .medium))
             Text(title ?? "--")
                 .font(.handjet(19))
@@ -161,7 +161,7 @@ private struct TrackRow: View {
                         .frame(width: 28)
                 }
                 .buttonStyle(.borderless)
-                .accessibilityLabel(isActive ? "Stop preview of \(track.title)" : "Play preview of \(track.title)")
+                .accessibilityLabel(isActive ? Text("Stop preview of \(track.title)") : Text("Play preview of \(track.title)"))
             }
         }
         .font(.handjet(21))
