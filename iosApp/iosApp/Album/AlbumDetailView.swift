@@ -40,6 +40,8 @@ private struct AlbumContent: View {
     let dayAlbumIds: [String]
 
     @Environment(PreviewPlayer.self) private var player
+    /// The cover's dominant colours once it has loaded; the background uses the palette until then.
+    @State private var dominant: [RGB]?
 
     /// This album's track that's buffering or playing, if any.
     private var activePosition: Int? {
@@ -56,7 +58,10 @@ private struct AlbumContent: View {
                     Text(album.artistName).font(.pixel(17, weight: .medium))
                 }
 
-                CoverImage(url: album.coverURL, cornerRadius: 12)
+                CoverImage(url: album.coverURL, cornerRadius: 12) { image in
+                    guard dominant == nil, let cgImage = image.cgImage else { return }
+                    Task { dominant = await dominantColors(in: cgImage) }
+                }
                     .accessibilityLabel("\(album.title) by \(album.artistName)")
 
                 if !previews.isEmpty {
@@ -109,6 +114,7 @@ private struct AlbumContent: View {
             }
             .padding(16)
         }
+        .background { AnimatedGradientBackground(colors: dominant?.map(\.color)) }
     }
 }
 
