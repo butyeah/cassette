@@ -66,8 +66,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.ColorPainter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.pluralStringResource
@@ -78,7 +76,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
+import com.ruidoespontaneo.cassette.ui.components.CoverArt
 import coil3.toBitmap
 import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.cover.components.AnimatedGradientBackground
@@ -250,7 +248,6 @@ private fun AlbumDetailContent(
             .verticalScroll(scrollState)
             .padding(Spacing.large)
     ) {
-        val placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
         Text(
             text = album.title,
             style = MaterialTheme.typography.headlineSmall,
@@ -306,12 +303,9 @@ private fun AlbumDetailContent(
                         )
                 )
             }
-            AsyncImage(
-                model = album.coverArtUrl(),
+            CoverArt(
+                url = album.coverArtUrl(),
                 contentDescription = null, // decorative — title/artist are already read by the screen
-                placeholder = placeholder,
-                error = placeholder,
-                contentScale = ContentScale.Crop,
                 onSuccess = { onCoverLoaded(it.result.image.toBitmap()) },
                 modifier = Modifier
                     .size(IconSize.albumArtLarge)
