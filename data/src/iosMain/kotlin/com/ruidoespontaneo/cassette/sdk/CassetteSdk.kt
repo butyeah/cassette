@@ -17,9 +17,14 @@ import com.ruidoespontaneo.cassette.core.network.firestoreHttpClient
 import com.ruidoespontaneo.cassette.core.network.itunesHttpClient
 import com.ruidoespontaneo.cassette.core.network.lrclibHttpClient
 import com.ruidoespontaneo.cassette.core.network.musicBrainzHttpClient
+import com.ruidoespontaneo.cassette.core.network.wikidataHttpClient
 import com.ruidoespontaneo.cassette.dayinhistory.data.DayInHistoryRepositoryImpl
 import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.dayinhistory.domain.usecase.GetAlbumsByDayUseCase
+import com.ruidoespontaneo.cassette.facts.data.WikidataAlbumFactsRepository
+import com.ruidoespontaneo.cassette.facts.data.api.KtorWikidataApi
+import com.ruidoespontaneo.cassette.facts.domain.model.AlbumFacts
+import com.ruidoespontaneo.cassette.facts.domain.usecase.GetAlbumFactsUseCase
 import com.ruidoespontaneo.cassette.itunes.data.ItunesRepositoryImpl
 import com.ruidoespontaneo.cassette.itunes.data.api.KtorItunesApi
 import com.ruidoespontaneo.cassette.itunes.domain.usecase.GetTrackPreviewsUseCase
@@ -78,6 +83,10 @@ class CassetteSdk(appVersion: String, sessionStore: AuthSessionStore) {
         LrclibLyricsRepository(KtorLrclibApi(lrclibHttpClient(Darwin.create(), cassetteUserAgent(appVersion), logger = null)))
     )
 
+    private val getAlbumFacts = GetAlbumFactsUseCase(
+        WikidataAlbumFactsRepository(KtorWikidataApi(wikidataHttpClient(Darwin.create(), cassetteUserAgent(appVersion), logger = null)))
+    )
+
     private val authRepository = RestAuthRepository(
         FirebaseAuthRestApi(firebaseAuthHttpClient(Darwin.create(), logger = null), FIREBASE_API_KEY),
         sessionStore
@@ -107,6 +116,13 @@ class CassetteSdk(appVersion: String, sessionStore: AuthSessionStore) {
     /** Lyrics for the track at [position] on [album], or `null` when LRCLIB has none. */
     @Throws(Exception::class)
     suspend fun trackLyrics(album: AlbumDetail, position: Int): Lyrics? = getTrackLyrics(album, position).getOrThrow()
+
+    /**
+     * See [GetAlbumFactsUseCase]: what Wikidata knows about [album], named in [language] (an ISO 639-1
+     * code) where it can be, or `null` when it knows nothing.
+     */
+    @Throws(Exception::class)
+    suspend fun albumFacts(album: AlbumDetail, language: String): AlbumFacts? = getAlbumFacts(album, language).getOrThrow()
 
     /** Who's signed in right now, or `null`. */
     val currentUser: AuthUser? get() = authRepository.currentUser.value

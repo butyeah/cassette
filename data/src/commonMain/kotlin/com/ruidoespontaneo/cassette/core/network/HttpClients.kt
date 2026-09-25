@@ -18,12 +18,14 @@ private const val ITUNES_BASE_URL = "https://itunes.apple.com/"
 
 private const val LRCLIB_BASE_URL = "https://lrclib.net/api/"
 
+private const val WIKIDATA_BASE_URL = "https://www.wikidata.org/w/"
+
 /** Where the APIs we call can reach us about this client — see [cassetteUserAgent]. */
 private const val CASSETTE_CONTACT = "https://github.com/butyeah/cassette"
 
 /**
  * The `ApplicationName/Version ( contact )` User-Agent that MusicBrainz asks every client to send,
- * and LRCLIB asks for too.
+ * and that LRCLIB and Wikimedia ask for too.
  */
 fun cassetteUserAgent(appVersion: String): String = "Cassette/$appVersion ($CASSETTE_CONTACT)"
 
@@ -80,6 +82,22 @@ fun lrclibHttpClient(engine: HttpClientEngine, userAgent: String, logger: Logger
     install(UserAgent) { agent = userAgent }
     install(ContentNegotiation) { json(json) }
     defaultRequest { url(LRCLIB_BASE_URL) }
+    logger?.let { install(Logging) { this.logger = it; level = LogLevel.BODY } }
+}
+
+/**
+ * The client every [com.ruidoespontaneo.cassette.facts.data.api.WikidataApi] call goes through.
+ * [userAgent] comes from [cassetteUserAgent]: Wikimedia blocks clients without a descriptive one.
+ */
+fun wikidataHttpClient(engine: HttpClientEngine, userAgent: String, logger: Logger?): HttpClient = HttpClient(engine) {
+    expectSuccess = true
+    install(UserAgent) { agent = userAgent }
+    install(ContentNegotiation) { json(json) }
+    defaultRequest {
+        url(WIKIDATA_BASE_URL)
+        // The Action API answers in HTML unless each call asks for JSON.
+        url.parameters.append("format", "json")
+    }
     logger?.let { install(Logging) { this.logger = it; level = LogLevel.BODY } }
 }
 

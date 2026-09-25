@@ -6,6 +6,9 @@ import com.ruidoespontaneo.cassette.core.network.cassetteUserAgent
 import com.ruidoespontaneo.cassette.core.network.itunesHttpClient
 import com.ruidoespontaneo.cassette.core.network.lrclibHttpClient
 import com.ruidoespontaneo.cassette.core.network.musicBrainzHttpClient
+import com.ruidoespontaneo.cassette.core.network.wikidataHttpClient
+import com.ruidoespontaneo.cassette.facts.data.api.KtorWikidataApi
+import com.ruidoespontaneo.cassette.facts.data.api.WikidataApi
 import com.ruidoespontaneo.cassette.itunes.data.api.ItunesApi
 import com.ruidoespontaneo.cassette.itunes.data.api.KtorItunesApi
 import com.ruidoespontaneo.cassette.lyrics.data.api.KtorLrclibApi
@@ -38,6 +41,11 @@ annotation class Itunes
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class Lrclib
+
+/** Distinguishes the Wikidata [HttpClient] — see [MusicBrainz]. */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class Wikidata
 
 /**
  * Full request/response bodies to Logcat in debuggable builds; nothing in release. Read from the
@@ -96,4 +104,19 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideLrclibApi(@Lrclib client: HttpClient): LrclibApi = KtorLrclibApi(client)
+
+    @Provides
+    @Singleton
+    @Wikidata
+    fun provideWikidataHttpClient(@ApplicationContext context: Context): HttpClient = wikidataHttpClient(
+        engine = OkHttp.create(),
+        userAgent = cassetteUserAgent(
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
+        ),
+        logger = logger(context)
+    )
+
+    @Provides
+    @Singleton
+    fun provideWikidataApi(@Wikidata client: HttpClient): WikidataApi = KtorWikidataApi(client)
 }
