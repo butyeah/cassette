@@ -72,3 +72,13 @@ fun firestoreHttpClient(engine: HttpClientEngine, logger: Logger?): HttpClient =
     install(ContentNegotiation) { json(json) }
     logger?.let { install(Logging) { this.logger = it; level = LogLevel.BODY } }
 }
+
+/**
+ * The client [com.ruidoespontaneo.cassette.auth.data.rest.FirebaseAuthRestApi] calls through. Never
+ * give it a body-logging [logger] outside development: requests carry passwords and tokens.
+ */
+fun firebaseAuthHttpClient(engine: HttpClientEngine, logger: Logger?): HttpClient = HttpClient(engine) {
+    expectSuccess = true
+    install(ContentNegotiation) { json(json) }
+    logger?.let { install(Logging) { this.logger = it; level = LogLevel.HEADERS } }
+}

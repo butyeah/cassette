@@ -14,7 +14,8 @@ struct CassetteApp: App {
         URLCache.shared = URLCache(memoryCapacity: 50_000_000, diskCapacity: 200_000_000)
 
         let sdk = CassetteSdk(
-            appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+            appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0",
+            sessionStore: KeychainSessionStore()
         )
         self.sdk = sdk
         _player = State(initialValue: PreviewPlayer(sdk: sdk))
