@@ -26,7 +26,9 @@ import com.ruidoespontaneo.cassette.facts.data.WikidataAlbumFactsRepository
 import com.ruidoespontaneo.cassette.facts.data.api.KtorWikidataApi
 import com.ruidoespontaneo.cassette.facts.data.api.KtorWikipediaApi
 import com.ruidoespontaneo.cassette.facts.domain.model.AlbumFacts
+import com.ruidoespontaneo.cassette.facts.domain.model.ReleaseStory
 import com.ruidoespontaneo.cassette.facts.domain.usecase.GetAlbumFactsUseCase
+import com.ruidoespontaneo.cassette.facts.domain.usecase.GetReleaseStoryUseCase
 import com.ruidoespontaneo.cassette.itunes.data.ItunesRepositoryImpl
 import com.ruidoespontaneo.cassette.itunes.data.api.KtorItunesApi
 import com.ruidoespontaneo.cassette.itunes.domain.usecase.GetTrackPreviewsUseCase
@@ -128,6 +130,14 @@ class CassetteSdk(appVersion: String, sessionStore: AuthSessionStore) {
      */
     @Throws(Exception::class)
     suspend fun albumFacts(album: AlbumDetail, language: String): AlbumFacts? = getAlbumFacts(album, language).getOrThrow()
+
+    private val getReleaseStory = GetReleaseStoryUseCase()
+
+    /**
+     * See [GetReleaseStoryUseCase]: which sentence tells how [album] came out, given its [facts]
+     * (`null` when Wikidata knows nothing), or `null` when there's nothing to tell.
+     */
+    fun releaseStory(album: AlbumDetail, facts: AlbumFacts?): ReleaseStory? = getReleaseStory(album, facts)
 
     /** Who's signed in right now, or `null`. */
     val currentUser: AuthUser? get() = authRepository.currentUser.value
