@@ -2,6 +2,7 @@ package com.ruidoespontaneo.cassette.albumdetail.presentation
 
 import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -66,6 +67,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.pluralStringResource
@@ -91,6 +93,7 @@ import com.ruidoespontaneo.cassette.cover.components.waveformColors
 import com.ruidoespontaneo.cassette.cover.components.wavyPillBackground
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import com.ruidoespontaneo.cassette.facts.domain.model.AlbumFacts
+import com.ruidoespontaneo.cassette.facts.domain.model.ReleaseStory
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.StreamingLinks
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
@@ -207,6 +210,7 @@ private fun AlbumDetailScreenContent(
                     waveColors = dominantColors,
                     onCoverLoaded = { coverBitmap = it },
                     facts = state.facts,
+                    releaseStory = state.releaseStory,
                     hazeState = hazeState,
                     modifier = Modifier
                         .fillMaxSize()
@@ -247,6 +251,8 @@ private fun AlbumDetailContent(
     onCoverLoaded: (Bitmap) -> Unit,
     /** Shown in a card after the tracklist when there are any. */
     facts: AlbumFacts?,
+    /** Shown under the artist, in place of the type and year, once the facts have loaded. */
+    releaseStory: ReleaseStory?,
     /** The background's, so the facts card can frost it. */
     hazeState: HazeState,
     modifier: Modifier = Modifier
@@ -326,7 +332,7 @@ private fun AlbumDetailContent(
                 modifier = Modifier.padding(top = Spacing.small)
             )
         }
-        AlbumTypeAndYear(album, modifier = Modifier.padding(top = Spacing.medium))
+        ReleaseStoryLine(story = releaseStory, modifier = Modifier.padding(top = Spacing.medium))
         if (album.genres.isNotEmpty()) {
             Text(
                 text = stringResource(R.string.genres_format, album.genres.joinToString()),
@@ -676,12 +682,13 @@ private fun StreamingLinksRow(streamingLinks: StreamingLinks, modifier: Modifier
     }
 }
 
+/** How the album came out, in a sentence. Fades in once the facts it's told from have loaded. */
 @Composable
-private fun AlbumTypeAndYear(album: AlbumDetail, modifier: Modifier = Modifier) {
-    val year = album.firstReleaseDate?.year
-    val text = listOfNotNull(album.primaryType, year?.toString()).joinToString(separator = " · ")
-    if (text.isNotEmpty()) {
-        Text(text = text, style = MaterialTheme.typography.bodyMedium, modifier = modifier)
+private fun ReleaseStoryLine(story: ReleaseStory?, modifier: Modifier = Modifier) {
+    val resources = LocalResources.current
+    val effects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+    AnimatedVisibility(visible = story != null, enter = fadeIn(effects), modifier = modifier) {
+        story?.let { Text(text = it.text(resources), style = MaterialTheme.typography.bodyMedium) }
     }
 }
 

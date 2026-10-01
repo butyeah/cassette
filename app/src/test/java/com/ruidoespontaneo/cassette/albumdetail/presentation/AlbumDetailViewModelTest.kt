@@ -4,6 +4,8 @@ import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.facts.domain.AlbumFactsRepository
 import com.ruidoespontaneo.cassette.facts.domain.model.AlbumFacts
 import com.ruidoespontaneo.cassette.facts.domain.usecase.GetAlbumFactsUseCase
+import com.ruidoespontaneo.cassette.facts.domain.usecase.GetReleaseStoryUseCase
+import com.ruidoespontaneo.cassette.facts.domain.model.ReleaseStory
 import com.ruidoespontaneo.cassette.albumdetail.preview.FakePreviewPlayer
 import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewPlayback
 import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewQueue
@@ -307,6 +309,7 @@ class AlbumDetailViewModelTest {
             GetAlbumDetailUseCase(repository, albumTracksRepository),
             GetTrackPreviewsUseCase(itunesRepository),
             GetAlbumFactsUseCase(factsRepository),
+            GetReleaseStoryUseCase(),
             player,
             queue
         )
@@ -336,6 +339,29 @@ class AlbumDetailViewModelTest {
         assertEquals(album, viewModel.state.value.album)
         assertNull(viewModel.state.value.facts)
         assertNull(viewModel.state.value.errorRes)
+    }
+
+    @Test
+    fun `the release story waits for the facts, then is told from them`() {
+        val gate = CompletableDeferred<Unit>()
+        val facts = AlbumFacts(labels = listOf("Parlophone"), producers = listOf("Nigel Godrich"))
+        val viewModel = viewModel("album-1", getFacts = { _, _ -> gate.await(); Result.success(facts) })
+
+        dispatcher.scheduler.advanceUntilIdle()
+        assertNull(viewModel.state.value.releaseStory)
+
+        gate.complete(Unit)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(ReleaseStory.Phrase.LabelAndProducer, viewModel.state.value.releaseStory?.phrase)
+    }
+
+    @Test
+    fun `failed facts still tell the release story from the date`() {
+        val viewModel = viewModel("album-1", getFacts = { _, _ -> Result.failure(IllegalStateException("offline")) })
+
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(ReleaseStory.Phrase.DateOnly, viewModel.state.value.releaseStory?.phrase)
     }
 
     // Autoplay itself is PreviewQueueTest's; here the queue only needs to reach the player.

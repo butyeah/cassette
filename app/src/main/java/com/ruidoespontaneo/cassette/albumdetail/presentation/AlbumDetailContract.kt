@@ -5,6 +5,7 @@ import com.ruidoespontaneo.cassette.core.mvi.UiEffect
 import com.ruidoespontaneo.cassette.core.mvi.UiIntent
 import com.ruidoespontaneo.cassette.core.mvi.UiState
 import com.ruidoespontaneo.cassette.facts.domain.model.AlbumFacts
+import com.ruidoespontaneo.cassette.facts.domain.model.ReleaseStory
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 
 data class AlbumDetailUiState(
@@ -24,7 +25,13 @@ data class AlbumDetailUiState(
      * after [album] and never blocking it; stays `null` when there's nothing to show or the lookup
      * failed, and the card is then left out.
      */
-    val facts: AlbumFacts? = null
+    val facts: AlbumFacts? = null,
+    /**
+     * The sentence telling how the album came out. Set once the facts lookup has finished, found
+     * something or not, so it shows once in its final wording instead of changing when the facts
+     * arrive. `null` until then, and when the album has no precise release date.
+     */
+    val releaseStory: ReleaseStory? = null
 ) : UiState
 
 /** [remainingMs] is `null` until the clip's duration is known (always while it's still buffering). */

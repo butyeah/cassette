@@ -64,6 +64,15 @@
     <string name="facts_read_on_wikipedia">Read more on Wikipedia</string>
     <string name="facts_credit_wikipedia">Summary from Wikipedia</string>
     <string name="facts_credit_both">Facts from Wikidata · Summary from Wikipedia</string>
+    <string name="release_story_label_and_producer">On %1$s, %2$s released this album, produced by %3$s.</string>
+    <string name="release_story_label_self_produced">This record was self-produced by %4$s and released on %1$s on the %2$s label.</string>
+    <string name="release_story_label_and_producers">On %1$s, this record came out, bringing together %3$s on production for %2$s.</string>
+    <string name="release_story_label_only">On %1$s, %2$s released this record.</string>
+    <string name="release_story_producer">This record came out on %1$s, produced by %3$s.</string>
+    <string name="release_story_self_produced">On %1$s, a record self-produced by %3$s premieres.</string>
+    <string name="release_story_producers">On %1$s, a record produced by %3$s premieres.</string>
+    <string name="release_story_date_only">On %1$s, this record was released to the world.</string>
+    <string name="list_and">%1$s and %2$s</string>
     <string name="login_title">Welcome to Cassette</string>
     <string name="login_subtitle">Sign in to keep your reminders and preferences with you.</string>
     <string name="continue_with_google">Continue with Google</string>

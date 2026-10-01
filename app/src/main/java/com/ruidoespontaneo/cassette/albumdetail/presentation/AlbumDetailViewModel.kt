@@ -7,6 +7,7 @@ import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewPlayer
 import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewQueue
 import com.ruidoespontaneo.cassette.core.mvi.MviViewModel
 import com.ruidoespontaneo.cassette.facts.domain.usecase.GetAlbumFactsUseCase
+import com.ruidoespontaneo.cassette.facts.domain.usecase.GetReleaseStoryUseCase
 import com.ruidoespontaneo.cassette.itunes.domain.usecase.GetTrackPreviewsUseCase
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.usecase.GetAlbumDetailUseCase
@@ -42,6 +43,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
     private val getAlbumDetailUseCase: GetAlbumDetailUseCase,
     private val getTrackPreviewsUseCase: GetTrackPreviewsUseCase,
     private val getAlbumFactsUseCase: GetAlbumFactsUseCase,
+    private val getReleaseStoryUseCase: GetReleaseStoryUseCase,
     private val previewPlayer: PreviewPlayer,
     private val previewQueue: PreviewQueue
 ) : MviViewModel<AlbumDetailUiState, AlbumDetailIntent, AlbumDetailEffect>(
@@ -92,10 +94,12 @@ class AlbumDetailViewModel @AssistedInject constructor(
         }
     }
 
-    // Independent in the same way: no facts just means no card.
+    // Independent in the same way: no facts just means no card, and a release story told from the
+    // date alone.
     private fun loadFacts(album: AlbumDetail) {
         viewModelScope.launch {
-            getAlbumFactsUseCase(album, Locale.getDefault().language).onSuccess { facts -> setState { copy(facts = facts) } }
+            val facts = getAlbumFactsUseCase(album, Locale.getDefault().language).getOrNull()
+            setState { copy(facts = facts, releaseStory = getReleaseStoryUseCase(album, facts)) }
         }
     }
 
