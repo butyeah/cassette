@@ -45,9 +45,6 @@ fun albumDetailRoute(month: Int, day: Int, albumId: String) = "albumDetail/$mont
 @Composable
 fun CassetteApp() {
     val navController = rememberNavController()
-    // Hoisted here because the button that opens it lives in the floating toolbar, outside the
-    // Daily screen that shows it.
-    var isCalendarOpen by rememberSaveable { mutableStateOf(false) }
     // Activity-scoped: playback outlives every screen, so what's playing is tracked at the top.
     val nowPlayingViewModel: NowPlayingViewModel = hiltViewModel()
     val nowPlayingState by nowPlayingViewModel.state.collectAsStateWithLifecycle()
@@ -64,9 +61,7 @@ fun CassetteApp() {
                     OneDayLikeTodayScreen(
                         onAlbumClick = { day, albumId ->
                             navController.navigate(albumDetailRoute(day.monthValue, day.dayOfMonth, albumId))
-                        },
-                        isCalendarOpen = isCalendarOpen,
-                        onCalendarDismiss = { isCalendarOpen = false }
+                        }
                     )
                 }
                 composable(
@@ -99,7 +94,6 @@ fun CassetteApp() {
             }
             CassetteFloatingToolbar(
                 navController = navController,
-                onCalendarClick = { isCalendarOpen = true },
                 nowPlaying = nowPlayingState.nowPlaying,
                 showNowPlaying = nowPlayingState.isActive,
                 onNowPlayingClick = { isNowPlayingOpen = true },
