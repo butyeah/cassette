@@ -31,6 +31,8 @@ extension Color {
     static let palettePrimary = Color(light: Palette.light[0], dark: Palette.dark[0])
     static let paletteSecondary = Color(light: Palette.light[1], dark: Palette.dark[1])
     static let paletteTertiary = Color(light: Palette.light[2], dark: Palette.dark[2])
+    /// Material's baseline surfaceVariant, which Android falls back to: a quiet fill for chips.
+    static let surfaceVariant = Color(light: 0xE7E0EC, dark: 0x49454F)
 
     /// `0xRRGGBB` in light mode and `dark` in dark mode.
     init(light: UInt32, dark: UInt32) {

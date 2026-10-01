@@ -178,7 +178,7 @@ private struct YearGrid: View {
     var body: some View {
         let expandedIndex = group.albums.firstIndex { $0.id == expandedAlbumId }
         VStack(alignment: .leading, spacing: 8) {
-            Text(String(group.year)).font(.pixel(20, weight: .medium))
+            YearLabel(year: group.year)
             MosaicLayout(cells: mosaicCells(count: group.albums.count, expandedIndex: expandedIndex)) {
                 ForEach(group.albums, id: \.id) { album in
                     CoverTile(
@@ -190,6 +190,20 @@ private struct YearGrid: View {
                 }
             }
         }
+    }
+}
+
+/// A release year as a heading on a small rounded chip, in Handjet as on Android.
+private struct YearLabel: View {
+    let year: Int32
+
+    var body: some View {
+        Text(String(year))
+            .font(.handjet(20))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color.surfaceVariant, in: RoundedRectangle(cornerRadius: 4))
+            .accessibilityAddTraits(.isHeader)
     }
 }
 
@@ -243,7 +257,7 @@ private struct YearCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(String(group.year)).font(.pixel(20, weight: .medium))
+            YearLabel(year: group.year)
             ForEach(group.albums, id: \.id) { album in
                 NavigationLink(value: AlbumRoute(albumIds: albumIds, albumId: album.id)) {
                     HStack(spacing: 14) {
