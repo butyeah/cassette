@@ -62,33 +62,39 @@ private struct AlbumContent: View {
                     Text(album.artistName).font(.pixel(17, weight: .medium))
                 }
 
-                // A player-style display panel beside the cover, as on Android.
-                HStack(spacing: 12) {
-                    PreviewDisplay(album: album, activePosition: activePosition, dominant: dominant)
-                    CoverImage(url: album.coverURL) { image in
-                        guard dominant == nil, let cgImage = image.cgImage else { return }
-                        Task { dominant = await dominantColors(in: cgImage) }
+                // A player-style display panel beside the cover, as on Android, with how the album
+                // came out along the bottom.
+                VStack(spacing: 0) {
+                    HStack(spacing: 12) {
+                        PreviewDisplay(album: album, activePosition: activePosition, dominant: dominant)
+                        CoverImage(url: album.coverURL) { image in
+                            guard dominant == nil, let cgImage = image.cgImage else { return }
+                            Task { dominant = await dominantColors(in: cgImage) }
+                        }
+                        .frame(width: Self.coverSize)
+                        .accessibilityLabel("\(album.title) by \(album.artistName)")
                     }
-                    .frame(width: Self.coverSize)
-                    .accessibilityLabel("\(album.title) by \(album.artistName)")
-                }
-                .frame(height: Self.coverSize)
-                .background(.black, in: RoundedRectangle(cornerRadius: 8))
-
-                VStack(alignment: .leading, spacing: 4) {
-                    // In place of the type and year, centred, as on Android: fades in once the facts
-                    // it's told from have loaded.
+                    .frame(height: Self.coverSize)
+                    // Fades in once the facts it's told from have loaded, in the display's colour
+                    // since it sits on the player's black.
                     if let releaseStory {
-                        Text(releaseStory.text).font(.handjet(20)).foregroundStyle(.secondary)
+                        Text(releaseStory.text).font(.handjet(20))
+                            .foregroundStyle(displayTextColor(dominant: dominant, background: .black).color)
                             .multilineTextAlignment(.center)
                             .frame(maxWidth: .infinity)
+                            .padding(12)
                             .transition(.opacity)
                     }
+                }
+                .background(.black, in: RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .animation(.easeInOut(duration: 0.4), value: releaseStory)
+
+                VStack(alignment: .leading, spacing: 4) {
                     ForEach([album.genresText, album.ratingText].compactMap { $0 }, id: \.self) {
                         Text($0).font(.handjet(20)).foregroundStyle(.secondary)
                     }
                 }
-                .animation(.easeInOut(duration: 0.4), value: releaseStory)
 
                 let links = album.streamingLinks.displayList
                 if !links.isEmpty {
