@@ -6,13 +6,22 @@ import SwiftUI
 ///
 /// `colors` overrides the three blobs' colours, most dominant first (an album's own cover
 /// colours, say). Left `nil`, or shorter than three, falls back to the palette per missing slot, so
-/// a partial list is never wrong, just less colourful.
+/// a partial list is never wrong, just less colourful. Changing them cross-fades the blobs to the
+/// new colours over `colorFadeDuration`, as Android's `animateColorAsState` does.
 ///
-/// Holds still when Reduce Motion is on.
+/// Holds still, and swaps colours at once, when Reduce Motion is on.
 struct AnimatedGradientBackground: View {
     var colors: [Color]?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// The colours being faded away from, and when that started; `nil` once there's nothing to fade.
+    @State private var fade: Fade?
+
+    private struct Fade {
+        let from: [Color]?
+        let start: Date
+    }
 
     private struct Blob {
         /// Where the orbit is centred, as a fraction of the size.
@@ -33,14 +42,22 @@ struct AnimatedGradientBackground: View {
     private static let blobRadiusFraction: CGFloat = 0.6
     private static let blobAlpha = 0.75
     private static let blurRadius: CGFloat = 50
+    private static let colorFadeDuration: TimeInterval = 1.5
 
     var body: some View {
         TimelineView(.animation(paused: reduceMotion)) { timeline in
             let time = timeline.date.timeIntervalSinceReferenceDate
+            let progress = fadeProgress(at: timeline.date)
             Canvas { context, size in
-                drawBlobs(in: context, size: size, time: time)
+                if progress < 1 {
+                    drawBlobs(in: context, size: size, time: time, colors: fade?.from, opacity: 1 - progress)
+                }
+                drawBlobs(in: context, size: size, time: time, colors: colors, opacity: progress)
             }
             .blur(radius: Self.blurRadius)
+        }
+        .onChange(of: colors) { old, _ in
+            fade = reduceMotion ? nil : Fade(from: old, start: .now)
         }
         .ignoresSafeArea()
         .accessibilityHidden(true)
@@ -48,7 +65,16 @@ struct AnimatedGradientBackground: View {
 
     // Kept out of the Canvas closure, with explicit types throughout: inline, this arithmetic is
     // more than Swift's type checker will finish in time for a device build.
-    private func drawBlobs(in context: GraphicsContext, size: CGSize, time: Double) {
+    /// How far the current colour fade has got at `date`, from 0 to 1, eased in and out (smoothstep).
+    /// 1 when nothing is fading.
+    private func fadeProgress(at date: Date) -> Double {
+        guard let fade else { return 1 }
+        let linear: Double = min(max(date.timeIntervalSince(fade.start) / Self.colorFadeDuration, 0), 1)
+        return linear * linear * (3 - 2 * linear)
+    }
+
+    /// The blobs in `colors` (the palette per missing slot), at `opacity` on top of their own alpha.
+    private func drawBlobs(in context: GraphicsContext, size: CGSize, time: Double, colors: [Color]?, opacity: Double) {
         let radius: CGFloat = min(size.width, size.height) * Self.blobRadiusFraction
         for (index, blob) in Self.blobs.enumerated() {
             let angle: Double = time.truncatingRemainder(dividingBy: blob.period) / blob.period * 2 * Double.pi
@@ -57,7 +83,7 @@ struct AnimatedGradientBackground: View {
             let center = CGPoint(x: size.width * blob.anchor.x + swingX, y: size.height * blob.anchor.y + swingY)
             let bounds = CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2)
             let color: Color = colors?[safe: index] ?? Self.paletteColors[index]
-            let gradient = Gradient(colors: [color.opacity(Self.blobAlpha), color.opacity(0)])
+            let gradient = Gradient(colors: [color.opacity(Self.blobAlpha * opacity), color.opacity(0)])
             context.fill(
                 Path(ellipseIn: bounds),
                 with: .radialGradient(gradient, center: center, startRadius: 0, endRadius: radius)
