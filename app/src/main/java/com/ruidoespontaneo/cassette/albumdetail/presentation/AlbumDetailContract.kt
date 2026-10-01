@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import com.ruidoespontaneo.cassette.core.mvi.UiEffect
 import com.ruidoespontaneo.cassette.core.mvi.UiIntent
 import com.ruidoespontaneo.cassette.core.mvi.UiState
+import com.ruidoespontaneo.cassette.facts.domain.model.AlbumFacts
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 
 data class AlbumDetailUiState(
@@ -17,7 +18,13 @@ data class AlbumDetailUiState(
      */
     val previews: Map<Int, String> = emptyMap(),
     /** The track of this album whose preview is buffering or playing, if any. */
-    val previewPlayback: TrackPlayback? = null
+    val previewPlayback: TrackPlayback? = null,
+    /**
+     * What Wikidata knows about the album, for the "About this album" card. Like [previews], loaded
+     * after [album] and never blocking it; stays `null` when there's nothing to show or the lookup
+     * failed, and the card is then left out.
+     */
+    val facts: AlbumFacts? = null
 ) : UiState
 
 /** [remainingMs] is `null` until the clip's duration is known (always while it's still buffering). */

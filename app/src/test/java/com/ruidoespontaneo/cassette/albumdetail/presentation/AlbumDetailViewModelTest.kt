@@ -1,6 +1,9 @@
 package com.ruidoespontaneo.cassette.albumdetail.presentation
 
 import com.ruidoespontaneo.cassette.R
+import com.ruidoespontaneo.cassette.facts.domain.AlbumFactsRepository
+import com.ruidoespontaneo.cassette.facts.domain.model.AlbumFacts
+import com.ruidoespontaneo.cassette.facts.domain.usecase.GetAlbumFactsUseCase
 import com.ruidoespontaneo.cassette.albumdetail.preview.FakePreviewPlayer
 import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewPlayback
 import com.ruidoespontaneo.cassette.albumdetail.preview.PreviewQueue
@@ -268,6 +271,8 @@ class AlbumDetailViewModelTest {
         dayAlbumIds: List<String> = listOf(albumId),
         getPreviews: suspend (AlbumDetail) -> Result<List<TrackPreview>> = { Result.success(previewsFor(it)) },
         album: AlbumDetail = this.album,
+        getFacts: suspend (releaseGroupId: String, language: String) -> Result<AlbumFacts?> = { _, _ -> Result.success(null) },
+        // Last, so tests can pass it as a trailing lambda.
         getAlbumDetail: suspend (id: String) -> Result<AlbumDetail> = { Result.success(album) }
     ): AlbumDetailViewModel {
         val repository = object : MusicBrainzRepository {
@@ -293,14 +298,44 @@ class AlbumDetailViewModelTest {
         val itunesRepository = object : ItunesRepository {
             override suspend fun getPreviews(album: AlbumDetail): Result<List<TrackPreview>> = getPreviews(album)
         }
+        val factsRepository = object : AlbumFactsRepository {
+            override suspend fun getAlbumFacts(releaseGroupId: String, language: String) = getFacts(releaseGroupId, language)
+        }
         return AlbumDetailViewModel(
             albumId,
             dayAlbumIds,
             GetAlbumDetailUseCase(repository, albumTracksRepository),
             GetTrackPreviewsUseCase(itunesRepository),
+            GetAlbumFactsUseCase(factsRepository),
             player,
             queue
         )
+    }
+
+    @Test
+    fun `loads the album's facts after it, by its id`() {
+        val facts = AlbumFacts(producers = listOf("Nigel Godrich"))
+        var requestedId: String? = null
+        val viewModel = viewModel("album-1", getFacts = { id, _ ->
+            requestedId = id
+            Result.success(facts)
+        })
+
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(facts, viewModel.state.value.facts)
+        assertEquals("album-1", requestedId)
+    }
+
+    @Test
+    fun `failed facts leave the album on screen and the card out`() {
+        val viewModel = viewModel("album-1", getFacts = { _, _ -> Result.failure(IllegalStateException("offline")) })
+
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(album, viewModel.state.value.album)
+        assertNull(viewModel.state.value.facts)
+        assertNull(viewModel.state.value.errorRes)
     }
 
     // Autoplay itself is PreviewQueueTest's; here the queue only needs to reach the player.

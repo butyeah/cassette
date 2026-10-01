@@ -53,6 +53,14 @@
     <string name="lyrics_instrumental">Instrumental</string>
     <string name="lyrics_failed">Couldn\'t load the lyrics</string>
     <string name="lyrics_credit">Lyrics from LRCLIB</string>
+    <string name="about_album_title">About this album</string>
+    <string name="facts_produced_by">Produced by</string>
+    <string name="facts_recorded_at">Recorded at</string>
+    <string name="facts_cover_art_by">Cover art by</string>
+    <string name="facts_label">Label</string>
+    <string name="facts_awards">Awards</string>
+    <string name="facts_nominations">Nominations</string>
+    <string name="facts_credit">Facts from Wikidata</string>
     <string name="login_title">Welcome to Cassette</string>
     <string name="login_subtitle">Sign in to keep your reminders and preferences with you.</string>
     <string name="continue_with_google">Continue with Google</string>
