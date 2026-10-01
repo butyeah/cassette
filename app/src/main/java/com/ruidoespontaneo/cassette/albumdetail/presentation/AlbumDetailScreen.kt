@@ -74,6 +74,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -267,7 +268,11 @@ private fun AlbumDetailContent(
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(top = Spacing.medium)
         )
-        Text(text = album.artistName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = Spacing.medium))
+        Text(
+            text = album.artistName,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = Spacing.medium)
+        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -362,7 +367,11 @@ private fun AlbumDetailContent(
             )
         }
         if (facts != null) {
-            AboutAlbumCard(facts = facts, hazeState = hazeState, modifier = Modifier.padding(top = Spacing.large))
+            AboutAlbumCard(
+                facts = facts,
+                hazeState = hazeState,
+                modifier = Modifier.padding(top = Spacing.large)
+            )
         }
     }
 }
@@ -466,7 +475,8 @@ private fun Tracklist(
         animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
         label = "highlightContainer"
     )
-    val highlightContent = highlightColors?.content ?: MaterialTheme.colorScheme.onSecondaryContainer
+    val highlightContent =
+        highlightColors?.content ?: MaterialTheme.colorScheme.onSecondaryContainer
     // Where each row sits inside the Box below, so one shared indicator can travel between them.
     val rowBounds = remember { mutableStateMapOf<Int, RowBounds>() }
     Column(modifier = modifier) {
@@ -682,13 +692,23 @@ private fun StreamingLinksRow(streamingLinks: StreamingLinks, modifier: Modifier
     }
 }
 
-/** How the album came out, in a sentence. Fades in once the facts it's told from have loaded. */
+/**
+ * How the album came out, in a sentence, centred, with the date and names in bold. Fades in once
+ * the facts it's told from have loaded.
+ */
 @Composable
 private fun ReleaseStoryLine(story: ReleaseStory?, modifier: Modifier = Modifier) {
     val resources = LocalResources.current
     val effects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
-    AnimatedVisibility(visible = story != null, enter = fadeIn(effects), modifier = modifier) {
-        story?.let { Text(text = it.text(resources), style = MaterialTheme.typography.bodyMedium) }
+    AnimatedVisibility(visible = story != null, enter = fadeIn(effects), modifier = modifier.fillMaxWidth()) {
+        story?.let {
+            Text(
+                text = it.text(resources),
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 
