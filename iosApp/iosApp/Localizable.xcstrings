@@ -83,6 +83,26 @@
     "%d. %@" : {
       "shouldTranslate" : false
     },
+    "About this album" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sobre este álbum"
+          }
+        }
+      }
+    },
+    "Awards" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premios"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "localizations" : {
         "es" : {
@@ -149,6 +169,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No se pudo cargar este álbum."
+          }
+        }
+      }
+    },
+    "Cover art by" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Portada de"
           }
         }
       }
@@ -273,6 +303,16 @@
         }
       }
     },
+    "Facts from Wikidata" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datos de Wikidata"
+          }
+        }
+      }
+    },
     "Follows your phone's language" : {
       "localizations" : {
         "es" : {
@@ -329,6 +369,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instrumental"
+          }
+        }
+      }
+    },
+    "Label" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sello"
           }
         }
       }
@@ -433,6 +483,16 @@
         }
       }
     },
+    "Nominations" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nominaciones"
+          }
+        }
+      }
+    },
     "Notifications" : {
       "localizations" : {
         "es" : {
@@ -533,12 +593,32 @@
         }
       }
     },
+    "Produced by" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Producido por"
+          }
+        }
+      }
+    },
     "Profile" : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Perfil"
+          }
+        }
+      }
+    },
+    "Recorded at" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grabado en"
           }
         }
       }

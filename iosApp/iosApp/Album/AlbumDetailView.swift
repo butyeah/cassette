@@ -16,7 +16,7 @@ struct AlbumDetailView: View {
     var body: some View {
         Group {
             if let album = model.album {
-                AlbumContent(album: album, previews: model.previews, dayAlbumIds: dayAlbumIds)
+                AlbumContent(album: album, previews: model.previews, facts: model.facts, dayAlbumIds: dayAlbumIds)
             } else if model.failed {
                 VStack(spacing: 16) {
                     Text("Couldn't load this album.").font(.handjet(22))
@@ -37,6 +37,7 @@ struct AlbumDetailView: View {
 private struct AlbumContent: View {
     let album: AlbumDetail
     let previews: [Int: String]
+    let facts: AlbumFacts?
     let dayAlbumIds: [String]
 
     @Environment(PreviewPlayer.self) private var player
@@ -115,6 +116,11 @@ private struct AlbumContent: View {
                             }
                         }
                     }
+                }
+
+                if let facts {
+                    AboutAlbumCard(facts: facts)
+                        .padding(.top, 8)
                 }
             }
             .padding(16)
