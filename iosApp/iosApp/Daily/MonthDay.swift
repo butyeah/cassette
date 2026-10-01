@@ -38,4 +38,9 @@ struct MonthDay: Hashable {
         formatter.setLocalizedDateFormatFromTemplate("MMMMd")
         return formatter.string(from: date())
     }
+
+    /// `formatted` in capitals, for the Daily header: "JUNE 17", "17 DE JUNIO".
+    var formattedUppercase: String {
+        formatted.uppercased(with: .current)
+    }
 }

@@ -25,43 +25,32 @@ struct DailyView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            content
-                .background { AnimatedGradientBackground() }
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .principal) {
-                        Button { isPickingDay = true } label: {
-                            Text(model.day.formatted).font(.pixel(24, weight: .semibold))
-                        }
-                        .foregroundStyle(.primary)
-                        .accessibilityHint("Choose another day")
-                    }
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button { isPickingDay = true } label: {
-                            Image(systemName: "calendar")
-                        }
-                        .accessibilityLabel("Choose another day")
-                    }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button { model.toggleLayout() } label: {
-                            Image(systemName: model.layout == .grid ? "list.bullet" : "square.grid.2x2")
-                        }
-                        .accessibilityLabel(model.layout == .grid ? Text("Show as list") : Text("Show as grid"))
-                    }
+            VStack(spacing: 0) {
+                DayHeader(
+                    day: model.day,
+                    layout: model.layout,
+                    onDayTap: { isPickingDay = true },
+                    onToggleLayout: { model.toggleLayout() }
+                )
+                content
+            }
+            .background { AnimatedGradientBackground() }
+            // The header above stands in for the navigation bar, as on Android, so it isn't
+            // turned into toolbar glass. Pushed album screens keep their own bar.
+            .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(for: AlbumRoute.self) { route in
+                AlbumPagerView(sdk: sdk, albumIds: route.albumIds, initialAlbumId: route.albumId)
+            }
+            .sheet(isPresented: $isPickingDay) {
+                DayPickerSheet(day: model.day) { day in
+                    Task { await model.select(day) }
                 }
-                .navigationDestination(for: AlbumRoute.self) { route in
-                    AlbumPagerView(sdk: sdk, albumIds: route.albumIds, initialAlbumId: route.albumId)
-                }
-                .sheet(isPresented: $isPickingDay) {
-                    DayPickerSheet(day: model.day) { day in
-                        Task { await model.select(day) }
-                    }
-                }
-                .task { await model.loadIfNeeded() }
-                .onChange(of: reminder.openTodayRequests) {
-                    path = NavigationPath()
-                    Task { await model.select(.today()) }
-                }
+            }
+            .task { await model.loadIfNeeded() }
+            .onChange(of: reminder.openTodayRequests) {
+                path = NavigationPath()
+                Task { await model.select(.today()) }
+            }
         }
     }
 
@@ -103,6 +92,49 @@ struct DailyView: View {
                 .padding(16)
             }
         }
+    }
+}
+
+/// The day as an outlined button that opens the day picker, with the list/grid toggle to its right.
+private struct DayHeader: View {
+    let day: MonthDay
+    let layout: DailyViewModel.Layout
+    let onDayTap: () -> Void
+    let onToggleLayout: () -> Void
+
+    /// The toggle's width, also left empty on the other side so the day stays centred.
+    private static let toggleWidth: CGFloat = 44
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Color.clear.frame(width: Self.toggleWidth, height: 1)
+            Button(action: onDayTap) {
+                HStack(spacing: 8) {
+                    Image(systemName: "calendar")
+                    Text(day.formattedUppercase)
+                        .font(.pixel(22, weight: .bold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Image(systemName: "chevron.down").font(.body.weight(.semibold))
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity)
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(.primary, lineWidth: 2))
+                .contentShape(RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Choose another day")
+            Button(action: onToggleLayout) {
+                Image(systemName: layout == .grid ? "list.bullet" : "square.grid.2x2")
+                    .font(.title3)
+                    .frame(width: Self.toggleWidth, height: Self.toggleWidth)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(layout == .grid ? Text("Show as list") : Text("Show as grid"))
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
     }
 }
 
