@@ -7,7 +7,11 @@ import androidx.compose.animation.animateBounds
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import android.graphics.Bitmap
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
+import coil3.toBitmap
+import com.ruidoespontaneo.cassette.cover.components.dominantColors
 import androidx.compose.foundation.border
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -118,8 +122,26 @@ private fun OneDayLikeTodayScreenContent(
     val hazeState = rememberHazeState()
     var isCalendarOpen by rememberSaveable { mutableStateOf(initialCalendarOpen) }
     val onCalendarDismiss = { isCalendarOpen = false }
-    Box(modifier = modifier.fillMaxSize()) {
-        AnimatedGradientBackground(Modifier.matchParentSize().hazeSource(hazeState))
+    // Which grid cover is expanded is plain UI state, reset whenever the day changes. Its cover's
+    // dominant colors tint the background; nothing expanded (or the list) keeps the theme's.
+    var expandedAlbumId by rememberSaveable(state.day) { mutableStateOf<String?>(null) }
+    var expandedCover by remember(expandedAlbumId) { mutableStateOf<Bitmap?>(null) }
+    // Not keyed on the album, so switching covers moves from the old colors to the new ones
+    // rather than through the theme's.
+    var expandedCoverColors by remember { mutableStateOf<List<Color>?>(null) }
+    LaunchedEffect(expandedAlbumId, expandedCover) {
+        val cover = expandedCover
+        when {
+            expandedAlbumId == null -> expandedCoverColors = null
+            cover != null -> expandedCoverColors = cover.dominantColors()
+        }
+    }
+    val baseColor = if (isSystemInDarkTheme()) Color.Black else Color.White
+    Box(modifier = modifier.fillMaxSize().background(baseColor)) {
+        AnimatedGradientBackground(
+            Modifier.matchParentSize().hazeSource(hazeState),
+            colors = expandedCoverColors.takeIf { state.layout == AlbumsLayout.Grid }
+        )
         Column(modifier = Modifier.fillMaxSize()) {
             DayHeader(
                 day = state.day,
@@ -138,8 +160,10 @@ private fun OneDayLikeTodayScreenContent(
 
                 state.albumsByYear.isEmpty() -> NoAlbums(Modifier.fillMaxSize())
                 state.layout == AlbumsLayout.Grid -> AlbumsGrid(
-                    day = state.day,
                     groups = state.albumsByYear,
+                    expandedAlbumId = expandedAlbumId,
+                    onExpandedChange = { expandedAlbumId = it },
+                    onExpandedCoverLoaded = { expandedCover = it },
                     onAlbumClick = { albumId -> onAlbumClick(state.day, albumId) },
                     modifier = Modifier.fillMaxSize()
                 )
@@ -351,16 +375,17 @@ private fun AlbumRow(album: Album, onClick: () -> Unit) {
  * as a [CoverMosaic]. Same order as the list, which is also the pager's order.
  *
  * Tapping a cover expands it in place, with its title and artist; tapping the expanded cover opens
- * the album. Which cover is expanded is plain UI state, reset whenever the [day] changes.
+ * the album. [onExpandedCoverLoaded] gets the expanded cover's image once it's loaded.
  */
 @Composable
 private fun AlbumsGrid(
-    day: MonthDay,
     groups: List<AlbumsByYear>,
+    expandedAlbumId: String?,
+    onExpandedChange: (String) -> Unit,
+    onExpandedCoverLoaded: (Bitmap) -> Unit,
     onAlbumClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var expandedAlbumId by rememberSaveable(day) { mutableStateOf<String?>(null) }
     LazyColumn(
         modifier = modifier,
         contentPadding = albumsContentPadding,
@@ -382,8 +407,9 @@ private fun AlbumsGrid(
                     albums = group.albums,
                     expandedAlbumId = expandedAlbumId,
                     onCoverClick = { albumId ->
-                        if (albumId == expandedAlbumId) onAlbumClick(albumId) else expandedAlbumId = albumId
-                    }
+                        if (albumId == expandedAlbumId) onAlbumClick(albumId) else onExpandedChange(albumId)
+                    },
+                    onExpandedCoverLoaded = onExpandedCoverLoaded
                 )
             }
         }
@@ -405,6 +431,7 @@ private fun CoverMosaic(
     albums: List<Album>,
     expandedAlbumId: String?,
     onCoverClick: (String) -> Unit,
+    onExpandedCoverLoaded: (Bitmap) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val expandedIndex = albums.indexOfFirst { it.id == expandedAlbumId }.takeIf { it >= 0 }
@@ -429,6 +456,7 @@ private fun CoverMosaic(
                                 album = album,
                                 expanded = album.id == expandedAlbumId,
                                 onClick = { onCoverClick(album.id) },
+                                onExpandedCoverLoaded = onExpandedCoverLoaded,
                                 modifier = Modifier.animateBounds(this, boundsTransform = boundsTransform)
                             )
                         }
@@ -453,10 +481,26 @@ private fun CoverMosaic(
     }
 }
 
-/** A cover; while [expanded], its title and artist fade in over a scrim along the bottom. */
+/**
+ * A cover; while [expanded], its title and artist fade in over a scrim along the bottom, and its
+ * loaded image goes to [onExpandedCoverLoaded].
+ */
 @Composable
-private fun CoverTile(album: Album, expanded: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun CoverTile(
+    album: Album,
+    expanded: Boolean,
+    onClick: () -> Unit,
+    onExpandedCoverLoaded: (Bitmap) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val effects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+    // Kept rather than reported straight from onSuccess: a cover usually loads long before it's
+    // expanded, and expanding it doesn't load it again.
+    var cover by remember(album.id) { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(expanded, cover) {
+        val loaded = cover
+        if (expanded && loaded != null) onExpandedCoverLoaded(loaded)
+    }
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(Spacing.small))
@@ -469,7 +513,8 @@ private fun CoverTile(album: Album, expanded: Boolean, onClick: () -> Unit, modi
             url = album.coverArtUrl(),
             // The cover is all there is to go on while collapsed, so it names the album.
             contentDescription = stringResource(R.string.album_cover_description, album.title, album.artistName),
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            onSuccess = { cover = it.result.image.toBitmap() }
         )
         AnimatedVisibility(
             visible = expanded,
