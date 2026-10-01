@@ -77,6 +77,7 @@ import com.ruidoespontaneo.cassette.ui.components.CoverArt
 import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.cover.components.AnimatedGradientBackground
 import com.ruidoespontaneo.cassette.cover.components.CoverCard
+import com.ruidoespontaneo.cassette.cover.theme.Handjet
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import com.ruidoespontaneo.cassette.ui.theme.ToolbarSize
 import com.ruidoespontaneo.cassette.dayinhistory.domain.layout.mosaicCells
@@ -341,14 +342,27 @@ private fun YearCard(
     // otherwise paints its own background over the blur.
     CoverCard(hazeState = hazeState, modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(vertical = Spacing.small)) {
-            Text(
-                text = group.year.toString(),
-                style = MaterialTheme.typography.titleMedium,
+            YearLabel(
+                year = group.year,
                 modifier = Modifier.padding(horizontal = Spacing.large, vertical = Spacing.extraSmall)
             )
             group.albums.forEach { album -> AlbumRow(album, onClick = { onAlbumClick(album.id) }) }
         }
     }
+}
+
+/** A release year as a heading, in the dotted Handjet face on a rounded chip. */
+@Composable
+private fun YearLabel(year: Int, modifier: Modifier = Modifier) {
+    Text(
+        text = year.toString(),
+        style = MaterialTheme.typography.headlineSmall.copy(fontFamily = Handjet),
+        modifier = modifier
+            .clip(RoundedCornerShape(Spacing.small))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = Spacing.medium, vertical = Spacing.small)
+            .semantics { heading() }
+    )
 }
 
 @Composable
@@ -393,13 +407,10 @@ private fun AlbumsGrid(
     ) {
         groups.forEachIndexed { index, group ->
             item(key = "year-${group.year}") {
-                Text(
-                    text = group.year.toString(),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier
-                        // Extra room above every year but the first, so each reads as its own group.
-                        .padding(top = if (index == 0) 0.dp else Spacing.medium)
-                        .semantics { heading() }
+                YearLabel(
+                    year = group.year,
+                    // Extra room above every year but the first, so each reads as its own group.
+                    modifier = Modifier.padding(top = if (index == 0) 0.dp else Spacing.medium)
                 )
             }
             item(key = "covers-${group.year}") {
