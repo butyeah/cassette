@@ -252,7 +252,7 @@ private fun AlbumDetailContent(
     onCoverLoaded: (Bitmap) -> Unit,
     /** Shown in a card after the tracklist when there are any. */
     facts: AlbumFacts?,
-    /** Shown under the artist, in place of the type and year, once the facts have loaded. */
+    /** Shown along the bottom of the player, once the facts have loaded. */
     releaseStory: ReleaseStory?,
     /** The background's, so the facts card can frost it. */
     hazeState: HazeState,
@@ -273,62 +273,72 @@ private fun AlbumDetailContent(
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = Spacing.medium)
         )
-        Row(
+        // The player: the display beside the cover, and how the album came out along the bottom.
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(Spacing.small))
-                .background(color = Color.Black),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                .background(color = Color.Black)
         ) {
-            // A player-style display panel beside the cover: track number and remaining time across
-            // the top, the waveform along the bottom.
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(IconSize.albumArtLarge)
-                    .clip(RoundedCornerShape(Spacing.small))
-                    .background(Color.Black),
-                contentAlignment = Alignment.BottomCenter
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
             ) {
-                PreviewDisplayReadout(
-                    playback = previewPlayback,
-                    title = previewTrackTitle(album.tracks, previewPlayback),
-                    color = displayTextColor(dominant = waveColors, background = Color.Black),
+                // A player-style display panel beside the cover: track number and remaining time across
+                // the top, the waveform along the bottom.
+                Box(
                     modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .fillMaxWidth()
-                        .padding(Spacing.medium)
-                )
-                PreviewWaveform(
-                    playing = previewPlayback != null && !previewPlayback.isLoading,
-                    colors = waveformColors(
-                        dominant = waveColors,
-                        fallback = with(MaterialTheme.colorScheme) {
-                            listOf(
-                                primary,
-                                secondary,
-                                tertiary
+                        .weight(1f)
+                        .height(IconSize.albumArtLarge)
+                        .clip(RoundedCornerShape(Spacing.small))
+                        .background(Color.Black),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    PreviewDisplayReadout(
+                        playback = previewPlayback,
+                        title = previewTrackTitle(album.tracks, previewPlayback),
+                        color = displayTextColor(dominant = waveColors, background = Color.Black),
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .fillMaxWidth()
+                            .padding(Spacing.medium)
+                    )
+                    PreviewWaveform(
+                        playing = previewPlayback != null && !previewPlayback.isLoading,
+                        colors = waveformColors(
+                            dominant = waveColors,
+                            fallback = with(MaterialTheme.colorScheme) {
+                                listOf(
+                                    primary,
+                                    secondary,
+                                    tertiary
+                                )
+                            },
+                            background = Color.Black,
+                            count = PREVIEW_WAVEFORM_LINES
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                start = Spacing.medium,
+                                end = Spacing.medium,
+                                bottom = Spacing.medium
                             )
-                        },
-                        background = Color.Black,
-                        count = PREVIEW_WAVEFORM_LINES
-                    ),
+                    )
+                }
+                CoverArt(
+                    url = album.coverArtUrl(),
+                    contentDescription = null, // decorative — title/artist are already read by the screen
+                    onSuccess = { onCoverLoaded(it.result.image.toBitmap()) },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = Spacing.medium,
-                            end = Spacing.medium,
-                            bottom = Spacing.medium
-                        )
+                        .size(IconSize.albumArtLarge)
+                        .clip(RoundedCornerShape(Spacing.small))
                 )
             }
-            CoverArt(
-                url = album.coverArtUrl(),
-                contentDescription = null, // decorative — title/artist are already read by the screen
-                onSuccess = { onCoverLoaded(it.result.image.toBitmap()) },
-                modifier = Modifier
-                    .size(IconSize.albumArtLarge)
-                    .clip(RoundedCornerShape(Spacing.small))
+            ReleaseStoryLine(
+                story = releaseStory,
+                color = displayTextColor(dominant = waveColors, background = Color.Black),
+                modifier = Modifier.padding(Spacing.medium)
             )
         }
         if (album.streamingLinks.hasAny()) {
@@ -337,7 +347,6 @@ private fun AlbumDetailContent(
                 modifier = Modifier.padding(top = Spacing.small)
             )
         }
-        ReleaseStoryLine(story = releaseStory, modifier = Modifier.padding(top = Spacing.medium))
         if (album.genres.isNotEmpty()) {
             Text(
                 text = stringResource(R.string.genres_format, album.genres.joinToString()),
@@ -693,11 +702,12 @@ private fun StreamingLinksRow(streamingLinks: StreamingLinks, modifier: Modifier
 }
 
 /**
- * How the album came out, in a sentence, centred, with the date and names in bold. Fades in once
- * the facts it's told from have loaded.
+ * How the album came out, in a sentence, centred, with the date and names in bold, in [color] (the
+ * display's, since it sits on the player's black). Fades in once the facts it's told from have
+ * loaded.
  */
 @Composable
-private fun ReleaseStoryLine(story: ReleaseStory?, modifier: Modifier = Modifier) {
+private fun ReleaseStoryLine(story: ReleaseStory?, color: Color, modifier: Modifier = Modifier) {
     val resources = LocalResources.current
     val effects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
     AnimatedVisibility(visible = story != null, enter = fadeIn(effects), modifier = modifier.fillMaxWidth()) {
@@ -705,6 +715,7 @@ private fun ReleaseStoryLine(story: ReleaseStory?, modifier: Modifier = Modifier
             Text(
                 text = it.text(resources),
                 style = MaterialTheme.typography.bodyMedium,
+                color = color,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
