@@ -47,6 +47,8 @@ private enum class Phase { Rest, Leaving, Looping, Returning }
  * Everything rolls like a wheel, turning as far as it travels. With animations turned off in the
  * system settings, it switches between still squares and still tiles instead. Decorative: the
  * genres are read out in the line below.
+ *
+ * Not shown for now: the release story sits where it would go, along the bottom of the player.
  */
 @Composable
 fun GenreTileStrip(tiles: List<GenreTile>, playing: Boolean, modifier: Modifier = Modifier) {

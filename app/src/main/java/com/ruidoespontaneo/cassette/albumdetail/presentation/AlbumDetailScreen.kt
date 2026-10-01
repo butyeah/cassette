@@ -95,7 +95,6 @@ import com.ruidoespontaneo.cassette.cover.components.wavyPillBackground
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import com.ruidoespontaneo.cassette.facts.domain.model.AlbumFacts
 import com.ruidoespontaneo.cassette.facts.domain.model.ReleaseStory
-import com.ruidoespontaneo.cassette.musicbrainz.domain.genre.genreTiles
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.StreamingLinks
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
@@ -253,7 +252,7 @@ private fun AlbumDetailContent(
     onCoverLoaded: (Bitmap) -> Unit,
     /** Shown in a card after the tracklist when there are any. */
     facts: AlbumFacts?,
-    /** Shown under the artist, in place of the type and year, once the facts have loaded. */
+    /** Shown along the bottom of the player, once the facts have loaded. */
     releaseStory: ReleaseStory?,
     /** The background's, so the facts card can frost it. */
     hazeState: HazeState,
@@ -274,7 +273,7 @@ private fun AlbumDetailContent(
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = Spacing.medium)
         )
-        // The player: the display beside the cover, and the album's genre tiles along the bottom.
+        // The player: the display beside the cover, and how the album came out along the bottom.
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -336,11 +335,10 @@ private fun AlbumDetailContent(
                         .clip(RoundedCornerShape(Spacing.small))
                 )
             }
-            GenreTileStrip(
-                tiles = remember(album.genres) { genreTiles(album.genres) },
-                // Any clip of this album, buffering or playing, so moving on to the next track
-                // doesn't send the tiles back and out again.
-                playing = previewPlayback != null
+            ReleaseStoryLine(
+                story = releaseStory,
+                color = displayTextColor(dominant = waveColors, background = Color.Black),
+                modifier = Modifier.padding(Spacing.medium)
             )
         }
         if (album.streamingLinks.hasAny()) {
@@ -349,7 +347,6 @@ private fun AlbumDetailContent(
                 modifier = Modifier.padding(top = Spacing.small)
             )
         }
-        ReleaseStoryLine(story = releaseStory, modifier = Modifier.padding(top = Spacing.medium))
         if (album.genres.isNotEmpty()) {
             Text(
                 text = stringResource(R.string.genres_format, album.genres.joinToString()),
@@ -705,11 +702,12 @@ private fun StreamingLinksRow(streamingLinks: StreamingLinks, modifier: Modifier
 }
 
 /**
- * How the album came out, in a sentence, centred, with the date and names in bold. Fades in once
- * the facts it's told from have loaded.
+ * How the album came out, in a sentence, centred, with the date and names in bold, in [color] (the
+ * display's, since it sits on the player's black). Fades in once the facts it's told from have
+ * loaded.
  */
 @Composable
-private fun ReleaseStoryLine(story: ReleaseStory?, modifier: Modifier = Modifier) {
+private fun ReleaseStoryLine(story: ReleaseStory?, color: Color, modifier: Modifier = Modifier) {
     val resources = LocalResources.current
     val effects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
     AnimatedVisibility(visible = story != null, enter = fadeIn(effects), modifier = modifier.fillMaxWidth()) {
@@ -717,6 +715,7 @@ private fun ReleaseStoryLine(story: ReleaseStory?, modifier: Modifier = Modifier
             Text(
                 text = it.text(resources),
                 style = MaterialTheme.typography.bodyMedium,
+                color = color,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
