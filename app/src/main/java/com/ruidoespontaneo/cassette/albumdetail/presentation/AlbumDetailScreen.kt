@@ -95,6 +95,7 @@ import com.ruidoespontaneo.cassette.cover.components.wavyPillBackground
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import com.ruidoespontaneo.cassette.facts.domain.model.AlbumFacts
 import com.ruidoespontaneo.cassette.facts.domain.model.ReleaseStory
+import com.ruidoespontaneo.cassette.musicbrainz.domain.genre.genreTiles
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.AlbumDetail
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.StreamingLinks
 import com.ruidoespontaneo.cassette.musicbrainz.domain.model.Track
@@ -273,62 +274,73 @@ private fun AlbumDetailContent(
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = Spacing.medium)
         )
-        Row(
+        // The player: the display beside the cover, and the album's genre tiles along the bottom.
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(Spacing.small))
-                .background(color = Color.Black),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                .background(color = Color.Black)
         ) {
-            // A player-style display panel beside the cover: track number and remaining time across
-            // the top, the waveform along the bottom.
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(IconSize.albumArtLarge)
-                    .clip(RoundedCornerShape(Spacing.small))
-                    .background(Color.Black),
-                contentAlignment = Alignment.BottomCenter
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
             ) {
-                PreviewDisplayReadout(
-                    playback = previewPlayback,
-                    title = previewTrackTitle(album.tracks, previewPlayback),
-                    color = displayTextColor(dominant = waveColors, background = Color.Black),
+                // A player-style display panel beside the cover: track number and remaining time across
+                // the top, the waveform along the bottom.
+                Box(
                     modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .fillMaxWidth()
-                        .padding(Spacing.medium)
-                )
-                PreviewWaveform(
-                    playing = previewPlayback != null && !previewPlayback.isLoading,
-                    colors = waveformColors(
-                        dominant = waveColors,
-                        fallback = with(MaterialTheme.colorScheme) {
-                            listOf(
-                                primary,
-                                secondary,
-                                tertiary
+                        .weight(1f)
+                        .height(IconSize.albumArtLarge)
+                        .clip(RoundedCornerShape(Spacing.small))
+                        .background(Color.Black),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    PreviewDisplayReadout(
+                        playback = previewPlayback,
+                        title = previewTrackTitle(album.tracks, previewPlayback),
+                        color = displayTextColor(dominant = waveColors, background = Color.Black),
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .fillMaxWidth()
+                            .padding(Spacing.medium)
+                    )
+                    PreviewWaveform(
+                        playing = previewPlayback != null && !previewPlayback.isLoading,
+                        colors = waveformColors(
+                            dominant = waveColors,
+                            fallback = with(MaterialTheme.colorScheme) {
+                                listOf(
+                                    primary,
+                                    secondary,
+                                    tertiary
+                                )
+                            },
+                            background = Color.Black,
+                            count = PREVIEW_WAVEFORM_LINES
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                start = Spacing.medium,
+                                end = Spacing.medium,
+                                bottom = Spacing.medium
                             )
-                        },
-                        background = Color.Black,
-                        count = PREVIEW_WAVEFORM_LINES
-                    ),
+                    )
+                }
+                CoverArt(
+                    url = album.coverArtUrl(),
+                    contentDescription = null, // decorative — title/artist are already read by the screen
+                    onSuccess = { onCoverLoaded(it.result.image.toBitmap()) },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = Spacing.medium,
-                            end = Spacing.medium,
-                            bottom = Spacing.medium
-                        )
+                        .size(IconSize.albumArtLarge)
+                        .clip(RoundedCornerShape(Spacing.small))
                 )
             }
-            CoverArt(
-                url = album.coverArtUrl(),
-                contentDescription = null, // decorative — title/artist are already read by the screen
-                onSuccess = { onCoverLoaded(it.result.image.toBitmap()) },
-                modifier = Modifier
-                    .size(IconSize.albumArtLarge)
-                    .clip(RoundedCornerShape(Spacing.small))
+            GenreTileStrip(
+                tiles = remember(album.genres) { genreTiles(album.genres) },
+                // Any clip of this album, buffering or playing, so moving on to the next track
+                // doesn't send the tiles back and out again.
+                playing = previewPlayback != null
             )
         }
         if (album.streamingLinks.hasAny()) {
