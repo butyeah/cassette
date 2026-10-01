@@ -77,7 +77,6 @@ import com.ruidoespontaneo.cassette.ui.components.CoverArt
 import com.ruidoespontaneo.cassette.R
 import com.ruidoespontaneo.cassette.cover.components.AnimatedGradientBackground
 import com.ruidoespontaneo.cassette.cover.components.CoverCard
-import com.ruidoespontaneo.cassette.cover.theme.Handjet
 import com.ruidoespontaneo.cassette.cover.theme.Spacing
 import com.ruidoespontaneo.cassette.ui.theme.ToolbarSize
 import com.ruidoespontaneo.cassette.dayinhistory.domain.layout.mosaicCells
@@ -351,16 +350,16 @@ private fun YearCard(
     }
 }
 
-/** A release year as a heading, in the dotted Handjet face on a rounded chip. */
+/** A release year as a heading on a small rounded chip, in bodyLarge's dotted Handjet face. */
 @Composable
 private fun YearLabel(year: Int, modifier: Modifier = Modifier) {
     Text(
         text = year.toString(),
-        style = MaterialTheme.typography.headlineSmall.copy(fontFamily = Handjet),
+        style = MaterialTheme.typography.bodyLarge,
         modifier = modifier
-            .clip(RoundedCornerShape(Spacing.small))
+            .clip(RoundedCornerShape(Spacing.extraSmall))
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(horizontal = Spacing.medium, vertical = Spacing.small)
+            .padding(horizontal = Spacing.small, vertical = Spacing.extraSmall)
             .semantics { heading() }
     )
 }
