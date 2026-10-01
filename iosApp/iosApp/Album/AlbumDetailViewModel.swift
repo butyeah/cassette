@@ -18,6 +18,10 @@ final class AlbumDetailViewModel {
     /// previews, never blocking the album: `nil` when there's nothing to show or the lookup failed,
     /// and the card is then left out.
     private(set) var facts: AlbumFacts?
+    /// The sentence telling how the album came out, in place of its type and year. Set once the facts
+    /// lookup has finished, found or not, so it shows once in its final wording. `nil` until then,
+    /// and when the album has no precise release date.
+    private(set) var releaseStory: ReleaseStory?
 
     private let sdk: CassetteSdk
     private let albumId: String
@@ -50,6 +54,7 @@ final class AlbumDetailViewModel {
             previews = await sdk.previews(for: album)
             // In the language the app shows itself in, which may differ from the phone's.
             facts = try? await sdk.albumFacts(album: album, language: Bundle.main.preferredLocalizations.first ?? "en")
+            releaseStory = sdk.releaseStory(album: album, facts: facts)
         }
     }
 }
