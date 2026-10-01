@@ -16,12 +16,6 @@ extension AlbumDetail {
     /// Hero size, for the album screen.
     var coverURL: URL? { coverArtURL(releaseGroupId: id, size: 500) }
 
-    /// "Album · 2012", leaving out whichever part MusicBrainz doesn't have.
-    var typeAndYear: String? {
-        let parts = [primaryType, firstReleaseDate.map { String($0.year) }].compactMap { $0 }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
-    }
-
     var genresText: String? {
         genres.isEmpty ? nil : String(localized: "Genres: \(genres.joined(separator: ", "))")
     }
@@ -50,5 +44,54 @@ extension StreamingLinks {
     var displayList: [(label: String, url: URL)] {
         [("Spotify", spotify), ("Apple Music", appleMusic), ("YouTube Music", youtubeMusic)]
             .compactMap { label, link in link.flatMap(URL.init(string:)).map { (label, $0) } }
+    }
+}
+
+extension ReleaseStory {
+    /// This story as a sentence in the app's language: the full date ("21 de mayo de 1997"), and
+    /// labels and producers joined with "and"/"y". Mirrors Android's ReleaseStoryText.kt.
+    var text: String {
+        let locale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
+        let date = Self.formattedDate(isoDate: self.date.description, locale: locale)
+        let lists = ListFormatter()
+        lists.locale = locale
+        let labels = lists.string(from: self.labels) ?? ""
+        let producers = lists.string(from: self.producers) ?? ""
+        switch phrase {
+        case .labelandproducer:
+            return String(localized: "On \(date), \(labels) released this album, produced by \(producers).")
+        case .labelselfproduced:
+            return String(localized: "This record was self-produced by \(artist) and released on \(date) on the \(labels) label.")
+        case .labelandproducers:
+            return String(localized: "On \(date), this record came out, bringing together \(producers) on production for \(labels).")
+        case .labelonly:
+            return String(localized: "On \(date), \(labels) released this record.")
+        case .producer:
+            return String(localized: "This record came out on \(date), produced by \(producers).")
+        case .selfproduced:
+            return String(localized: "On \(date), a record self-produced by \(producers) premieres.")
+        case .producers:
+            return String(localized: "On \(date), a record produced by \(producers) premieres.")
+        default:
+            return String(localized: "On \(date), this record was released to the world.")
+        }
+    }
+
+    /// "1997-05-21" (Kotlin's LocalDate as text) as a long date in `locale`.
+    private static func formattedDate(isoDate: String, locale: Locale) -> String {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        let parts = isoDate.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3,
+              let date = calendar.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2])) else {
+            return isoDate
+        }
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
     }
 }

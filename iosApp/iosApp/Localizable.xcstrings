@@ -553,6 +553,66 @@
         }
       }
     },
+    "On %@, %@ released this album, produced by %@." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un %1$@ el sello %2$@ libera este álbum producido por %3$@."
+          }
+        }
+      }
+    },
+    "On %@, %@ released this record." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El %1$@, el sello %2$@ lanzó este disco."
+          }
+        }
+      }
+    },
+    "On %@, a record produced by %@ premieres." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El %1$@ se estrena un disco producido por %2$@."
+          }
+        }
+      }
+    },
+    "On %@, a record self-produced by %@ premieres." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El %1$@ se estrena un disco autoproducido por %2$@."
+          }
+        }
+      }
+    },
+    "On %@, this record came out, bringing together %@ on production for %@." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El %1$@, se libera este disco que junta a %2$@ en la producción para el sello %3$@."
+          }
+        }
+      }
+    },
+    "On %@, this record was released to the world." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El %1$@ se lanzó este disco al mundo."
+          }
+        }
+      }
+    },
     "One day like today" : {
       "localizations" : {
         "es" : {
@@ -849,6 +909,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tu cuenta se eliminará de forma permanente y se cerrará la sesión. No se puede deshacer."
+          }
+        }
+      }
+    },
+    "This record came out on %@, produced by %@." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este disco se liberó el %1$@, producido por %2$@."
+          }
+        }
+      }
+    },
+    "This record was self-produced by %@ and released on %@ on the %@ label." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este disco fue autoproducido por %1$@ y liberado el %2$@ bajo el sello %3$@."
           }
         }
       }

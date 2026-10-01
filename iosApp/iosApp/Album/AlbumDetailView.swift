@@ -16,7 +16,7 @@ struct AlbumDetailView: View {
     var body: some View {
         Group {
             if let album = model.album {
-                AlbumContent(album: album, previews: model.previews, facts: model.facts, dayAlbumIds: dayAlbumIds)
+                AlbumContent(album: album, previews: model.previews, facts: model.facts, releaseStory: model.releaseStory, dayAlbumIds: dayAlbumIds)
             } else if model.failed {
                 VStack(spacing: 16) {
                     Text("Couldn't load this album.").font(.handjet(22))
@@ -38,6 +38,7 @@ private struct AlbumContent: View {
     let album: AlbumDetail
     let previews: [Int: String]
     let facts: AlbumFacts?
+    let releaseStory: ReleaseStory?
     let dayAlbumIds: [String]
 
     @Environment(PreviewPlayer.self) private var player
@@ -75,10 +76,17 @@ private struct AlbumContent: View {
                 .background(.black, in: RoundedRectangle(cornerRadius: 8))
 
                 VStack(alignment: .leading, spacing: 4) {
-                    ForEach([album.typeAndYear, album.genresText, album.ratingText].compactMap { $0 }, id: \.self) {
+                    // In place of the type and year, as on Android: fades in once the facts it's
+                    // told from have loaded.
+                    if let releaseStory {
+                        Text(releaseStory.text).font(.handjet(20)).foregroundStyle(.secondary)
+                            .transition(.opacity)
+                    }
+                    ForEach([album.genresText, album.ratingText].compactMap { $0 }, id: \.self) {
                         Text($0).font(.handjet(20)).foregroundStyle(.secondary)
                     }
                 }
+                .animation(.easeInOut(duration: 0.4), value: releaseStory)
 
                 let links = album.streamingLinks.displayList
                 if !links.isEmpty {
