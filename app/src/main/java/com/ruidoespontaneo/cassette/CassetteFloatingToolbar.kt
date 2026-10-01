@@ -18,12 +18,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -60,8 +58,7 @@ private val bottomNavTabs = listOf(
 
 /**
  * Floating pill holding the app's top-level sections. It only shows on those sections' own routes,
- * so pushed screens (album detail, notifications) aren't covered by it. On Daily, it also carries a
- * FAB that opens the jump-to-date calendar via [onCalendarClick].
+ * so pushed screens (album detail, notifications) aren't covered by it.
  *
  * While [showNowPlaying] (a preview is loaded), a separate floating button to the toolbar's left
  * shows [nowPlaying]'s album cover and opens the now-playing dialog via [onNowPlayingClick].
@@ -70,7 +67,6 @@ private val bottomNavTabs = listOf(
 @Composable
 fun CassetteFloatingToolbar(
     navController: NavHostController,
-    onCalendarClick: () -> Unit,
     nowPlaying: NowPlaying?,
     showNowPlaying: Boolean,
     onNowPlayingClick: () -> Unit,
@@ -105,18 +101,7 @@ fun CassetteFloatingToolbar(
             ) {
                 nowPlaying?.let { NowPlayingButton(it, onClick = onNowPlayingClick) }
             }
-            if (currentRoute == ROUTE_ONE_DAY_LIKE_TODAY) {
-                HorizontalFloatingToolbar(
-                    expanded = true,
-                    floatingActionButton = {
-                        FloatingToolbarDefaults.VibrantFloatingActionButton(onClick = onCalendarClick) {
-                            Icon(Icons.Default.DateRange, contentDescription = stringResource(R.string.open_calendar))
-                        }
-                    }
-                ) { tabs() }
-            } else {
-                HorizontalFloatingToolbar(expanded = true) { tabs() }
-            }
+            HorizontalFloatingToolbar(expanded = true) { tabs() }
         }
     }
 }

@@ -8,6 +8,10 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -89,8 +93,6 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun OneDayLikeTodayScreen(
     onAlbumClick: (MonthDay, String) -> Unit,
-    isCalendarOpen: Boolean,
-    onCalendarDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: OneDayLikeTodayViewModel = hiltViewModel()
 ) {
@@ -99,8 +101,6 @@ fun OneDayLikeTodayScreen(
         state = state,
         onIntent = viewModel::onIntent,
         onAlbumClick = onAlbumClick,
-        isCalendarOpen = isCalendarOpen,
-        onCalendarDismiss = onCalendarDismiss,
         dayFormatter = rememberDayFormatter(),
         modifier = modifier
     )
@@ -111,18 +111,20 @@ private fun OneDayLikeTodayScreenContent(
     state: OneDayLikeTodayUiState,
     onIntent: (OneDayLikeTodayIntent) -> Unit,
     onAlbumClick: (MonthDay, String) -> Unit,
-    isCalendarOpen: Boolean,
-    onCalendarDismiss: () -> Unit,
     dayFormatter: DateTimeFormatter,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    initialCalendarOpen: Boolean = false
 ) {
     val hazeState = rememberHazeState()
+    var isCalendarOpen by rememberSaveable { mutableStateOf(initialCalendarOpen) }
+    val onCalendarDismiss = { isCalendarOpen = false }
     Box(modifier = modifier.fillMaxSize()) {
         AnimatedGradientBackground(Modifier.matchParentSize().hazeSource(hazeState))
         Column(modifier = Modifier.fillMaxSize()) {
             DayHeader(
                 day = state.day,
                 layout = state.layout,
+                onDayClick = { isCalendarOpen = true },
                 onToggleLayout = { onIntent(OneDayLikeTodayIntent.ToggleLayout) },
                 dayFormatter = dayFormatter
             )
@@ -167,6 +169,7 @@ private fun OneDayLikeTodayScreenContent(
 private fun DayHeader(
     day: MonthDay,
     layout: AlbumsLayout,
+    onDayClick: () -> Unit,
     onToggleLayout: () -> Unit,
     dayFormatter: DateTimeFormatter,
     modifier: Modifier = Modifier
@@ -175,18 +178,47 @@ private fun DayHeader(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = Spacing.small, vertical = Spacing.extraSmall),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // As wide as the layout toggle, balancing it so the date stays centered.
         Spacer(Modifier.size(IconSize.minTouchTarget))
-        Text(
-            text = day.format(dayFormatter),
-            style = MaterialTheme.typography.titleLarge
+        DayButton(
+            text = day.formatUppercase(dayFormatter),
+            onClick = onDayClick,
+            modifier = Modifier.weight(1f)
         )
         LayoutToggle(layout = layout, onClick = onToggleLayout)
     }
 }
+
+/** The day, outlined, between a calendar icon and a chevron; tapping it opens the calendar. */
+@Composable
+private fun DayButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(Spacing.small)
+    Row(
+        modifier = modifier
+            .clip(shape)
+            .border(DAY_BUTTON_BORDER_WIDTH, MaterialTheme.colorScheme.onSurface, shape)
+            .clickable(onClickLabel = stringResource(R.string.open_calendar), onClick = onClick)
+            .padding(horizontal = Spacing.medium, vertical = Spacing.small),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Default.DateRange, contentDescription = null)
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false)
+        )
+        Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
+    }
+}
+
+private val DAY_BUTTON_BORDER_WIDTH = 2.dp
 
 /** Shows the layout it switches *to*: the grid icon while listing, the list icon while in the grid. */
 @Composable
@@ -487,8 +519,6 @@ private fun OneDayLikeTodayScreenPreview(
             state = state,
             onIntent = {},
             onAlbumClick = { _, _ -> },
-            isCalendarOpen = false,
-            onCalendarDismiss = {},
             dayFormatter = rememberDayFormatter()
         )
     }
@@ -502,9 +532,8 @@ private fun OneDayLikeTodayScreenCalendarPreview() {
             state = OneDayLikeTodayUiState(day = MonthDay.of(6, 17), isLoading = false),
             onIntent = {},
             onAlbumClick = { _, _ -> },
-            isCalendarOpen = true,
-            onCalendarDismiss = {},
-            dayFormatter = rememberDayFormatter()
+            dayFormatter = rememberDayFormatter(),
+            initialCalendarOpen = true
         )
     }
 }

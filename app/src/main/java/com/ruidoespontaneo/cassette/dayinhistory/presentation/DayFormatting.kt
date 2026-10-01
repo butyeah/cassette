@@ -4,6 +4,7 @@ import android.text.format.DateFormat
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
+import java.time.MonthDay
 import java.time.format.DateTimeFormatter
 
 /**
@@ -19,3 +20,6 @@ fun rememberDayFormatter(): DateTimeFormatter {
         DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, "MMMMd"), locale)
     }
 }
+
+/** This day in [formatter]'s words, in capitals for the Daily header — "JUNE 17", "17 DE JUNIO". */
+fun MonthDay.formatUppercase(formatter: DateTimeFormatter): String = format(formatter).uppercase(formatter.locale)
