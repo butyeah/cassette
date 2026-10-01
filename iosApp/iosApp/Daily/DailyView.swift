@@ -15,6 +15,9 @@ struct DailyView: View {
     @Binding var path: NavigationPath
 
     @State private var isPickingDay = false
+    /// The expanded grid cover's dominant colours, for the background. Kept while moving from one
+    /// expanded cover to another, so the background fades straight between their colours.
+    @State private var expandedCoverColors: [Color]?
     @Environment(DailyReminder.self) private var reminder
 
     init(sdk: CassetteSdk, path: Binding<NavigationPath>) {
@@ -34,7 +37,15 @@ struct DailyView: View {
                 )
                 content
             }
-            .background { AnimatedGradientBackground() }
+            .background {
+                ZStack {
+                    Color(light: 0xFFFFFF, dark: 0x000000).ignoresSafeArea()
+                    AnimatedGradientBackground(colors: model.layout == .grid ? expandedCoverColors : nil)
+                }
+            }
+            .onChange(of: model.expandedAlbumId) {
+                if model.expandedAlbumId == nil { expandedCoverColors = nil }
+            }
             // The header above stands in for the navigation bar, as on Android, so it isn't
             // turned into toolbar glass. Pushed album screens keep their own bar.
             .toolbar(.hidden, for: .navigationBar)
@@ -51,6 +62,17 @@ struct DailyView: View {
                 path = NavigationPath()
                 Task { await model.select(.today()) }
             }
+        }
+    }
+
+    /// Takes the background's colours from `cover`, the expanded album's. Dropped if another cover
+    /// has been expanded, or none, by the time they're ready.
+    private func takeColors(from cover: UIImage, albumId: String) {
+        guard let cgImage = cover.cgImage else { return }
+        Task {
+            let colors = await dominantColors(in: cgImage)
+            guard model.expandedAlbumId == albumId, !colors.isEmpty else { return }
+            expandedCoverColors = colors.map(\.color)
         }
     }
 
@@ -78,13 +100,18 @@ struct DailyView: View {
                     ForEach(model.albumsByYear, id: \.year) { group in
                         switch model.layout {
                         case .grid:
-                            YearGrid(group: group, expandedAlbumId: model.expandedAlbumId) { albumId in
-                                if albumId == model.expandedAlbumId {
-                                    path.append(AlbumRoute(albumIds: model.albumIds, albumId: albumId))
-                                } else {
-                                    withAnimation(.spring(duration: 0.5, bounce: 0.2)) { model.expandedAlbumId = albumId }
-                                }
-                            }
+                            YearGrid(
+                                group: group,
+                                expandedAlbumId: model.expandedAlbumId,
+                                onCoverTap: { albumId in
+                                    if albumId == model.expandedAlbumId {
+                                        path.append(AlbumRoute(albumIds: model.albumIds, albumId: albumId))
+                                    } else {
+                                        withAnimation(.spring(duration: 0.5, bounce: 0.2)) { model.expandedAlbumId = albumId }
+                                    }
+                                },
+                                onExpandedCoverLoaded: takeColors
+                            )
                         case .list: YearCard(group: group, albumIds: model.albumIds)
                         }
                     }
@@ -140,11 +167,13 @@ private struct DayHeader: View {
 
 /// One year's covers, four tiles to a row, packed by the shared `mosaicCells`: the expanded cover
 /// takes 2×2 tiles and the rest flow around it. Tapping a cover calls `onCoverTap`; the caller
-/// decides whether that expands it or opens it.
+/// decides whether that expands it or opens it. `onExpandedCoverLoaded` gets the expanded cover's
+/// image and album ID once it has loaded.
 private struct YearGrid: View {
     let group: AlbumsByYear
     let expandedAlbumId: String?
     let onCoverTap: (String) -> Void
+    let onExpandedCoverLoaded: (UIImage, String) -> Void
 
     var body: some View {
         let expandedIndex = group.albums.firstIndex { $0.id == expandedAlbumId }
@@ -152,24 +181,33 @@ private struct YearGrid: View {
             Text(String(group.year)).font(.pixel(20, weight: .medium))
             MosaicLayout(cells: mosaicCells(count: group.albums.count, expandedIndex: expandedIndex)) {
                 ForEach(group.albums, id: \.id) { album in
-                    CoverTile(album: album, expanded: album.id == expandedAlbumId) {
-                        onCoverTap(album.id)
-                    }
+                    CoverTile(
+                        album: album,
+                        expanded: album.id == expandedAlbumId,
+                        onTap: { onCoverTap(album.id) },
+                        onExpandedCoverLoaded: { onExpandedCoverLoaded($0, album.id) }
+                    )
                 }
             }
         }
     }
 }
 
-/// A cover; while `expanded`, its title and artist fade in over a scrim along the bottom.
+/// A cover; while `expanded`, its title and artist fade in over a scrim along the bottom, and its
+/// loaded image goes to `onExpandedCoverLoaded`.
 private struct CoverTile: View {
     let album: Album
     let expanded: Bool
     let onTap: () -> Void
+    let onExpandedCoverLoaded: (UIImage) -> Void
+
+    /// Kept rather than reported straight from `onLoad`: a cover usually loads long before it's
+    /// expanded, and expanding it doesn't load it again.
+    @State private var cover: UIImage?
 
     var body: some View {
         Button(action: onTap) {
-            CoverImage(url: album.coverURL)
+            CoverImage(url: album.coverURL) { cover = $0 }
                 .overlay(alignment: .bottomLeading) {
                     if expanded {
                         VStack(alignment: .leading, spacing: 2) {
@@ -192,6 +230,9 @@ private struct CoverTile: View {
         .accessibilityLabel("\(album.title) by \(album.artistName)")
         .accessibilityHint(expanded ? Text("Open album") : Text("Show details"))
         .accessibilityAddTraits(.isButton)
+        .onChange(of: expanded && cover != nil, initial: true) {
+            if expanded, let cover { onExpandedCoverLoaded(cover) }
+        }
     }
 }
 
