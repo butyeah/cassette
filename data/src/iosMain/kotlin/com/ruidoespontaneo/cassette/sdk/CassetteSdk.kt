@@ -29,6 +29,7 @@ import com.ruidoespontaneo.cassette.facts.domain.model.AlbumFacts
 import com.ruidoespontaneo.cassette.facts.domain.model.ReleaseStory
 import com.ruidoespontaneo.cassette.facts.domain.usecase.GetAlbumFactsUseCase
 import com.ruidoespontaneo.cassette.facts.domain.usecase.GetReleaseStoryUseCase
+import com.ruidoespontaneo.cassette.musicbrainz.domain.genre.GenreTile
 import com.ruidoespontaneo.cassette.itunes.data.ItunesRepositoryImpl
 import com.ruidoespontaneo.cassette.itunes.data.api.KtorItunesApi
 import com.ruidoespontaneo.cassette.itunes.domain.usecase.GetTrackPreviewsUseCase
@@ -138,6 +139,10 @@ class CassetteSdk(appVersion: String, sessionStore: AuthSessionStore) {
      * (`null` when Wikidata knows nothing), or `null` when there's nothing to tell.
      */
     fun releaseStory(album: AlbumDetail, facts: AlbumFacts?): ReleaseStory? = getReleaseStory(album, facts)
+
+    /** See [genreTiles]: a tile, with its five colours, for each of [genres], in order. */
+    fun genreTiles(genres: List<String>): List<GenreTile> =
+        com.ruidoespontaneo.cassette.musicbrainz.domain.genre.genreTiles(genres)
 
     /** Who's signed in right now, or `null`. */
     val currentUser: AuthUser? get() = authRepository.currentUser.value
