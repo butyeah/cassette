@@ -313,6 +313,16 @@
         }
       }
     },
+    "Facts from Wikidata · Summary from Wikipedia" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datos de Wikidata · Resumen de Wikipedia"
+          }
+        }
+      }
+    },
     "Follows your phone's language" : {
       "localizations" : {
         "es" : {
@@ -613,6 +623,16 @@
         }
       }
     },
+    "Read more on Wikipedia" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leer más en Wikipedia"
+          }
+        }
+      }
+    },
     "Recorded at" : {
       "localizations" : {
         "es" : {
@@ -769,6 +789,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detener la vista previa de %@"
+          }
+        }
+      }
+    },
+    "Summary from Wikipedia" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resumen de Wikipedia"
           }
         }
       }
