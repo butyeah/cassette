@@ -29,19 +29,24 @@ class KtorWikidataApi(private val client: HttpClient) : WikidataApi {
         return (hits.firstOrNull() as? JsonObject)?.string("title")
     }
 
-    override suspend fun itemClaims(itemId: String): Map<String, List<String>> {
+    override suspend fun item(itemId: String, languages: List<String>): WikidataItem {
         val entity = entities {
             parameter("ids", itemId)
-            parameter("props", "claims")
-        }[itemId] as? JsonObject ?: return emptyMap()
-        val claims = entity["claims"] as? JsonObject ?: return emptyMap()
-        return claims.mapValues { (_, statements) ->
+            parameter("props", "claims|sitelinks")
+            parameter("sitefilter", languages.joinToString("|") { "${it}wiki" })
+        }[itemId] as? JsonObject ?: return WikidataItem()
+        val claims = (entity["claims"] as? JsonObject).orEmpty().mapValues { (_, statements) ->
             (statements as? JsonArray).orEmpty().mapNotNull { statement ->
                 val claim = statement as? JsonObject ?: return@mapNotNull null
                 if (claim.string("rank") == "deprecated") return@mapNotNull null
                 claim.obj("mainsnak")?.obj("datavalue")?.obj("value")?.string("id")
             }
         }.filterValues { it.isNotEmpty() }
+        val sitelinks = entity["sitelinks"] as? JsonObject
+        val articleTitles = languages.mapNotNull { language ->
+            sitelinks?.obj("${language}wiki")?.string("title")?.let { language to it }
+        }.toMap()
+        return WikidataItem(claims, articleTitles)
     }
 
     override suspend fun labels(itemIds: List<String>, languages: List<String>): Map<String, String> {

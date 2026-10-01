@@ -101,6 +101,18 @@ fun wikidataHttpClient(engine: HttpClientEngine, userAgent: String, logger: Logg
     logger?.let { install(Logging) { this.logger = it; level = LogLevel.BODY } }
 }
 
+/**
+ * The client every [com.ruidoespontaneo.cassette.facts.data.api.WikipediaApi] call goes through.
+ * No base URL: each language's Wikipedia is its own host. [userAgent] comes from [cassetteUserAgent]:
+ * Wikimedia blocks clients without a descriptive one.
+ */
+fun wikipediaHttpClient(engine: HttpClientEngine, userAgent: String, logger: Logger?): HttpClient = HttpClient(engine) {
+    expectSuccess = true
+    install(UserAgent) { agent = userAgent }
+    install(ContentNegotiation) { json(json) }
+    logger?.let { install(Logging) { this.logger = it; level = LogLevel.BODY } }
+}
+
 /** The client [com.ruidoespontaneo.cassette.core.firestore.FirestoreRestDocuments] reads through. */
 fun firestoreHttpClient(engine: HttpClientEngine, logger: Logger?): HttpClient = HttpClient(engine) {
     expectSuccess = true

@@ -45,7 +45,7 @@ class KtorWikidataApiTest {
     }
 
     @Test
-    fun `reads item-valued claims, skipping deprecated, valueless and non-item ones`() = runBlocking {
+    fun `reads item-valued claims, skipping deprecated, valueless and non-item ones, and article titles`() = runBlocking {
         val api = api(
             """
                 {"entities": {"Q202996": {"type": "item", "id": "Q202996", "claims": {
@@ -56,20 +56,25 @@ class KtorWikidataApiTest {
                            {"mainsnak": {"datavalue": {"value": {"id": "Q1"}}}, "rank": "deprecated"},
                            {"mainsnak": {"snaktype": "somevalue"}, "rank": "normal"}],
                   "P444": [{"mainsnak": {"datavalue": {"value": "94", "type": "string"}}, "rank": "normal"}]
-                }}}}
+                }, "sitelinks": {"enwiki": {"site": "enwiki", "title": "OK Computer", "badges": []}}}}}
             """.trimIndent()
         )
 
-        val claims = api.itemClaims("Q202996")
+        val item = api.item("Q202996", languages = listOf("es", "en"))
 
-        assertEquals(mapOf("P162" to listOf("Q544301"), "P264" to listOf("Q208909")), claims)
-        assertEquals("wbgetentities", requests.single().url.parameters["action"])
-        assertEquals("claims", requests.single().url.parameters["props"])
+        assertEquals(mapOf("P162" to listOf("Q544301"), "P264" to listOf("Q208909")), item.claims)
+        assertEquals(mapOf("en" to "OK Computer"), item.articleTitles)
+        val url = requests.single().url
+        assertEquals("wbgetentities", url.parameters["action"])
+        assertEquals("claims|sitelinks", url.parameters["props"])
+        assertEquals("eswiki|enwiki", url.parameters["sitefilter"])
     }
 
     @Test
-    fun `an entity with no claims, written as an empty array, has none`() = runBlocking {
-        assertTrue(api("""{"entities": {"Q1": {"id": "Q1", "claims": []}}}""").itemClaims("Q1").isEmpty())
+    fun `an entity with no claims or sitelinks, written as empty arrays, has none`() = runBlocking {
+        val item = api("""{"entities": {"Q1": {"id": "Q1", "claims": [], "sitelinks": []}}}""").item("Q1", listOf("en"))
+
+        assertEquals(WikidataItem(), item)
     }
 
     @Test
