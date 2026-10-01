@@ -61,6 +61,9 @@
     <string name="facts_awards">Awards</string>
     <string name="facts_nominations">Nominations</string>
     <string name="facts_credit">Facts from Wikidata</string>
+    <string name="facts_read_on_wikipedia">Read more on Wikipedia</string>
+    <string name="facts_credit_wikipedia">Summary from Wikipedia</string>
+    <string name="facts_credit_both">Facts from Wikidata · Summary from Wikipedia</string>
     <string name="login_title">Welcome to Cassette</string>
     <string name="login_subtitle">Sign in to keep your reminders and preferences with you.</string>
     <string name="continue_with_google">Continue with Google</string>
