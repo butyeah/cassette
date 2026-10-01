@@ -1,6 +1,7 @@
 package com.ruidoespontaneo.cassette.cover.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
@@ -43,9 +44,14 @@ fun AnimatedGradientBackground(modifier: Modifier = Modifier, colors: List<Color
         MaterialTheme.colorScheme.secondary,
         MaterialTheme.colorScheme.tertiary
     )
-    // Animated, so a change of colors (say, another album's) fades in rather than snapping.
+    // A slow, eased cross-fade, so a change of colors (say, another album's) drifts in like the
+    // blobs themselves rather than snapping on the default spring.
     val blobColors = List(themeColors.size) { index ->
-        animateColorAsState(colors?.getOrNull(index) ?: themeColors[index], label = "blob${index + 1}Color").value
+        animateColorAsState(
+            targetValue = colors?.getOrNull(index) ?: themeColors[index],
+            animationSpec = tween(ColorFadeMillis, easing = FastOutSlowInEasing),
+            label = "blob${index + 1}Color"
+        ).value
     }
     val blobs = listOf(
         Blob(
@@ -102,3 +108,4 @@ private val BlurRadius = 50.dp
 private const val OrbitAmplitude = 0.22f
 private const val BlobRadiusFraction = 0.6f
 private const val BlobAlpha = 0.75f
+private const val ColorFadeMillis = 1_500
