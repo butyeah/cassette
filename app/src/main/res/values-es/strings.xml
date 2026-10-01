@@ -63,6 +63,15 @@
     <string name="facts_read_on_wikipedia">Leer más en Wikipedia</string>
     <string name="facts_credit_wikipedia">Resumen de Wikipedia</string>
     <string name="facts_credit_both">Datos de Wikidata · Resumen de Wikipedia</string>
+    <string name="release_story_label_and_producer">Un %1$s el sello %2$s libera este álbum producido por %3$s.</string>
+    <string name="release_story_label_self_produced">Este disco fue autoproducido por %4$s y liberado el %1$s bajo el sello %2$s.</string>
+    <string name="release_story_label_and_producers">El %1$s, se libera este disco que junta a %3$s en la producción para el sello %2$s.</string>
+    <string name="release_story_label_only">El %1$s, el sello %2$s lanzó este disco.</string>
+    <string name="release_story_producer">Este disco se liberó el %1$s, producido por %3$s.</string>
+    <string name="release_story_self_produced">El %1$s se estrena un disco autoproducido por %3$s.</string>
+    <string name="release_story_producers">El %1$s se estrena un disco producido por %3$s.</string>
+    <string name="release_story_date_only">El %1$s se lanzó este disco al mundo.</string>
+    <string name="list_and">%1$s y %2$s</string>
     <string name="login_title">Te damos la bienvenida a Cassette</string>
     <string name="login_subtitle">Inicia sesión para llevar contigo tus recordatorios y preferencias.</string>
     <string name="continue_with_google">Continuar con Google</string>
