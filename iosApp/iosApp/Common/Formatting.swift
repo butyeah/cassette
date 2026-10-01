@@ -48,33 +48,56 @@ extension StreamingLinks {
 }
 
 extension ReleaseStory {
-    /// This story as a sentence in the app's language: the full date ("21 de mayo de 1997"), and
-    /// labels and producers joined with "and"/"y". Mirrors Android's ReleaseStoryText.kt.
-    var text: String {
+    /// This story as a sentence in the app's language, with what changes from album to album in
+    /// bold: the full date ("21 de mayo de 1997"), and every label and producer, joined with
+    /// "and"/"y" (which stay regular). Mirrors Android's ReleaseStoryText.kt.
+    var text: AttributedString {
         let locale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
-        let date = Self.formattedDate(isoDate: self.date.description, locale: locale)
-        let lists = ListFormatter()
-        lists.locale = locale
-        let labels = lists.string(from: self.labels) ?? ""
-        let producers = lists.string(from: self.producers) ?? ""
+        let date = Self.bold(Self.formattedDate(isoDate: self.date.description, locale: locale))
+        let labels = Self.boldNames(self.labels, locale: locale)
+        let producers = Self.boldNames(self.producers, locale: locale)
+        let artist = Self.bold(self.artist)
         switch phrase {
         case .labelandproducer:
-            return String(localized: "On \(date), \(labels) released this album, produced by \(producers).")
+            return AttributedString(localized: "On \(date), \(labels) released this album, produced by \(producers).")
         case .labelselfproduced:
-            return String(localized: "This record was self-produced by \(artist) and released on \(date) on the \(labels) label.")
+            return AttributedString(localized: "This record was self-produced by \(artist) and released on \(date) on the \(labels) label.")
         case .labelandproducers:
-            return String(localized: "On \(date), this record came out, bringing together \(producers) on production for \(labels).")
+            return AttributedString(localized: "On \(date), this record came out, bringing together \(producers) on production for \(labels).")
         case .labelonly:
-            return String(localized: "On \(date), \(labels) released this record.")
+            return AttributedString(localized: "On \(date), \(labels) released this record.")
         case .producer:
-            return String(localized: "This record came out on \(date), produced by \(producers).")
+            return AttributedString(localized: "This record came out on \(date), produced by \(producers).")
         case .selfproduced:
-            return String(localized: "On \(date), a record self-produced by \(producers) premieres.")
+            return AttributedString(localized: "On \(date), a record self-produced by \(producers) premieres.")
         case .producers:
-            return String(localized: "On \(date), a record produced by \(producers) premieres.")
+            return AttributedString(localized: "On \(date), a record produced by \(producers) premieres.")
         default:
-            return String(localized: "On \(date), this record was released to the world.")
+            return AttributedString(localized: "On \(date), this record was released to the world.")
         }
+    }
+
+    private static func bold(_ text: String) -> AttributedString {
+        var bold = AttributedString(text)
+        bold.inlinePresentationIntent = .stronglyEmphasized
+        return bold
+    }
+
+    /// `names` joined the way `locale` lists things ("A, B y C"), with each name in bold and the
+    /// joining words not.
+    private static func boldNames(_ names: [String], locale: Locale) -> AttributedString {
+        let lists = ListFormatter()
+        lists.locale = locale
+        var joined = AttributedString(lists.string(from: names) ?? "")
+        // Each name is found after the one before it, so a name that also appears inside another
+        // ("Capitol" in "Capitol Records") still lands on the right one.
+        var searchFrom = joined.startIndex
+        for name in names {
+            guard let range = joined[searchFrom...].range(of: name) else { continue }
+            joined[range].inlinePresentationIntent = .stronglyEmphasized
+            searchFrom = range.upperBound
+        }
+        return joined
     }
 
     /// "1997-05-21" (Kotlin's LocalDate as text) as a long date in `locale`.

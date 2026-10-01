@@ -76,10 +76,12 @@ private struct AlbumContent: View {
                 .background(.black, in: RoundedRectangle(cornerRadius: 8))
 
                 VStack(alignment: .leading, spacing: 4) {
-                    // In place of the type and year, as on Android: fades in once the facts it's
-                    // told from have loaded.
+                    // In place of the type and year, centred, as on Android: fades in once the facts
+                    // it's told from have loaded.
                     if let releaseStory {
                         Text(releaseStory.text).font(.handjet(20)).foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity)
                             .transition(.opacity)
                     }
                     ForEach([album.genresText, album.ratingText].compactMap { $0 }, id: \.self) {
