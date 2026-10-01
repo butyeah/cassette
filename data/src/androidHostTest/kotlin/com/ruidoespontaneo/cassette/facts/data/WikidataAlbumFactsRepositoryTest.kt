@@ -1,7 +1,11 @@
 package com.ruidoespontaneo.cassette.facts.data
 
 import com.ruidoespontaneo.cassette.facts.data.api.WikidataApi
+import com.ruidoespontaneo.cassette.facts.data.api.WikidataItem
+import com.ruidoespontaneo.cassette.facts.data.api.WikipediaApi
+import com.ruidoespontaneo.cassette.facts.data.api.WikipediaSummary
 import com.ruidoespontaneo.cassette.facts.domain.model.AlbumFacts
+import com.ruidoespontaneo.cassette.facts.domain.model.AlbumSummary
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -17,6 +21,7 @@ class WikidataAlbumFactsRepositoryTest {
         val item: String? = "Q1",
         val claims: Map<String, List<String>> = emptyMap(),
         val names: Map<String, String> = emptyMap(),
+        val articles: Map<String, String> = emptyMap(),
         val failWith: Exception? = null
     ) : WikidataApi {
         override suspend fun findItem(musicBrainzReleaseGroupId: String): String? {
@@ -25,9 +30,9 @@ class WikidataAlbumFactsRepositoryTest {
             return item
         }
 
-        override suspend fun itemClaims(itemId: String): Map<String, List<String>> {
-            calls += "claims $itemId"
-            return claims
+        override suspend fun item(itemId: String, languages: List<String>): WikidataItem {
+            calls += "item $itemId in ${languages.joinToString(",")}"
+            return WikidataItem(claims, articleTitles = articles.filterKeys { it in languages })
         }
 
         override suspend fun labels(itemIds: List<String>, languages: List<String>): Map<String, String> {
@@ -36,9 +41,23 @@ class WikidataAlbumFactsRepositoryTest {
         }
     }
 
+    private inner class FakeWikipediaApi(
+        val summaries: Map<String, String> = emptyMap(),
+        val failWith: Exception? = null
+    ) : WikipediaApi {
+        override suspend fun summary(language: String, title: String): WikipediaSummary? {
+            calls += "summary $language:$title"
+            failWith?.let { throw it }
+            return summaries[title]?.let { WikipediaSummary(it, "https://$language.wikipedia.org/wiki/$title") }
+        }
+    }
+
+    private fun repository(wikidata: WikidataApi, wikipedia: WikipediaApi = FakeWikipediaApi()) =
+        WikidataAlbumFactsRepository(wikidata, wikipedia)
+
     @Test
     fun `each property fills its own row, named in one call`() = runBlocking {
-        val repository = WikidataAlbumFactsRepository(
+        val repository = repository(
             FakeWikidataApi(
                 claims = mapOf(
                     "P162" to listOf("Q10"),
@@ -69,12 +88,12 @@ class WikidataAlbumFactsRepositoryTest {
             ),
             facts
         )
-        assertEquals(listOf("find mbid", "claims Q1", "labels Q10,Q11,Q12,Q13,Q14,Q15,Q16 in es,en"), calls)
+        assertEquals(listOf("find mbid", "item Q1 in es,en", "labels Q10,Q11,Q12,Q13,Q14,Q15,Q16 in es,en"), calls)
     }
 
     @Test
     fun `English asks for English only, and an item with no label is dropped`() = runBlocking {
-        val repository = WikidataAlbumFactsRepository(
+        val repository = repository(
             FakeWikidataApi(claims = mapOf("P162" to listOf("Q10", "Q11")), names = mapOf("Q10" to "Nigel Godrich"))
         )
 
@@ -84,7 +103,7 @@ class WikidataAlbumFactsRepositoryTest {
 
     @Test
     fun `no item is null, without asking further`() = runBlocking {
-        val repository = WikidataAlbumFactsRepository(FakeWikidataApi(item = null))
+        val repository = repository(FakeWikidataApi(item = null))
 
         assertNull(repository.getAlbumFacts("mbid", "en").getOrThrow())
         assertEquals(listOf("find mbid"), calls)
@@ -92,33 +111,86 @@ class WikidataAlbumFactsRepositoryTest {
 
     @Test
     fun `an item with none of the card's facts is null`() = runBlocking {
-        val repository = WikidataAlbumFactsRepository(FakeWikidataApi(claims = mapOf("P444" to listOf("Q99"))))
+        val repository = repository(FakeWikidataApi(claims = mapOf("P444" to listOf("Q99"))))
 
         assertNull(repository.getAlbumFacts("mbid", "en").getOrThrow())
     }
 
     @Test
     fun `facts whose items all lack labels are null`() = runBlocking {
-        val repository = WikidataAlbumFactsRepository(FakeWikidataApi(claims = mapOf("P162" to listOf("Q10"))))
+        val repository = repository(FakeWikidataApi(claims = mapOf("P162" to listOf("Q10"))))
 
         assertNull(repository.getAlbumFacts("mbid", "en").getOrThrow())
     }
 
     @Test
     fun `a network error is a failure`() = runBlocking {
-        val repository = WikidataAlbumFactsRepository(FakeWikidataApi(failWith = IOException("offline")))
+        val repository = repository(FakeWikidataApi(failWith = IOException("offline")))
 
         assertTrue(repository.getAlbumFacts("mbid", "en").isFailure)
     }
 
     @Test
     fun `a repeat lookup comes from the cache, per language`() = runBlocking {
-        val repository = WikidataAlbumFactsRepository(FakeWikidataApi(item = null))
+        val repository = repository(FakeWikidataApi(item = null))
 
         repository.getAlbumFacts("mbid", "en")
         repository.getAlbumFacts("mbid", "en")
         repository.getAlbumFacts("mbid", "es")
 
         assertEquals(listOf("find mbid", "find mbid"), calls)
+    }
+
+    @Test
+    fun `the summary comes from the article in the user's language`() = runBlocking {
+        val repository = repository(
+            FakeWikidataApi(articles = mapOf("es" to "OK Computer (álbum)", "en" to "OK Computer")),
+            FakeWikipediaApi(summaries = mapOf("OK Computer (álbum)" to "Tercer álbum de Radiohead."))
+        )
+
+        val facts = repository.getAlbumFacts("mbid", "es").getOrThrow()
+
+        assertEquals(
+            AlbumSummary("Tercer álbum de Radiohead.", "https://es.wikipedia.org/wiki/OK Computer (álbum)"),
+            facts?.summary
+        )
+        assertEquals("summary es:OK Computer (álbum)", calls.last())
+    }
+
+    @Test
+    fun `with no article in the user's language, the summary is English's`() = runBlocking {
+        val repository = repository(
+            FakeWikidataApi(articles = mapOf("en" to "OK Computer")),
+            FakeWikipediaApi(summaries = mapOf("OK Computer" to "The third album by Radiohead."))
+        )
+
+        assertEquals("The third album by Radiohead.", repository.getAlbumFacts("mbid", "es").getOrThrow()?.summary?.text)
+    }
+
+    @Test
+    fun `a summary alone is enough for facts, without naming anything`() = runBlocking {
+        val repository = repository(
+            FakeWikidataApi(articles = mapOf("en" to "OK Computer")),
+            FakeWikipediaApi(summaries = mapOf("OK Computer" to "The third album by Radiohead."))
+        )
+
+        val facts = repository.getAlbumFacts("mbid", "en").getOrThrow()
+
+        assertEquals(AlbumFacts(summary = AlbumSummary("The third album by Radiohead.", "https://en.wikipedia.org/wiki/OK Computer")), facts)
+        assertTrue(calls.none { it.startsWith("labels") })
+    }
+
+    @Test
+    fun `a failed summary leaves it out but keeps the facts`() = runBlocking {
+        val repository = repository(
+            FakeWikidataApi(
+                claims = mapOf("P162" to listOf("Q10")),
+                names = mapOf("Q10" to "Nigel Godrich"),
+                articles = mapOf("en" to "OK Computer")
+            ),
+            FakeWikipediaApi(failWith = IOException("offline"))
+        )
+
+        assertEquals(AlbumFacts(producers = listOf("Nigel Godrich")), repository.getAlbumFacts("mbid", "en").getOrThrow())
     }
 }

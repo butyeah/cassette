@@ -18,11 +18,13 @@ import com.ruidoespontaneo.cassette.core.network.itunesHttpClient
 import com.ruidoespontaneo.cassette.core.network.lrclibHttpClient
 import com.ruidoespontaneo.cassette.core.network.musicBrainzHttpClient
 import com.ruidoespontaneo.cassette.core.network.wikidataHttpClient
+import com.ruidoespontaneo.cassette.core.network.wikipediaHttpClient
 import com.ruidoespontaneo.cassette.dayinhistory.data.DayInHistoryRepositoryImpl
 import com.ruidoespontaneo.cassette.dayinhistory.domain.model.AlbumsByYear
 import com.ruidoespontaneo.cassette.dayinhistory.domain.usecase.GetAlbumsByDayUseCase
 import com.ruidoespontaneo.cassette.facts.data.WikidataAlbumFactsRepository
 import com.ruidoespontaneo.cassette.facts.data.api.KtorWikidataApi
+import com.ruidoespontaneo.cassette.facts.data.api.KtorWikipediaApi
 import com.ruidoespontaneo.cassette.facts.domain.model.AlbumFacts
 import com.ruidoespontaneo.cassette.facts.domain.usecase.GetAlbumFactsUseCase
 import com.ruidoespontaneo.cassette.itunes.data.ItunesRepositoryImpl
@@ -84,7 +86,10 @@ class CassetteSdk(appVersion: String, sessionStore: AuthSessionStore) {
     )
 
     private val getAlbumFacts = GetAlbumFactsUseCase(
-        WikidataAlbumFactsRepository(KtorWikidataApi(wikidataHttpClient(Darwin.create(), cassetteUserAgent(appVersion), logger = null)))
+        WikidataAlbumFactsRepository(
+            KtorWikidataApi(wikidataHttpClient(Darwin.create(), cassetteUserAgent(appVersion), logger = null)),
+            KtorWikipediaApi(wikipediaHttpClient(Darwin.create(), cassetteUserAgent(appVersion), logger = null))
+        )
     )
 
     private val authRepository = RestAuthRepository(
@@ -118,8 +123,8 @@ class CassetteSdk(appVersion: String, sessionStore: AuthSessionStore) {
     suspend fun trackLyrics(album: AlbumDetail, position: Int): Lyrics? = getTrackLyrics(album, position).getOrThrow()
 
     /**
-     * See [GetAlbumFactsUseCase]: what Wikidata knows about [album], named in [language] (an ISO 639-1
-     * code) where it can be, or `null` when it knows nothing.
+     * See [GetAlbumFactsUseCase]: what Wikidata knows about [album], and its Wikipedia summary, in
+     * [language] (an ISO 639-1 code) where it can be, or `null` when there's nothing.
      */
     @Throws(Exception::class)
     suspend fun albumFacts(album: AlbumDetail, language: String): AlbumFacts? = getAlbumFacts(album, language).getOrThrow()
