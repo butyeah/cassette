@@ -1,5 +1,7 @@
 package com.ruidoespontaneo.cassette.cover.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
@@ -32,7 +34,7 @@ import kotlin.math.sin
  * [colors] overrides the three blobs' colors, most-dominant first (see [dominantColors]) — e.g.
  * an album's own cover art instead of the theme palette. Left `null` (the default), or shorter
  * than three colors, falls back to the theme per missing slot, so a partial list is never wrong,
- * just less colorful than a full one.
+ * just less colorful than a full one. Changing them fades each blob to its new color.
  */
 @Composable
 fun AnimatedGradientBackground(modifier: Modifier = Modifier, colors: List<Color>? = null) {
@@ -42,22 +44,30 @@ fun AnimatedGradientBackground(modifier: Modifier = Modifier, colors: List<Color
         MaterialTheme.colorScheme.secondary,
         MaterialTheme.colorScheme.tertiary
     )
-    val blobColor = { index: Int -> colors?.getOrNull(index) ?: themeColors[index] }
+    // A slow, eased cross-fade, so a change of colors (say, another album's) drifts in like the
+    // blobs themselves rather than snapping on the default spring.
+    val blobColors = List(themeColors.size) { index ->
+        animateColorAsState(
+            targetValue = colors?.getOrNull(index) ?: themeColors[index],
+            animationSpec = tween(ColorFadeMillis, easing = FastOutSlowInEasing),
+            label = "blob${index + 1}Color"
+        ).value
+    }
     val blobs = listOf(
         Blob(
             angle = transition.orbitAngle(periodMillis = 9_000, label = "blob1"),
             anchor = Offset(0.3f, 0.3f),
-            color = blobColor(0)
+            color = blobColors[0]
         ),
         Blob(
             angle = transition.orbitAngle(periodMillis = 13_000, label = "blob2"),
             anchor = Offset(0.7f, 0.5f),
-            color = blobColor(1)
+            color = blobColors[1]
         ),
         Blob(
             angle = transition.orbitAngle(periodMillis = 17_000, label = "blob3"),
             anchor = Offset(0.5f, 0.8f),
-            color = blobColor(2)
+            color = blobColors[2]
         )
     )
 
@@ -98,3 +108,4 @@ private val BlurRadius = 50.dp
 private const val OrbitAmplitude = 0.22f
 private const val BlobRadiusFraction = 0.6f
 private const val BlobAlpha = 0.75f
+private const val ColorFadeMillis = 1_500
