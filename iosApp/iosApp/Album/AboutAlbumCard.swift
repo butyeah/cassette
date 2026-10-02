@@ -1,10 +1,10 @@
 import Shared
 import SwiftUI
 
-/// "About this album": the lead of the album's Wikipedia article with a link to the rest, what
-/// Wikidata knows as one labelled row per fact (empty ones left out), then the credit for both.
-/// Frosted over the album's gradient, like the Daily screen's list cards. Mirrors Android's
-/// AboutAlbumCard.
+/// "About this album": the lead of the album's Wikipedia article with a link to the rest, and what
+/// Wikidata knows as one labelled row per fact (empty ones left out). Frosted over the album's
+/// gradient, like the Daily screen's list cards. The sources are credited in Settings, on the Credits
+/// page. Mirrors Android's AboutAlbumCard.
 struct AboutAlbumCard: View {
     let facts: AlbumFacts
 
@@ -19,20 +19,63 @@ struct AboutAlbumCard: View {
         ].filter { !$0.values.isEmpty }
     }
 
-    /// Credits whichever of Wikidata and Wikipedia the card shows something from.
-    private var credit: LocalizedStringKey {
-        switch (facts.summary != nil, !rows.isEmpty) {
-        case (false, _): "Facts from Wikidata"
-        case (true, true): "Facts from Wikidata · Summary from Wikipedia"
-        case (true, false): "Summary from Wikipedia"
-        }
-    }
+    /// How tall the card's body is while closed.
+    private static let collapsedHeight: CGFloat = 96
+    /// How much of the bottom fades out while closed.
+    private static let fadeHeight: CGFloat = 32
 
+    @State private var expanded = false
+    /// The body's height laid out in full, to know whether it fits under `collapsedHeight`.
+    @State private var fullHeight: CGFloat = 0
+
+    private var overflows: Bool { fullHeight > Self.collapsedHeight }
+
+    /// Under the title it's at most `collapsedHeight` tall, fading out at the bottom over a chevron,
+    /// when there's more than fits. A tap anywhere but the Wikipedia link opens it to its full
+    /// height, pushing what's below down; another closes it. Content that fits is shown whole.
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("About this album")
                 .font(.pixel(20, weight: .medium))
                 .accessibilityAddTraits(.isHeader)
+            details
+                .fixedSize(horizontal: false, vertical: true)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { fullHeight = $0 }
+                .frame(maxHeight: expanded || !overflows ? nil : Self.collapsedHeight, alignment: .top)
+                .clipped()
+                .mask {
+                    // A mask rather than a colour gradient: the card is frosted glass with no colour
+                    // of its own.
+                    VStack(spacing: 0) {
+                        Color.black
+                        LinearGradient(colors: [.black, .black.opacity(overflows && !expanded ? 0 : 1)], startPoint: .top, endPoint: .bottom)
+                            .frame(height: Self.fadeHeight)
+                    }
+                }
+            if overflows {
+                Image(systemName: "chevron.down")
+                    .font(.body.weight(.semibold))
+                    .rotationEffect(.degrees(expanded ? 180 : 0))
+                    .frame(maxWidth: .infinity)
+                    .accessibilityHidden(true)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .contentShape(RoundedRectangle(cornerRadius: 12))
+        .onTapGesture {
+            guard overflows else { return }
+            withAnimation(.spring(duration: 0.5, bounce: 0.2)) { expanded.toggle() }
+        }
+        .accessibilityAction(named: expanded ? Text("Show less") : Text("Show more")) {
+            guard overflows else { return }
+            withAnimation(.spring(duration: 0.5, bounce: 0.2)) { expanded.toggle() }
+        }
+    }
+
+    private var details: some View {
+        VStack(alignment: .leading, spacing: 12) {
             if let summary = facts.summary {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(summary.text).font(.handjet(20))
@@ -53,12 +96,7 @@ struct AboutAlbumCard: View {
                 }
                 .accessibilityElement(children: .combine)
             }
-            Text(credit)
-                .font(.handjet(16))
-                .foregroundStyle(.secondary)
         }
-        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 }
