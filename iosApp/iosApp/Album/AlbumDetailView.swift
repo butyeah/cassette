@@ -90,10 +90,13 @@ private struct AlbumContent: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .animation(.easeInOut(duration: 0.4), value: releaseStory)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    ForEach([album.genresText, album.ratingText].compactMap { $0 }, id: \.self) {
-                        Text($0).font(.handjet(20)).foregroundStyle(.secondary)
-                    }
+                // In the genres' place, closed to a set height until tapped.
+                if let facts {
+                    AboutAlbumCard(facts: facts)
+                }
+
+                if let ratingText = album.ratingText {
+                    Text(ratingText).font(.handjet(20)).foregroundStyle(.secondary)
                 }
 
                 let links = album.streamingLinks.displayList
@@ -134,10 +137,6 @@ private struct AlbumContent: View {
                     }
                 }
 
-                if let facts {
-                    AboutAlbumCard(facts: facts)
-                        .padding(.top, 8)
-                }
             }
             .padding(16)
         }

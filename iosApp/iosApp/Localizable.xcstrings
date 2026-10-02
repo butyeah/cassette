@@ -303,26 +303,6 @@
         }
       }
     },
-    "Facts from Wikidata" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Datos de Wikidata"
-          }
-        }
-      }
-    },
-    "Facts from Wikidata · Summary from Wikipedia" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Datos de Wikidata · Resumen de Wikipedia"
-          }
-        }
-      }
-    },
     "Follows your phone's language" : {
       "localizations" : {
         "es" : {
@@ -349,16 +329,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "¿Olvidaste tu contraseña?"
-          }
-        }
-      }
-    },
-    "Genres: %@" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Géneros: %@"
           }
         }
       }
@@ -763,6 +733,26 @@
         }
       }
     },
+    "Show less" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar menos"
+          }
+        }
+      }
+    },
+    "Show more" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar más"
+          }
+        }
+      }
+    },
     "Show password" : {
       "localizations" : {
         "es" : {
@@ -849,16 +839,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Detener la vista previa de %@"
-          }
-        }
-      }
-    },
-    "Summary from Wikipedia" : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Resumen de Wikipedia"
           }
         }
       }

@@ -16,10 +16,6 @@ extension AlbumDetail {
     /// Hero size, for the album screen.
     var coverURL: URL? { coverArtURL(releaseGroupId: id, size: 500) }
 
-    var genresText: String? {
-        genres.isEmpty ? nil : String(localized: "Genres: \(genres.joined(separator: ", "))")
-    }
-
     /// "4.5 / 5 (12 ratings)", or `nil` when the album has no community rating (always the case
     /// for albums served from the offline index). "rating" / "ratings" is a plural in the string
     /// catalog, as rating_format is on Android.
