@@ -60,21 +60,10 @@ private fun AlbumFacts.rows(): List<Pair<Int, List<String>>> = listOf(
     R.string.facts_nominations to nominations
 ).filter { (_, values) -> values.isNotEmpty() }
 
-/** Credits whichever of Wikidata and Wikipedia the card shows something from. */
-@StringRes
-private fun AlbumFacts.creditRes(): Int {
-    val hasWikidataFacts = rows().isNotEmpty()
-    return when {
-        summary == null -> R.string.facts_credit
-        hasWikidataFacts -> R.string.facts_credit_both
-        else -> R.string.facts_credit_wikipedia
-    }
-}
-
 /**
  * "About this album": the lead of the album's Wikipedia article with a link to the rest, what
- * Wikidata knows as one labelled row per fact, then the credit for both. Frosted over the album's
- * gradient via [hazeState], like the Daily screen's list cards.
+ * Wikidata knows as one labelled row per fact. Frosted over the album's gradient via [hazeState],
+ * like the Daily screen's list cards. The sources are credited in Settings, on the Credits page.
  *
  * Under the title it's at most [COLLAPSED_HEIGHT] tall, fading out at the bottom over a chevron,
  * when there's more than fits. A tap anywhere but the Wikipedia link opens it to its full height,
@@ -118,11 +107,6 @@ fun AboutAlbumCard(facts: AlbumFacts, hazeState: HazeState, modifier: Modifier =
                 ) {
                     facts.summary?.let { WikipediaSummary(it) }
                     facts.rows().forEach { (label, values) -> FactRow(label, values) }
-                    Text(
-                        text = stringResource(facts.creditRes()),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
             if (overflows) {
@@ -139,10 +123,10 @@ fun AboutAlbumCard(facts: AlbumFacts, hazeState: HazeState, modifier: Modifier =
 }
 
 /** How tall the card's body is while closed. */
-private val COLLAPSED_HEIGHT = 160.dp
+private val COLLAPSED_HEIGHT = 96.dp
 
 /** How much of the bottom fades out while closed. */
-private val FADE_HEIGHT = 48.dp
+private val FADE_HEIGHT = 32.dp
 
 /**
  * Fades the bottom [FADE_HEIGHT] of this out to transparent, by [amount] (0 not at all, 1 fully).
