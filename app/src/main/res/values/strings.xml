@@ -24,7 +24,6 @@
     <string name="daily_reminder_notification_text">Today\'s albums released in history are ready — take a look!</string>
     <string name="daily_reminder_channel_name">Daily reminder</string>
     <string name="album_detail_default_title">Album</string>
-    <string name="genres_format">Genres: %1$s</string>
     <plurals name="rating_format">
         <item quantity="one">%1$.1f / 5 (%2$d rating)</item>
         <item quantity="other">%1$.1f / 5 (%2$d ratings)</item>
@@ -54,16 +53,15 @@
     <string name="lyrics_failed">Couldn\'t load the lyrics</string>
     <string name="lyrics_credit">Lyrics from LRCLIB</string>
     <string name="about_album_title">About this album</string>
+    <string name="about_album_show_more">Show more</string>
+    <string name="about_album_show_less">Show less</string>
     <string name="facts_produced_by">Produced by</string>
     <string name="facts_recorded_at">Recorded at</string>
     <string name="facts_cover_art_by">Cover art by</string>
     <string name="facts_label">Label</string>
     <string name="facts_awards">Awards</string>
     <string name="facts_nominations">Nominations</string>
-    <string name="facts_credit">Facts from Wikidata</string>
     <string name="facts_read_on_wikipedia">Read more on Wikipedia</string>
-    <string name="facts_credit_wikipedia">Summary from Wikipedia</string>
-    <string name="facts_credit_both">Facts from Wikidata · Summary from Wikipedia</string>
     <string name="release_story_label_and_producer">On %1$s, %2$s released this album, produced by %3$s.</string>
     <string name="release_story_label_self_produced">This record was self-produced by %4$s and released on %1$s on the %2$s label.</string>
     <string name="release_story_label_and_producers">On %1$s, this record came out, bringing together %3$s on production for %2$s.</string>

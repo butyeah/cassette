@@ -24,7 +24,6 @@
     <string name="daily_reminder_notification_text">Ya están listos los álbumes que se publicaron un día como hoy. ¡Échales un vistazo!</string>
     <string name="daily_reminder_channel_name">Recordatorio diario</string>
     <string name="album_detail_default_title">Álbum</string>
-    <string name="genres_format">Géneros: %1$s</string>
     <plurals name="rating_format">
         <item quantity="one">%1$.1f / 5 (%2$d valoración)</item>
         <item quantity="many">%1$.1f / 5 (%2$d valoraciones)</item>
@@ -53,16 +52,15 @@
     <string name="lyrics_failed">No se pudo cargar la letra</string>
     <string name="lyrics_credit">Letra de LRCLIB</string>
     <string name="about_album_title">Sobre este álbum</string>
+    <string name="about_album_show_more">Mostrar más</string>
+    <string name="about_album_show_less">Mostrar menos</string>
     <string name="facts_produced_by">Producido por</string>
     <string name="facts_recorded_at">Grabado en</string>
     <string name="facts_cover_art_by">Portada de</string>
     <string name="facts_label">Sello</string>
     <string name="facts_awards">Premios</string>
     <string name="facts_nominations">Nominaciones</string>
-    <string name="facts_credit">Datos de Wikidata</string>
     <string name="facts_read_on_wikipedia">Leer más en Wikipedia</string>
-    <string name="facts_credit_wikipedia">Resumen de Wikipedia</string>
-    <string name="facts_credit_both">Datos de Wikidata · Resumen de Wikipedia</string>
     <string name="release_story_label_and_producer">Un %1$s el sello %2$s libera este álbum producido por %3$s.</string>
     <string name="release_story_label_self_produced">Este disco fue autoproducido por %4$s y liberado el %1$s bajo el sello %2$s.</string>
     <string name="release_story_label_and_producers">El %1$s, se libera este disco que junta a %3$s en la producción para el sello %2$s.</string>
