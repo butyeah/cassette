@@ -1,7 +1,7 @@
 import Shared
 import SwiftUI
 
-/// Notifications, language and, while signed in, the account. Mirrors Android's SettingsScreen.
+/// Notifications, language, credits and, while signed in, the account. Mirrors Android's SettingsScreen.
 struct SettingsView: View {
     @Environment(AuthModel.self) private var auth
     @Environment(\.openURL) private var openURL
@@ -33,6 +33,9 @@ struct SettingsView: View {
                     }
                 }
                 .foregroundStyle(.primary)
+                NavigationLink(value: ProfileRoute.credits) {
+                    Label("Credits", systemImage: "info.circle")
+                }
             }
 
             if auth.user != nil {

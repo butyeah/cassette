@@ -47,6 +47,7 @@
 		BB6A4684A35FDD5029C7F907 /* MosaicLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12FF96E62D4C7654C77328B3 /* MosaicLayout.swift */; };
 		C020E5325E868D54E39D64F7 /* GenreTileMotionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72E1290AA264B61DB6D1DDCF /* GenreTileMotionTests.swift */; };
 		DEFD061FC42A0E991843D140 /* DominantColorsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 098110F866DC52C23B4F8C88 /* DominantColorsTests.swift */; };
+		F0028E3CD010C9C0860329BC /* CreditsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 929CC964851EC7148EEDB8D1 /* CreditsView.swift */; };
 		FA35A67C2AF6692B81686E00 /* MarqueeText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 985CB2EB4E363DB83F9CEA59 /* MarqueeText.swift */; };
 		FC5CD4A5214B4B9DC243CA75 /* GenreTileMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC53F07968AB0F0693411D7E /* GenreTileMotion.swift */; };
 		FFF93642A27B8411D7A8E6BE /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2925723D1B4AC9FBF45C9F3F /* RootView.swift */; };
@@ -87,6 +88,7 @@
 		86038AE1032E284E79B32AD6 /* iosApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A2C7D39B60B22635AFB4CDD /* CoverImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverImage.swift; sourceTree = "<group>"; };
 		8EF4BB7FA4397CDB768AC43E /* handjet.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = handjet.ttf; sourceTree = "<group>"; };
+		929CC964851EC7148EEDB8D1 /* CreditsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditsView.swift; sourceTree = "<group>"; };
 		968D41B54D5F4CD066475948 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		985CB2EB4E363DB83F9CEA59 /* MarqueeText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarqueeText.swift; sourceTree = "<group>"; };
 		9E245F95DF361D313AEDB59D /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
@@ -204,6 +206,7 @@
 		8AD09A33681C22D59FD6D944 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				929CC964851EC7148EEDB8D1 /* CreditsView.swift */,
 				61F79D5D14F51BF4A8A008D0 /* NotificationsView.swift */,
 				968D41B54D5F4CD066475948 /* SettingsView.swift */,
 			);
@@ -428,6 +431,7 @@
 				A0AC444EE8227A1FD3FF9819 /* CassetteApp.swift in Sources */,
 				88BD4F4BA4B4AAD3418DC692 /* CoverColors.swift in Sources */,
 				6B3799B0D8260C303FBF8660 /* CoverImage.swift in Sources */,
+				F0028E3CD010C9C0860329BC /* CreditsView.swift in Sources */,
 				971B598F52DE0B8BCF3AF6EA /* DailyReminder.swift in Sources */,
 				742A51DBE5717A088D4EEA19 /* DailyView.swift in Sources */,
 				17E0B0AF49A644C12E78D82C /* DailyViewModel.swift in Sources */,

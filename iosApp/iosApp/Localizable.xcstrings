@@ -93,6 +93,16 @@
         }
       }
     },
+    "Albums, release dates, tracklists, genres and ratings." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Álbumes, fechas de lanzamiento, listas de canciones, géneros y calificaciones."
+          }
+        }
+      }
+    },
     "Awards" : {
       "localizations" : {
         "es" : {
@@ -103,12 +113,25 @@
         }
       }
     },
+    "CC0" : {
+      "shouldTranslate" : false
+    },
     "Cancel" : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"
+          }
+        }
+      }
+    },
+    "Cassette is built on open music data. Thanks to these projects and the people who keep them up." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cassette se construye sobre datos musicales abiertos. Gracias a estos proyectos y a las personas que los mantienen."
           }
         }
       }
@@ -129,6 +152,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Elegir otro día"
+          }
+        }
+      }
+    },
+    "Core data under CC0; genres and ratings under CC BY-NC-SA 3.0" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datos principales bajo CC0; géneros y calificaciones bajo CC BY-NC-SA 3.0"
           }
         }
       }
@@ -189,6 +222,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Crear cuenta"
+          }
+        }
+      }
+    },
+    "Credits" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Créditos"
           }
         }
       }
@@ -643,6 +686,16 @@
         }
       }
     },
+    "Producers, recording places, cover artists, labels, awards and nominations." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Productores, lugares de grabación, artistas de portada, sellos, premios y nominaciones."
+          }
+        }
+      }
+    },
     "Profile" : {
       "localizations" : {
         "es" : {
@@ -843,6 +896,16 @@
         }
       }
     },
+    "Text under CC BY-SA 4.0" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texto bajo CC BY-SA 4.0"
+          }
+        }
+      }
+    },
     "That email address isn't valid." : {
       "localizations" : {
         "es" : {
@@ -859,6 +922,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Las contraseñas no coinciden."
+          }
+        }
+      }
+    },
+    "The summary of each album, from the opening of its article." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El resumen de cada álbum, tomado del inicio de su artículo."
           }
         }
       }

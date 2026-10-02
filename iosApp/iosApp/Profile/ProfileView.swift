@@ -31,6 +31,7 @@ struct ProfileView: View {
                 switch route {
                 case .settings: SettingsView()
                 case .notifications: NotificationsView()
+                case .credits: CreditsView()
                 }
             }
         }
@@ -41,6 +42,7 @@ struct ProfileView: View {
 enum ProfileRoute: Hashable {
     case settings
     case notifications
+    case credits
 }
 
 /// An avatar with the email's initial, the email, and "Signed in". Mirrors SignedInContent.kt.
