@@ -24,7 +24,6 @@
     <string name="daily_reminder_notification_text">Today\'s albums released in history are ready — take a look!</string>
     <string name="daily_reminder_channel_name">Daily reminder</string>
     <string name="album_detail_default_title">Album</string>
-    <string name="genres_format">Genres: %1$s</string>
     <plurals name="rating_format">
         <item quantity="one">%1$.1f / 5 (%2$d rating)</item>
         <item quantity="other">%1$.1f / 5 (%2$d ratings)</item>
@@ -54,6 +53,8 @@
     <string name="lyrics_failed">Couldn\'t load the lyrics</string>
     <string name="lyrics_credit">Lyrics from LRCLIB</string>
     <string name="about_album_title">About this album</string>
+    <string name="about_album_show_more">Show more</string>
+    <string name="about_album_show_less">Show less</string>
     <string name="facts_produced_by">Produced by</string>
     <string name="facts_recorded_at">Recorded at</string>
     <string name="facts_cover_art_by">Cover art by</string>

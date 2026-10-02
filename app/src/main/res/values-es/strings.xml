@@ -24,7 +24,6 @@
     <string name="daily_reminder_notification_text">Ya están listos los álbumes que se publicaron un día como hoy. ¡Échales un vistazo!</string>
     <string name="daily_reminder_channel_name">Recordatorio diario</string>
     <string name="album_detail_default_title">Álbum</string>
-    <string name="genres_format">Géneros: %1$s</string>
     <plurals name="rating_format">
         <item quantity="one">%1$.1f / 5 (%2$d valoración)</item>
         <item quantity="many">%1$.1f / 5 (%2$d valoraciones)</item>
@@ -53,6 +52,8 @@
     <string name="lyrics_failed">No se pudo cargar la letra</string>
     <string name="lyrics_credit">Letra de LRCLIB</string>
     <string name="about_album_title">Sobre este álbum</string>
+    <string name="about_album_show_more">Mostrar más</string>
+    <string name="about_album_show_less">Mostrar menos</string>
     <string name="facts_produced_by">Producido por</string>
     <string name="facts_recorded_at">Grabado en</string>
     <string name="facts_cover_art_by">Portada de</string>

@@ -250,7 +250,7 @@ private fun AlbumDetailContent(
     /** The album's dominant colors once its cover has decoded; the waveform falls back to theme colors until then. */
     waveColors: List<Color>?,
     onCoverLoaded: (Bitmap) -> Unit,
-    /** Shown in a card after the tracklist when there are any. */
+    /** Shown in a card under the player, in place of the genres, when there are any. */
     facts: AlbumFacts?,
     /** Shown along the bottom of the player, once the facts have loaded. */
     releaseStory: ReleaseStory?,
@@ -347,9 +347,10 @@ private fun AlbumDetailContent(
                 modifier = Modifier.padding(top = Spacing.small)
             )
         }
-        if (album.genres.isNotEmpty()) {
-            Text(
-                text = stringResource(R.string.genres_format, album.genres.joinToString()),
+        if (facts != null) {
+            AboutAlbumCard(
+                facts = facts,
+                hazeState = hazeState,
                 modifier = Modifier.padding(top = Spacing.small)
             )
         }
@@ -372,13 +373,6 @@ private fun AlbumDetailContent(
                 previewPlayback = previewPlayback,
                 highlightColors = highlightContainerColors(waveColors),
                 onTogglePreview = onTogglePreview,
-                modifier = Modifier.padding(top = Spacing.large)
-            )
-        }
-        if (facts != null) {
-            AboutAlbumCard(
-                facts = facts,
-                hazeState = hazeState,
                 modifier = Modifier.padding(top = Spacing.large)
             )
         }
