@@ -95,6 +95,13 @@
     <string name="signed_in">Sesión iniciada</string>
     <string name="settings_title">Ajustes</string>
     <string name="settings_language">Idioma</string>
+    <string name="credits_title">Créditos</string>
+    <string name="credits_intro">Cassette se construye sobre datos musicales abiertos. Gracias a estos proyectos y a las personas que los mantienen.</string>
+    <string name="credits_musicbrainz_gives">Álbumes, fechas de lanzamiento, listas de canciones, géneros y calificaciones.</string>
+    <string name="credits_musicbrainz_license">Datos principales bajo CC0; géneros y calificaciones bajo CC BY-NC-SA 3.0</string>
+    <string name="credits_wikidata_gives">Productores, lugares de grabación, artistas de portada, sellos, premios y nominaciones.</string>
+    <string name="credits_wikipedia_gives">El resumen de cada álbum, tomado del inicio de su artículo.</string>
+    <string name="credits_wikipedia_license">Texto bajo CC BY-SA 4.0</string>
     <string name="language_system_default">Predeterminado del sistema</string>
     <string name="language_follows_phone">Usa el idioma de tu teléfono</string>
     <string name="sign_out_confirm_title">¿Cerrar sesión?</string>

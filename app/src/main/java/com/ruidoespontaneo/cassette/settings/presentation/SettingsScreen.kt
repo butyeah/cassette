@@ -13,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -56,6 +57,7 @@ import com.ruidoespontaneo.cassette.ui.theme.IconSize
 fun SettingsScreen(
     onBack: () -> Unit,
     onNotificationsClick: () -> Unit,
+    onCreditsClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
@@ -72,6 +74,7 @@ fun SettingsScreen(
         onIntent = viewModel::onIntent,
         onBack = onBack,
         onNotificationsClick = onNotificationsClick,
+        onCreditsClick = onCreditsClick,
         modifier = modifier
     )
 }
@@ -83,6 +86,7 @@ private fun SettingsScreenContent(
     onIntent: (SettingsIntent) -> Unit,
     onBack: () -> Unit,
     onNotificationsClick: () -> Unit,
+    onCreditsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isLanguageDialogOpen by rememberSaveable { mutableStateOf(false) }
@@ -128,6 +132,13 @@ private fun SettingsScreenContent(
                 } else {
                     null
                 }
+            )
+            HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.large))
+            SettingsRow(
+                label = stringResource(R.string.credits_title),
+                icon = Icons.Filled.Info,
+                showChevron = true,
+                onClick = onCreditsClick
             )
             if (state.isSignedIn) {
                 HorizontalDivider(modifier = Modifier.padding(horizontal = Spacing.large))

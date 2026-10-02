@@ -96,6 +96,17 @@
     <string name="signed_in">Signed in</string>
     <string name="settings_title">Settings</string>
     <string name="settings_language">Language</string>
+    <string name="credits_title">Credits</string>
+    <string name="credits_intro">Cassette is built on open music data. Thanks to these projects and the people who keep them up.</string>
+    <string name="credits_musicbrainz" translatable="false">MusicBrainz</string>
+    <string name="credits_musicbrainz_gives">Albums, release dates, tracklists, genres and ratings.</string>
+    <string name="credits_musicbrainz_license">Core data under CC0; genres and ratings under CC BY-NC-SA 3.0</string>
+    <string name="credits_wikidata" translatable="false">Wikidata</string>
+    <string name="credits_wikidata_gives">Producers, recording places, cover artists, labels, awards and nominations.</string>
+    <string name="credits_wikidata_license" translatable="false">CC0</string>
+    <string name="credits_wikipedia" translatable="false">Wikipedia</string>
+    <string name="credits_wikipedia_gives">The summary of each album, from the opening of its article.</string>
+    <string name="credits_wikipedia_license">Text under CC BY-SA 4.0</string>
     <string name="language_system_default">System default</string>
     <string name="language_english" translatable="false">English</string>
     <string name="language_spanish" translatable="false">Español</string>
